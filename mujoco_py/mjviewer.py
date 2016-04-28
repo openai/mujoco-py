@@ -4,7 +4,7 @@ import logging
 from threading import Lock
 import os
 
-import glfw
+import .glfw
 import mjcore
 from mjconstants import *
 from mjlib import mjlib
