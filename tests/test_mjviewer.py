@@ -38,4 +38,4 @@ class MjLibTest(unittest.TestCase):
         # the width and height are scaled
         self.assertEqual(len(data), 3 * width * height)
         # make sure the image is not pitch black
-        self.assertTrue(any(map(ord, data)))
+        self.assertTrue(any(map(lambda x: x > 0, data)))
