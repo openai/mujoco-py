@@ -1,5 +1,9 @@
 import ctypes, os, sys
 from ctypes import *
+import six
+
+# MAXINT on Python 2, undefined on Python 3
+MAXINT = 9223372036854775807
 
 class UserString:
     def __init__(self, seq):
@@ -53,7 +57,7 @@ class UserString:
     def capitalize(self): return self.__class__(self.data.capitalize())
     def center(self, width, *args):
         return self.__class__(self.data.center(width, *args))
-    def count(self, sub, start=0, end=sys.maxint):
+    def count(self, sub, start=0, end=MAXINT):
         return self.data.count(sub, start, end)
     def decode(self, encoding=None, errors=None): # XXX improve this?
         if encoding:
@@ -71,13 +75,13 @@ class UserString:
                 return self.__class__(self.data.encode(encoding))
         else:
             return self.__class__(self.data.encode())
-    def endswith(self, suffix, start=0, end=sys.maxint):
+    def endswith(self, suffix, start=0, end=MAXINT):
         return self.data.endswith(suffix, start, end)
     def expandtabs(self, tabsize=8):
         return self.__class__(self.data.expandtabs(tabsize))
-    def find(self, sub, start=0, end=sys.maxint):
+    def find(self, sub, start=0, end=MAXINT):
         return self.data.find(sub, start, end)
-    def index(self, sub, start=0, end=sys.maxint):
+    def index(self, sub, start=0, end=MAXINT):
         return self.data.index(sub, start, end)
     def isalpha(self): return self.data.isalpha()
     def isalnum(self): return self.data.isalnum()
@@ -97,9 +101,9 @@ class UserString:
         return self.data.partition(sep)
     def replace(self, old, new, maxsplit=-1):
         return self.__class__(self.data.replace(old, new, maxsplit))
-    def rfind(self, sub, start=0, end=sys.maxint):
+    def rfind(self, sub, start=0, end=MAXINT):
         return self.data.rfind(sub, start, end)
-    def rindex(self, sub, start=0, end=sys.maxint):
+    def rindex(self, sub, start=0, end=MAXINT):
         return self.data.rindex(sub, start, end)
     def rjust(self, width, *args):
         return self.__class__(self.data.rjust(width, *args))
@@ -111,7 +115,7 @@ class UserString:
     def rsplit(self, sep=None, maxsplit=-1):
         return self.data.rsplit(sep, maxsplit)
     def splitlines(self, keepends=0): return self.data.splitlines(keepends)
-    def startswith(self, prefix, start=0, end=sys.maxint):
+    def startswith(self, prefix, start=0, end=MAXINT):
         return self.data.startswith(prefix, start, end)
     def strip(self, chars=None): return self.__class__(self.data.strip(chars))
     def swapcase(self): return self.__class__(self.data.swapcase())
@@ -181,8 +185,12 @@ class String(MutableString, Union):
                 ('data', c_char_p)]
 
     def __init__(self, obj=""):
-        if isinstance(obj, (str, unicode, UserString)):
-            self.data = str(obj)
+        if isinstance(obj, six.text_type):
+            self.data = obj.encode('ascii')
+        elif isinstance(obj, six.binary_type):
+            self.data = obj
+        elif isinstance(obj, UserString):
+            self.data = six.b(obj)
         else:
             self.raw = obj
 

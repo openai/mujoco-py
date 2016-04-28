@@ -10,7 +10,8 @@ setup(
     packages=['mujoco_py'],
     install_requires=[
         'PyOpenGL>=3.1.0',
-        'numpy>=1.10.4'
+        'numpy>=1.10.4',
+        'six',
     ],
     tests_requires=[
         'nose2'
