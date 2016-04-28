@@ -1,14 +1,10 @@
-import os
-from mujoco_py import config
-config.init()
+from .config import init_config, get_key_path
+init_config()
 
-# Ok, everything's great! Do the actual work now.
 from .mjviewer import MjViewer
 from .mjcore import MjModel
 from .mjcore import register_license
-import os
-import sys
-from mjconstants import *
-from platname_targdir import targdir
+from .mjconstants import *
+from .platname_targdir import targdir
 
-register_license(config.key_path)
+register_license(get_key_path())

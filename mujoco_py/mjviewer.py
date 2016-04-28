@@ -4,10 +4,8 @@ import logging
 from threading import Lock
 import os
 
-import .glfw
-import mjcore
-from mjconstants import *
-from mjlib import mjlib
+from . import mjcore, mjconstants, glfw
+from .mjlib import mjlib
 import numpy as np
 import OpenGL.GL as gl
 
