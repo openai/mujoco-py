@@ -1,5 +1,7 @@
 # MuJoCo Python Bindings
 
+[![Build Status](https://travis-ci.org/openai/mujoco-py.svg?branch=master)](https://travis-ci.org/openai/mujoco-py)
+
 MuJoCo is a physics engine which can do very detailed efficient
 simulations with contacts. This library lets you use MuJoCo from
 Python.
