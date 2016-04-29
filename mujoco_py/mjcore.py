@@ -83,37 +83,37 @@ class MjModel(MjModelWrapper):
     @property
     def body_names(self):
         start_addr = ctypes.addressof(self.names.contents)
-        return [ctypes.string_at(start_addr + inc)
+        return [ctypes.string_at(start_addr + int(inc))
                 for inc in self.name_bodyadr.flatten()]
 
     @property
     def joint_names(self):
         start_addr = ctypes.addressof(self.names.contents)
-        return [ctypes.string_at(start_addr + inc)
+        return [ctypes.string_at(start_addr + int(inc))
                 for inc in self.name_jntadr.flatten()]
 
     @property
     def geom_names(self):
         start_addr = ctypes.addressof(self.names.contents)
-        return [ctypes.string_at(start_addr + inc)
+        return [ctypes.string_at(start_addr + int(inc))
                 for inc in self.name_geomadr.flatten()]
 
     @property
     def site_names(self):
         start_addr = ctypes.addressof(self.names.contents)
-        return [ctypes.string_at(start_addr + inc)
+        return [ctypes.string_at(start_addr + int(inc))
                 for inc in self.name_siteadr.flatten()]
 
     @property
     def mesh_names(self):
         start_addr = ctypes.addressof(self.names.contents)
-        return [ctypes.string_at(start_addr + inc)
+        return [ctypes.string_at(start_addr + int(inc))
                 for inc in self.name_meshadr.flatten()]
 
     @property
     def numeric_names(self):
         start_addr = ctypes.addressof(self.names.contents)
-        return [ctypes.string_at(start_addr + inc)
+        return [ctypes.string_at(start_addr + int(inc))
                 for inc in self.name_numericadr.flatten()]
 
 
