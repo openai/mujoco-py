@@ -4,7 +4,7 @@ from distutils.core import setup
 
 setup(
     name='mujoco-py',
-    version='0.4.1',
+    version='0.4.2',
     description='Python wrapper for Mojoco',
     author='OpenAI',
     packages=['mujoco_py'],
