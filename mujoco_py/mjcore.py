@@ -4,7 +4,7 @@ from . import mjconstants as C
 
 from .mjtypes import *  # import all for backwards compatibility
 from .mjlib import mjlib
-
+from six.moves import xrange
 
 class MjError(Exception):
     pass
