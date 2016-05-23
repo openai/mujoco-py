@@ -20,10 +20,17 @@ def _glfw_error_callback(e, d):
 
 class MjViewer(object):
 
-    def __init__(self, visible=True, init_width=500, init_height=500):
+    def __init__(self, visible=True, init_width=500, init_height=500, go_fast=False):
+        """
+        Set go_fast=True to run at full speed instead of waiting for the 60 Hz monitor refresh
+        init_width and init_height set window size. On Mac Retina displays, they are in nominal
+        pixels but .render returns an array of device pixels, so the array will be twice as big
+        as you expect.
+        """
         self.visible = visible
         self.init_width = init_width
         self.init_height = init_height
+        self.go_fast = not visible or go_fast
 
         self.last_render_time = 0
         self.objects = mjcore.MJVOBJECTS()
@@ -187,6 +194,10 @@ class MjViewer(object):
 
         # Make the window's context current
         glfw.make_context_current(window)
+
+        if self.go_fast:
+            # Let's go faster than 60 Hz
+            glfw.swap_interval(0)
 
         self._init_framebuffer_object()
 
