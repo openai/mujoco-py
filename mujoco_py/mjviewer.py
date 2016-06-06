@@ -253,11 +253,11 @@ class MjViewer(object):
         # determine action based on mouse button
         action = None
         if self._button_right_pressed:
-            action = MOUSE_MOVE_H if mod_shift else MOUSE_MOVE_V
+            action = mjconstants.MOUSE_MOVE_H if mod_shift else mjconstants.MOUSE_MOVE_V
         elif self._button_left_pressed:
-            action = MOUSE_ROTATE_H if mod_shift else MOUSE_ROTATE_V
+            action = mjconstants.MOUSE_ROTATE_H if mod_shift else mjconstants.MOUSE_ROTATE_V
         else:
-            action = MOUSE_ZOOM
+            action = mjconstants.MOUSE_ZOOM
 
         self.gui_lock.acquire()
 
@@ -302,7 +302,7 @@ class MjViewer(object):
 
         # scroll
         self.gui_lock.acquire()
-        mjlib.mjv_moveCamera(MOUSE_ZOOM, 0, (-20*y_offset), byref(self.cam), width, height)
+        mjlib.mjv_moveCamera(mjconstants.MOUSE_ZOOM, 0, (-20*y_offset), byref(self.cam), width, height)
         self.gui_lock.release()
 
     def should_stop(self):
