@@ -39,6 +39,21 @@ export MUJOCO_PY_MJKEY_PATH=/path/to/mjkey.txt
 export MUJOCO_PY_MJPRO_PATH=/path/to/mjpro131
 ```
 
+## Development
+
+You'll need `glfw3`. 
+### Ubuntu 14.04.3 LTS
+```bash
+sudo apt-get install cmake xorg-dev libglu1-mesa-dev
+wget https://github.com/glfw/glfw/releases/download/3.1.2/glfw-3.1.2.zip
+unzip glfw-3.1.2.zip -d /path/to/glfw-3.1.2
+cd /path/to/glfw-3.1.2
+rehash
+cmake -G "Unix Makefiles"
+make
+sudo make install
+````
+
 ## Testing
 
 Run:
