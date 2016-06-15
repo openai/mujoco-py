@@ -23,7 +23,7 @@ MuJoCo binaries and obtain license key.
 ## Obtaining the binaries and license key
 
 1. Obtain a 30-day free trial on the MuJoCo website:
-   https://www.roboti.us/trybuy.html. The license key will arrive in
+   https://www.roboti.us/license.html. The license key will arrive in
    an email with your username and password.
 2. Download the MuJoCo version 1.31 binaries for
    [Linux](https://www.roboti.us/active/mjpro131_linux.zip),
