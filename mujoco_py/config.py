@@ -45,5 +45,5 @@ def check_mujoco_version():
         raise error.MujocoDependencyError("We expected your MUJOCO_PY_MJPRO_PATH final directory to be 'mjpro131', but you provided: {} ({}). MuJoCo often changes in incompatible ways between versions, so you must use MuJoCo 1.31. If you're using MuJoCo 1.31 but changed the directory name, simply change the name back.".format(mjpro, mjpro_path))
 
 def check_numpy_version():
-    if distutils.version.StrictVersion(numpy.__version__) < distutils.version.StrictVersion('1.10.4'):
+    if distutils.version.LooseVersion(numpy.__version__) < distutils.version.LooseVersion('1.10.4'):
         raise error.MujocoDependencyError('You are running with numpy {}, but you must use >= 1.10.4. (In particular, earlier versions of numpy have been seen to cause mujoco-py to return different results from later ones.)'.format(numpy.__version__, '1.10.4'))
