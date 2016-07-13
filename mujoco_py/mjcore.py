@@ -92,6 +92,22 @@ class MjModel(MjModelWrapper):
         return [ctypes.string_at(start_addr + int(inc))
                 for inc in self.name_jntadr.flatten()]
 
+    def joint_adr(self, joint_name):
+        """Return (qposadr, qveladr, dof) for the given joint name.
+
+        If dof is 4 or 7, then the last 4 degrees of freedom in qpos represent a
+        unit quaternion."""
+        jntadr = mjlib.mj_name2id(self.ptr, C.mjOBJ_JOINT, joint_name)
+        assert(jntadr >= 0)
+        dofmap = {C.mjJNT_FREE:  7,
+                  C.mjJNT_BALL:  4,
+                  C.mjJNT_SLIDE: 1,
+                  C.mjJNT_HINGE: 1}
+        qposadr = self.jnt_qposadr[jntadr][0]
+        qveladr = self.jnt_dofadr[jntadr][0]
+        dof     = dofmap[self.jnt_type[jntadr][0]]
+        return (qposadr, qveladr, dof)
+
     @property
     def geom_names(self):
         start_addr = ctypes.addressof(self.names.contents)

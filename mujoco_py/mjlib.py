@@ -162,8 +162,8 @@ mjlib.mj_deleteData.restype = None
 #mjlib.mj_jacSite.restype = None
 #mjlib.mj_jacPointAxis.argtypes = [POINTER(MJMODEL), POINTER(MJDATA), POINTER(c_double), POINTER(c_double), POINTER(c_double), POINTER(c_double), c_int]
 #mjlib.mj_jacPointAxis.restype = None
-#mjlib.mj_name2id.argtypes = [POINTER(MJMODEL), mjtObj, String]
-#mjlib.mj_name2id.restype = c_int
+mjlib.mj_name2id.argtypes = [POINTER(MJMODEL), c_int, String]  # The middle term is a mjtObj (an enum) in C.
+mjlib.mj_name2id.restype = c_int
 #mjlib.mj_id2name.argtypes = [POINTER(MJMODEL), mjtObj, c_int]
 #mjlib.    mj_id2name.restype = ReturnString
 #mjlib.else:

@@ -5,3 +5,9 @@ MOUSE_MOVE_H = 4
 MOUSE_ZOOM = 5
 
 mjOBJ_BODY = 1
+mjOBJ_JOINT = 2
+
+mjJNT_FREE  = 0
+mjJNT_BALL  = 1
+mjJNT_SLIDE = 2
+mjJNT_HINGE = 3
