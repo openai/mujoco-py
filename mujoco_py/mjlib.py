@@ -169,8 +169,8 @@ mjlib.mj_name2id.restype = c_int
 #mjlib.else:
 #mjlib.    mj_id2name.restype = String
 #mjlib.    mj_id2name.errcheck = ReturnString
-#mjlib.mj_fullM.argtypes = [POINTER(MJMODEL), POINTER(c_double), POINTER(c_double)]
-#mjlib.mj_fullM.restype = None
+mjlib.mj_fullM.argtypes = [POINTER(MJMODEL), POINTER(c_double), POINTER(c_double)]
+mjlib.mj_fullM.restype = None
 #mjlib.mj_mulM.argtypes = [POINTER(MJMODEL), POINTER(MJDATA), POINTER(c_double), POINTER(c_double)]
 #mjlib.mj_mulM.restype = None
 #mjlib.mj_applyFT.argtypes = [POINTER(MJMODEL), POINTER(MJDATA), POINTER(c_double), POINTER(c_double), POINTER(c_double), c_int, POINTER(c_double)]
