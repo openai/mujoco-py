@@ -36,7 +36,8 @@ class MjModel(MjModelWrapper):
         self._body_comvels = None
         self.fullM = None
         self.forward()
-
+        self.raw_ptr = data_ptr
+        
     def forward(self):
         mjlib.mj_forward(self.ptr, self.data.ptr)
         mjlib.mj_sensor(self.ptr, self.data.ptr)
@@ -44,7 +45,7 @@ class MjModel(MjModelWrapper):
         self._body_comvels = None
 
     def findFullM(self):
-        mjlib.mj_fullM(self.ptr, self.fullM, self.data_ptr.qM)
+        mjlib.mj_fullM(self.ptr, self.fullM, self.raw_ptr.qM)
         
     @property
     def body_comvels(self):
