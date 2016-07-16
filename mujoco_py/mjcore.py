@@ -34,6 +34,7 @@ class MjModel(MjModelWrapper):
         data = MjData(data_ptr, self)
         self.data = data
         self._body_comvels = None
+        self.fullM = None
         self.forward()
 
     def forward(self):
@@ -42,6 +43,9 @@ class MjModel(MjModelWrapper):
         mjlib.mj_energy(self.ptr, self.data.ptr)
         self._body_comvels = None
 
+    def findFullM(self):
+        mjlib.mj_fullM(self.ptr, self.fullM, self.data.ptr.qM)
+        
     @property
     def body_comvels(self):
         if self._body_comvels is None:
