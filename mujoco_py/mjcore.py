@@ -44,7 +44,7 @@ class MjModel(MjModelWrapper):
         self._body_comvels = None
 
     def findFullM(self):
-        mjlib.mj_fullM(self.ptr, self.fullM, self.data.qM)
+        mjlib.mj_fullM(self.ptr, self.fullM, self.data_ptr->qM)
         
     @property
     def body_comvels(self):
