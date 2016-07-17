@@ -49,7 +49,7 @@ class MjModel(MjModelWrapper):
         mjlib.mj_fullM(self.ptr, fullqM_tmp, ctypes.c_double(self.data.qM.ctypes.data))
         #buffer = np.core.multiarray.int_asbuffer(ctypes.addressof(fullqM_tmp.contents), 8*array_length)
         #self.fullqM = np.frombuffer(buffer, float)
-        del fullqM_tmp
+        #del fullqM_tmp
         
     @property
     def body_comvels(self):
