@@ -44,10 +44,10 @@ class MjModel(MjModelWrapper):
 
     def fullM(self):
         array_length = self.nv*self.nv
-        data = c_double(array_length)
+        data = np.array((array_length))
         
-        #mjlib.mj_fullM(self.ptr, fullqM.astype(np.double).ctypes.data_as(POINTER(c_double)), self.data.qM.astype(np.double).ctypes.data_as(POINTER(c_double)))
-        mjlib.mj_fullM(self.ptr, POINTER(data), self.data.qM.astype(np.double).ctypes.data_as(POINTER(c_double)))
+        mjlib.mj_fullM(self.ptr, data.astype(np.double).ctypes.data_as(POINTER(c_double)), self.data.qM.astype(np.double).ctypes.data_as(POINTER(c_double)))
+        #mjlib.mj_fullM(self.ptr, POINTER(data), self.data.qM.astype(np.double).ctypes.data_as(POINTER(c_double)))
         #buffer = np.core.multiarray.int_asbuffer(ctypes.addressof(fullqM_tmp.contents), 8*array_length)
         #self.fullqM = np.frombuffer(buffer, float)
         #del fullqM_tmp
