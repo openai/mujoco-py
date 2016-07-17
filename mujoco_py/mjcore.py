@@ -34,7 +34,7 @@ class MjModel(MjModelWrapper):
         data = MjData(data_ptr, self)
         self.data = data
         self._body_comvels = None
-        self.fullM = ctypes.c_double
+        self.fullM = POINTER(ctypes.c_double)
         self.forward()
         
     def forward(self):
