@@ -46,12 +46,12 @@ class MjModel(MjModelWrapper):
         #fullqM = np.array((self.nv*self.nv))
         #mjlib.mj_fullM(self.ptr, ctypes.c_double(fullqM.ctypes.data), ctypes.c_double(self.data.qM.ctypes.data))
         
-        array_length = self.nv*self.nv
+        array_length = self.nv*self.nv*100
         data = np.zeros((array_length))
         fullqM = np.array((array_length))
           
-        #mjlib.mj_fullM(self.ptr, data.astype(np.double).ctypes.data_as(POINTER(c_double)), self.data.qM.astype(np.double).ctypes.data_as(POINTER(c_double)))
-        mjlib.mj_fullM(self.ptr, ctypes.byref(data.astype(np.double).ctypes.data_as(POINTER(c_double))), self.data.qM.astype(np.double).ctypes.data_as(POINTER(c_double)))
+        mjlib.mj_fullM(self.ptr, data.astype(np.double).ctypes.data_as(POINTER(c_double)), self.data.qM.astype(np.double).ctypes.data_as(POINTER(c_double)))
+        #mjlib.mj_fullM(self.ptr, ctypes.byref(data.astype(np.double).ctypes.data_as(POINTER(c_double))), self.data.qM.astype(np.double).ctypes.data_as(POINTER(c_double)))
         #mjlib.mj_fullM(self.ptr, ctypes.c_double(fullqM.ctypes.data), ctypes.c_double(self.data.qM.ctypes.data))
         #mjlib.mj_fullM(self.ptr, POINTER(data), self.data.qM.astype(np.double).ctypes.data_as(POINTER(c_double)))
         #buffer = np.core.multiarray.int_asbuffer(ctypes.addressof(fullqM_tmp.contents), 8*array_length)
