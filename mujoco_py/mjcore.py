@@ -34,7 +34,7 @@ class MjModel(MjModelWrapper):
         data = MjData(data_ptr, self)
         self.data = data
         self._body_comvels = None
-        self.fullM = ctypes.c_double(self.nv*self.nv)
+        self.fullqM = None
         self.forward()
         
     def forward(self):
@@ -43,8 +43,13 @@ class MjModel(MjModelWrapper):
         mjlib.mj_energy(self.ptr, self.data.ptr)
         self._body_comvels = None
 
-    def findFullM(self):
-        mjlib.mj_fullM(self.ptr, self.fullM, self.data.qM.ctypes.data_as(POINTER(ctypes.c_double)))
+    def fullM(self):
+        array_length = self.nv*self.nv
+        fullqM_tmp = ctypes.c_double(array_length)
+        mjlib.mj_fullM(self.ptr, fullqM_tmp, self.data.qM.ctypes.data)
+        buffer = np.core.multiarray.int_asbuffer(ctypes.addressof(fullqM_tmp.contents), 8*array_length)
+        self.fullqM = np.frombuffer(buffer, float)
+        del fullqM_tmp
         
     @property
     def body_comvels(self):
