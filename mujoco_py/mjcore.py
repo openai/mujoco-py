@@ -43,8 +43,7 @@ class MjModel(MjModelWrapper):
         self._body_comvels = None
 
     def fullM(self):
-        array_length = self.nv*self.nv
-        fullqM = np.array((array_length))
+        fullqM = np.array((self.nv*self.nv))
         mjlib.mj_fullM(self.ptr, ctypes.c_double(fullqM.ctypes.data), ctypes.c_double(self.data.qM.ctypes.data))
         return fullqM
         
