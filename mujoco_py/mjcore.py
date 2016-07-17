@@ -34,8 +34,7 @@ class MjModel(MjModelWrapper):
         data = MjData(data_ptr, self)
         self.data = data
         self._body_comvels = None
-        fullqM = POINTER(ctypes.c_double * self.nv*self.nv)
-        self.fullM = fullqM()
+        self.fullM = ctypes.c_double(self.nv*self.nv)
         self.forward()
         
     def forward(self):
