@@ -43,26 +43,7 @@ class MjModel(MjModelWrapper):
         self._body_comvels = None
 
     def fullM(self):
-        #fullqM = np.array((self.nv*self.nv))
-        #mjlib.mj_fullM(self.ptr, ctypes.c_double(fullqM.ctypes.data), ctypes.c_double(self.data.qM.ctypes.data))
-        
-        array_length = self.nv*self.nv*100
-        #fullqM = np.zeros((array_length))
-          
-        #mjlib.mj_fullM(self.ptr, fullqM.astype(np.double).ctypes.data_as(POINTER(c_double)), self.data.qM.astype(np.double).ctypes.data_as(POINTER(c_double)))
-        #data = np.fromiter(fullqM, dtype=np.float, count=array_length) 
-        #buffer = np.core.multiarray.int_asbuffer(ctypes.addressof(fullqM_tmp.contents), 8*array_length)
-        #self.fullqM = np.frombuffer(buffer, float)
-        #del fullqM_tmp
-        #array_pointer = ctypes.cast(data, POINTER(c_double*array_length))
-        #ArrayType = ctypes.c_double*array_length
-        #addr = ctypes.addressof(data.contents)
-        #fullqM = np.frombuffer(ArrayType.from_address(addr))
-         #ArrayType = ctypes.c_double*array_length
-        #addr = ctypes.addressof(data.contents)
-         #fullqM = np.frombuffer(ArrayType.from_address(addr))
-          #fullqM = np.frombuffer(array_pointer.contents)
-        #return data
+        array_length = self.nv*self.nv
         fullqM = np.zeros((array_length,), dtype=np.double)
         mjlib.mj_fullM(self.ptr, fullqM.ctypes.data_as(POINTER(c_double)), self.data.qM.astype(np.double).ctypes.data_as(POINTER(c_double)))
         return fullqM
