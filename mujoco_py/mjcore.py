@@ -51,8 +51,11 @@ class MjModel(MjModelWrapper):
         #buffer = np.core.multiarray.int_asbuffer(ctypes.addressof(fullqM_tmp.contents), 8*array_length)
         #self.fullqM = np.frombuffer(buffer, float)
         #del fullqM_tmp
-        array_pointer = ctypes.cast(data, POINTER(c_double*array_length))
-        fullqM = np.frombuffer(array_pointer.contents)
+        #array_pointer = ctypes.cast(data, POINTER(c_double*array_length))
+        ArrayType = ctypes.c_double*array_length
+        addr = ctypes.addressof(data.contents)
+        fullqM = np.frombuffer(ArrayType.from_address(addr))
+        #fullqM = np.frombuffer(array_pointer.contents)
         return fullqM
         
     @property
