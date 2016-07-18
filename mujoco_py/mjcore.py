@@ -47,6 +47,9 @@ class MjModel(MjModelWrapper):
         fullqM = np.zeros((array_length,), dtype=np.double)
         mjlib.mj_fullM(self.ptr, fullqM.ctypes.data_as(POINTER(c_double)), self.data.qM.astype(np.double).ctypes.data_as(POINTER(c_double)))
         return fullqM
+    #copy.argtypes = [POINTER(c_double), POINTER(c_double), c_int]
+    def copy(self, data_s, data_d, length):
+        mjlib.mj_copy(data_s.ctypes.data_as(POINTER(c_double)), data_d.ctypes.data_as(POINTER(c_double)), c_int(length))
         
     @property
     def body_comvels(self):
