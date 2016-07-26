@@ -21,6 +21,12 @@ def register_license(file_path):
     return result
 
 
+class dict2(dict):
+    def __init__(self, **kwargs):
+        dict.__init__(self, kwargs)
+        self.__dict__ = self
+
+
 class MjModel(MjModelWrapper):
 
     def __init__(self, xml_path):
@@ -31,7 +37,9 @@ class MjModel(MjModelWrapper):
             raise MjError(buf.value)
         super(MjModel, self).__init__(model_ptr)
         data_ptr = mjlib.mj_makeData(model_ptr)
-        data = MjData(data_ptr, self)
+        fields = ["nq","nv","na","nu","nbody","nmocap","nuserdata","nsensordata","njnt","ngeom","nsite","ncam","nlight","ntendon","nwrap","nM","njmax","nemax"]
+        sizes = dict2(**{ k: getattr(self, k) for k in fields })
+        data = MjData(data_ptr, sizes)
         self.data = data
         self._body_comvels = None
         self.forward()
