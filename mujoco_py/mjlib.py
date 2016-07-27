@@ -18,8 +18,11 @@ else:
 if not os.path.exists(libfile):
     raise RuntimeError("Missing path: %s. (HINT: you should have unzipped the mjpro131.zip bundle without modification.)" % libfile)
 
-mjlib = cdll.LoadLibrary(os.path.abspath(libfile))
+mjjaclib = cdll.LoadLibrary(os.path.abspath("../wrapper4Derivative/_jacMujoco.so"))
+mjjaclib.cmptJac.argtypes=[POINTER(c_double),POINTER(MJMODEL),POINTER(MJDATA)]
+mjjaclib.cmptJac.restype = None
 
+mjlib = cdll.LoadLibrary(os.path.abspath(libfile))
 mjlib.mj_loadXML.argtypes = [String, String, c_char_p, c_int]
 mjlib.mj_loadXML.restype = POINTER(MJMODEL)
 mjlib.mj_saveXML.argtypes = [String, POINTER(MJMODEL), String]
@@ -30,10 +33,10 @@ mjlib.mj_activate.argtypes = [String]
 mjlib.mj_activate.restype = c_int
 mjlib.mj_step.argtypes = [POINTER(MJMODEL), POINTER(MJDATA)]
 mjlib.mj_step.restype = None
-#mjlib.mj_step1.argtypes = [POINTER(MJMODEL), POINTER(MJDATA)]
-#mjlib.mj_step1.restype = None
-#mjlib.mj_step2.argtypes = [POINTER(MJMODEL), POINTER(MJDATA)]
-#mjlib.mj_step2.restype = None
+mjlib.mj_step1.argtypes = [POINTER(MJMODEL), POINTER(MJDATA)]
+mjlib.mj_step1.restype = None
+mjlib.mj_step2.argtypes = [POINTER(MJMODEL), POINTER(MJDATA)]
+mjlib.mj_step2.restype = None
 mjlib.mj_forward.argtypes = [POINTER(MJMODEL), POINTER(MJDATA)]
 mjlib.mj_forward.restype = None
 #mjlib.mj_inverse.argtypes = [POINTER(MJMODEL), POINTER(MJDATA)]

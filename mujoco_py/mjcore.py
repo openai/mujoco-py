@@ -3,7 +3,7 @@ import ctypes
 from . import mjconstants as C
 
 from .mjtypes import *  # import all for backwards compatibility
-from .mjlib import mjlib
+from .mjlib import mjlib, mjjaclib
 from six.moves import xrange
 
 class MjError(Exception):
@@ -33,9 +33,19 @@ class MjModel(MjModelWrapper):
         data_ptr = mjlib.mj_makeData(model_ptr)
         data = MjData(data_ptr, self)
         self.data = data
+        self.model_ptr = model_ptr
+        self.data_ptr = data_ptr
         self._body_comvels = None
         self.forward()
         
+    def cmptJac(self):
+        #All six Jacobian matrices are square, with dimensionality equal to the number of degrees of freedom m->nv
+        #1. dinv/dpos 2. dinv/dvel 3. dinv/dacc 4. dacc/dpos 5. dacc/dvel 6. dacc/dfrc
+        array_length = 6*self.nv*self.nv
+        fullJ = np.zeros((array_length,), dtype=np.double)
+        mjjaclib.cmptJac(fullJ.ctypes.data_as(POINTER(c_double)), self.ptr, self.data.ptr)
+        return fullJ
+
     def forward(self):
         mjlib.mj_forward(self.ptr, self.data.ptr)
         mjlib.mj_sensor(self.ptr, self.data.ptr)
@@ -47,10 +57,16 @@ class MjModel(MjModelWrapper):
         fullqM = np.zeros((array_length,), dtype=np.double)
         mjlib.mj_fullM(self.ptr, fullqM.ctypes.data_as(POINTER(c_double)), self.data.qM.astype(np.double).ctypes.data_as(POINTER(c_double)))
         return fullqM
-    #copy.argtypes = [POINTER(c_double), POINTER(c_double), c_int]
-    def copy(self, data_s, data_d, length):
-        mjlib.mj_copy(data_s.ctypes.data_as(POINTER(c_double)), data_d.ctypes.data_as(POINTER(c_double)), c_int(length))
-        
+    
+    def copy(self, data_d, data_s, length):
+        mjlib.mju_copy(data_d.ctypes.data_as(POINTER(c_double)), data_s.ctypes.data_as(POINTER(c_double)), c_int(length))
+
+    def step1(self):
+        mjlib.mj_step(self.ptr, self.data.ptr)
+
+    def step2(self):
+        mjlib.mj_step(self.ptr, self.data.ptr)
+
     @property
     def body_comvels(self):
         if self._body_comvels is None:
