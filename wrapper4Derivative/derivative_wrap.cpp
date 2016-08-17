@@ -3403,35 +3403,44 @@ fail:
 SWIGINTERN PyObject *_wrap_cmptJac(PyObject *SWIGUNUSEDPARM(self), PyObject *args) {
   PyObject *resultobj = 0;
   mjtNum *arg1 = (mjtNum *) 0 ;
-  mjModel *arg2 = (mjModel *) 0 ;
-  mjData *arg3 = (mjData *) 0 ;
+  mjtNum *arg2 = (mjtNum *) 0 ;
+  mjModel *arg3 = (mjModel *) 0 ;
+  mjData *arg4 = (mjData *) 0 ;
   void *argp1 = 0 ;
   int res1 = 0 ;
   void *argp2 = 0 ;
   int res2 = 0 ;
   void *argp3 = 0 ;
   int res3 = 0 ;
+  void *argp4 = 0 ;
+  int res4 = 0 ;
   PyObject * obj0 = 0 ;
   PyObject * obj1 = 0 ;
   PyObject * obj2 = 0 ;
+  PyObject * obj3 = 0 ;
   
-  if (!PyArg_ParseTuple(args,(char *)"OOO:cmptJac",&obj0,&obj1,&obj2)) SWIG_fail;
+  if (!PyArg_ParseTuple(args,(char *)"OOOO:cmptJac",&obj0,&obj1,&obj2,&obj3)) SWIG_fail;
   res1 = SWIG_ConvertPtr(obj0, &argp1,SWIGTYPE_p_mjtNum, 0 |  0 );
   if (!SWIG_IsOK(res1)) {
     SWIG_exception_fail(SWIG_ArgError(res1), "in method '" "cmptJac" "', argument " "1"" of type '" "mjtNum *""'"); 
   }
   arg1 = reinterpret_cast< mjtNum * >(argp1);
-  res2 = SWIG_ConvertPtr(obj1, &argp2,SWIGTYPE_p_mjModel, 0 |  0 );
+  res2 = SWIG_ConvertPtr(obj1, &argp2,SWIGTYPE_p_mjtNum, 0 |  0 );
   if (!SWIG_IsOK(res2)) {
-    SWIG_exception_fail(SWIG_ArgError(res2), "in method '" "cmptJac" "', argument " "2"" of type '" "mjModel *""'"); 
+    SWIG_exception_fail(SWIG_ArgError(res2), "in method '" "cmptJac" "', argument " "2"" of type '" "mjtNum *""'"); 
   }
-  arg2 = reinterpret_cast< mjModel * >(argp2);
-  res3 = SWIG_ConvertPtr(obj2, &argp3,SWIGTYPE_p_mjData, 0 |  0 );
+  arg2 = reinterpret_cast< mjtNum * >(argp2);
+  res3 = SWIG_ConvertPtr(obj2, &argp3,SWIGTYPE_p_mjModel, 0 |  0 );
   if (!SWIG_IsOK(res3)) {
-    SWIG_exception_fail(SWIG_ArgError(res3), "in method '" "cmptJac" "', argument " "3"" of type '" "mjData *""'"); 
+    SWIG_exception_fail(SWIG_ArgError(res3), "in method '" "cmptJac" "', argument " "3"" of type '" "mjModel *""'"); 
   }
-  arg3 = reinterpret_cast< mjData * >(argp3);
-  cmptJac(arg1,arg2,arg3);
+  arg3 = reinterpret_cast< mjModel * >(argp3);
+  res4 = SWIG_ConvertPtr(obj3, &argp4,SWIGTYPE_p_mjData, 0 |  0 );
+  if (!SWIG_IsOK(res4)) {
+    SWIG_exception_fail(SWIG_ArgError(res4), "in method '" "cmptJac" "', argument " "4"" of type '" "mjData *""'"); 
+  }
+  arg4 = reinterpret_cast< mjData * >(argp4);
+  cmptJac(arg1,arg2,arg3,arg4);
   resultobj = SWIG_Py_Void();
   return resultobj;
 fail:

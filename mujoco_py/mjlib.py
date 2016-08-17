@@ -18,8 +18,8 @@ else:
 if not os.path.exists(libfile):
     raise RuntimeError("Missing path: %s. (HINT: you should have unzipped the mjpro131.zip bundle without modification.)" % libfile)
 
-mjjaclib = cdll.LoadLibrary(os.path.abspath("../wrapper4Derivative/_jacMujoco.so"))
-mjjaclib.cmptJac.argtypes=[POINTER(c_double),POINTER(MJMODEL),POINTER(MJDATA)]
+mjjaclib = cdll.LoadLibrary(os.path.abspath("/Users/michaelmathew/gitlibs/mujoco-py/wrapper4Derivative/_jacMujoco.so"))
+mjjaclib.cmptJac.argtypes=[POINTER(c_double),POINTER(c_double),POINTER(MJMODEL),POINTER(MJDATA)]
 mjjaclib.cmptJac.restype = None
 
 mjlib = cdll.LoadLibrary(os.path.abspath(libfile))

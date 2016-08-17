@@ -31,15 +31,16 @@ const int MAXEPOCH = 100;   // maximum number of epochs
 int isforward = 0;          // dynamics mode: forward or inverse
 mjtNum* deriv = 0;          // dynamics derivatives (6*nv*nv):
                             //  dinv/dpos, dinv/dvel, dinv/dacc, dacc/dpos, dacc/dvel, dacc/dfrc
+//mjtNum* accuracy_measure = 0;
 
 
 // global variables: user-defined, with defaults
 int nthread = 0;            // number of parallel threads (default set later)
-int niter = 30;             // fixed number of solver iterations for finite-differencing
+int niter   = 30;             // fixed number of solver iterations for finite-differencing
 int nwarmup = 3;            // center point repetitions to improve warmstart
-int nepoch = 20;            // number of timing epochs
-int nstep = 500;            // number of simulation steps per epoch
-double eps = 1e-6;          // finite-difference epsilon
+int nepoch  = 20;            // number of timing epochs
+int nstep   = 500;            // number of simulation steps per epoch
+double eps  = 1e-6;          // finite-difference epsilon
 
 
 // worker function for parallel finite-difference computation of derivatives
@@ -195,7 +196,7 @@ double relnorm(mjtNum* residual, mjtNum* base, int n)
         L1base += mju_abs(base[i]);
     }
 
-    return (double)mju_log10(L1res/L1base);
+    return (double) mju_log10(mju_max(mjMINVAL,L1res/mju_max(mjMINVAL,L1base)));
 }
 
 
@@ -243,7 +244,7 @@ void checkderiv(const mjModel* m, mjData* d, mjtNum error[7])
     // G1 - G1'
     mju_transpose(mat, G1, nv, nv);
     mju_sub(mat, mat, G1, nv*nv);
-    error[2] += relnorm(mat, G1, nv*nv);
+    error[2] = relnorm(mat, G1, nv*nv);
 
     // F2 - F2'
     mju_transpose(mat, F2, nv, nv);
@@ -275,10 +276,12 @@ void checkderiv(const mjModel* m, mjData* d, mjtNum error[7])
 
 
 // main function
-void cmptJac(mjtNum* ptr, mjModel* m, mjData* dold)
+void cmptJac(mjtNum* ptr, mjtNum* accu_ptr, mjModel* m, mjData* dold)
 {
     mjData dmain;
     deriv = ptr;
+    //accuracy_measure = accu_ptr;
+    
     // default nthread = number of logical cores (usually optimal)
     nthread = omp_get_num_procs();
     
@@ -342,6 +345,7 @@ void cmptJac(mjtNum* ptr, mjModel* m, mjData* dold)
 
     // compute statistics
     double mcputm[2] = {0,0}, merror[8] = {0,0,0,0,0,0,0,0};
+    
     for( int epoch=0; epoch<nepoch; epoch++ )
     {
         mcputm[0] += cputm[epoch][0];
@@ -349,8 +353,13 @@ void cmptJac(mjtNum* ptr, mjModel* m, mjData* dold)
 
         for( int ie=0; ie<8; ie++ )
             merror[ie] += error[epoch][ie];
-    }
 
+    }
+    for( int ie=0; ie<8; ie++ )
+        merror[ie] = merror[ie]/nepoch;
+    
+    mju_copy(accu_ptr, merror, 8);
+    
     //mj_deleteData(&dmain);
     for( int n=0; n<nthread; n++ )
         mj_deleteData(d[n]);

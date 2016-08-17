@@ -43,8 +43,18 @@ class MjModel(MjModelWrapper):
         #1. dinv/dpos 2. dinv/dvel 3. dinv/dacc 4. dacc/dpos 5. dacc/dvel 6. dacc/dfrc
         array_length = 6*self.nv*self.nv
         fullJ = np.zeros((array_length,), dtype=np.double)
-        mjjaclib.cmptJac(fullJ.ctypes.data_as(POINTER(c_double)), self.ptr, self.data.ptr)
-        return fullJ
+        accu  = np.zeros((8,), dtype=np.double)
+        mjjaclib.cmptJac(fullJ.ctypes.data_as(POINTER(c_double)), accu.ctypes.data_as(POINTER(c_double)), self.ptr, self.data.ptr)
+           
+        accuracy = {'G2*F2 - I' : accu[0],\
+                    'G2 - G2\'' : accu[1],\
+                    'G1 - G1\'' : accu[2],\
+                    'F2 - F2\'' : accu[3],\
+                    'G1 + G2*F1': accu[4],\
+                    'G0 + G2*F0': accu[5],\
+                    'F1 + F2*G1': accu[6],\
+                    'F0 + F2*G0': accu[7]};
+        return fullJ, accuracy
 
     def forward(self):
         mjlib.mj_forward(self.ptr, self.data.ptr)

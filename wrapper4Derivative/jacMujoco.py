@@ -111,8 +111,8 @@ def checkderiv(m, d, error):
     return _jacMujoco.checkderiv(m, d, error)
 checkderiv = _jacMujoco.checkderiv
 
-def cmptJac(ptr, m, dold):
-    return _jacMujoco.cmptJac(ptr, m, dold)
+def cmptJac(ptr, accu_ptr, m, dold):
+    return _jacMujoco.cmptJac(ptr, accu_ptr, m, dold)
 cmptJac = _jacMujoco.cmptJac
 # This file is compatible with both classic and new-style classes.
 
