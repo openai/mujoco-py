@@ -86,7 +86,9 @@ class MjModel(MjModelWrapper):
 
     def __del__(self):
         if self._wrapped is not None:
-            mjlib.mj_deleteModel(self._wrapped)
+            # At the very end of the process, mjlib can be unloaded before we are deleted.
+            # At that point, it's okay to leak this memory.
+            if mjlib: mjlib.mj_deleteModel(self._wrapped)
 
     @property
     def body_names(self):
@@ -148,4 +150,6 @@ class MjData(MjDataWrapper):
 
     def __del__(self):
         if self._wrapped is not None:
-            mjlib.mj_deleteData(self._wrapped)
+            # At the very end of the process, mjlib can be unloaded before we are deleted.
+            # At that point, it's okay to leak this memory.
+            if mjlib: mjlib.mj_deleteData(self._wrapped)
