@@ -127,6 +127,123 @@ class MjModel(MjModelWrapper):
         return [ctypes.string_at(start_addr + int(inc))
                 for inc in self.name_jntadr.flatten()]
 
+    def geom_location(self, geom_name):
+        geom_adr = mjlib.mj_name2id(self.ptr, C.mjOBJ_GEOM, geom_name);
+        assert(geom_adr >= 0);
+        geom_loc = self.data.geom_xpos[geom_adr]
+        return geom_loc
+    
+    def body_location(self, body_name):
+        body_adr = mjlib.mj_name2id(self.ptr, C.mjOBJ_BODY, body_name);
+        assert(body_adr >= 0);
+        body_loc = self.data.xpos[body_adr]
+        body_ori = self.data.xquat[body_adr]
+        return (body_loc, body_ori)
+
+    def body_vel(self, body_name):
+        body_adr = mjlib.mj_name2id(self.ptr, C.mjOBJ_BODY, body_name);
+        assert(body_adr >= 0);
+        vel = self.data.cvel[body_adr];
+        body_vel_tran = vel[3:6];
+        body_vel_rot = vel[0:3];
+        return (body_vel_tran, body_vel_rot)
+    
+    def joint_location(self, joint_name):
+        joint_adr = mjlib.mj_name2id(self.ptr, C.mjOBJ_JOINT, joint_name);
+        assert(joint_adr >= 0);
+        joint_loc = self.data.xpos[joint_adr]
+        joint_ori = self.data.xquat[joint_adr]
+        return (joint_loc, joint_ori)
+
+    def joint_vel(self, joint_name):
+        joint_adr = mjlib.mj_name2id(self.ptr, C.mjOBJ_JOINT, joint_name);
+        assert(joint_adr >= 0);
+        vel = self.data.cvel[joint_adr];
+        joint_vel_tran = vel[3:6];
+        joint_vel_rot = vel[0:3];
+        return (joint_vel_tran, joint_vel_rot)
+
+#compute 3/6-by-nv Jacobian of global point attached to given body
+    def jac(self, world_coord, body_name):
+        body_adr = mjlib.mj_name2id(self.ptr, C.mjOBJ_BODY, body_name);
+        assert(body_adr >= 0);
+        jacp = np.zeros((3,self.nv), dtype=np.double)
+        jacr = np.zeros((3,self.nv), dtype=np.double)
+        mjlib.mj_jac(self.ptr,\
+                     self.data.ptr,\
+                     jacp.ctypes.data_as(POINTER(c_double)),\
+                     jacr.ctypes.data_as(POINTER(c_double)),\
+                     world_coord.ctypes.data_as(POINTER(c_double)),\
+                     body_adr);
+        return np.vstack([jacp,jacr])
+
+#compute body frame Jacobian
+    def jacBody(self, body_name):
+        body_adr = mjlib.mj_name2id(self.ptr, C.mjOBJ_BODY, body_name);
+        assert(body_adr >= 0);
+        jacp = np.zeros((3,self.nv), dtype=np.double)
+        jacr = np.zeros((3,self.nv), dtype=np.double)
+        mjlib.mj_jacBody(self.ptr,\
+                         self.data.ptr,\
+                         jacp.ctypes.data_as(POINTER(c_double)),\
+                         jacr.ctypes.data_as(POINTER(c_double)),\
+                         body_adr);
+        return np.vstack([jacp,jacr])
+
+#compute body center-of-mass Jacobian
+    def jacBodyCom(self, body_name):
+        body_adr = mjlib.mj_name2id(self.ptr, C.mjOBJ_BODY, body_name);
+        assert(body_adr >= 0);
+        jacp = np.zeros((3,self.nv), dtype=np.double)
+        jacr = np.zeros((3,self.nv), dtype=np.double)
+        mjlib.mj_jacBodyCom(self.ptr,\
+                            self.data.ptr,\
+                            jacp.ctypes.data_as(POINTER(c_double)),\
+                            jacr.ctypes.data_as(POINTER(c_double)),\
+                            body_adr);
+        return np.vstack([jacp,jacr])
+
+#compute geom Jacobian
+    def jacGeom(self, geom_name):
+        geom_adr = mjlib.mj_name2id(self.ptr, C.mjOBJ_GEOM, geom_name);
+        assert(geom_adr >= 0);
+        jacp = np.zeros((3,self.nv), dtype=np.double)
+        jacr = np.zeros((3,self.nv), dtype=np.double)
+        mjlib.mj_jacGeom(self.ptr,\
+                         self.data.ptr,\
+                         jacp.ctypes.data_as(POINTER(c_double)),\
+                         jacr.ctypes.data_as(POINTER(c_double)),\
+                         geom_adr);
+        return np.vstack([jacp,jacr])
+
+#compute site Jacobian
+    def jacSite(self, site_name):
+        site_adr = mjlib.mj_name2id(self.ptr, C.mjOBJ_GEOM, site_name);
+        assert(site_adr >= 0);
+        jacp = np.zeros((3,self.nv), dtype=np.double)
+        jacr = np.zeros((3,self.nv), dtype=np.double)
+        mjlib.mj_jacSite(self.ptr,\
+                         self.data.ptr,\
+                         jacp.ctypes.data_as(POINTER(c_double)),\
+                         jacr.ctypes.data_as(POINTER(c_double)),\
+                         site_adr);
+        return np.vstack([jacp,jacr])
+
+# compute translation Jacobian of point, and rotation Jacobian of axis
+    def jacPointAxis(self, point, axis, body_name):
+        body_adr = mjlib.mj_name2id(self.ptr, C.mjOBJ_BODY, body_name);
+        assert(body_adr >= 0);
+        jacp = np.zeros((3,1), dtype=np.double)
+        jaca = np.zeros((3,1), dtype=np.double)
+        mjlib.mj_jacPointAxis(self.ptr,\
+                              self.data.ptr,\
+                              jacp.ctypes.data_as(POINTER(c_double)),\
+                              jaca.ctypes.data_as(POINTER(c_double)),\
+                              point.ctypes.data_as(POINTER(c_double)),\
+                              axis.ctypes.data_as(POINTER(c_double)),\
+                              body_adr);
+        return jacp,jaca
+
     def joint_adr(self, joint_name):
         """Return (qposadr, qveladr, dof) for the given joint name.
 
