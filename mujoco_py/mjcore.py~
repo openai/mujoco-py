@@ -169,6 +169,7 @@ class MjModel(MjModelWrapper):
         assert(body_adr >= 0);
         jacp = np.zeros((3,self.nv), dtype=np.double)
         jacr = np.zeros((3,self.nv), dtype=np.double)
+	self.forward()
         mjlib.mj_jac(self.ptr,\
                      self.data.ptr,\
                      jacp.ctypes.data_as(POINTER(c_double)),\
@@ -183,6 +184,7 @@ class MjModel(MjModelWrapper):
         assert(body_adr >= 0);
         jacp = np.zeros((3,self.nv), dtype=np.double)
         jacr = np.zeros((3,self.nv), dtype=np.double)
+	self.forward()
         mjlib.mj_jacBody(self.ptr,\
                          self.data.ptr,\
                          jacp.ctypes.data_as(POINTER(c_double)),\
@@ -196,6 +198,7 @@ class MjModel(MjModelWrapper):
         assert(body_adr >= 0);
         jacp = np.zeros((3,self.nv), dtype=np.double)
         jacr = np.zeros((3,self.nv), dtype=np.double)
+	self.forward()
         mjlib.mj_jacBodyCom(self.ptr,\
                             self.data.ptr,\
                             jacp.ctypes.data_as(POINTER(c_double)),\
@@ -209,6 +212,7 @@ class MjModel(MjModelWrapper):
         assert(geom_adr >= 0);
         jacp = np.zeros((3,self.nv), dtype=np.double)
         jacr = np.zeros((3,self.nv), dtype=np.double)
+	self.forward()
         mjlib.mj_jacGeom(self.ptr,\
                          self.data.ptr,\
                          jacp.ctypes.data_as(POINTER(c_double)),\
@@ -222,6 +226,7 @@ class MjModel(MjModelWrapper):
         assert(site_adr >= 0);
         jacp = np.zeros((3,self.nv), dtype=np.double)
         jacr = np.zeros((3,self.nv), dtype=np.double)
+	self.forward()
         mjlib.mj_jacSite(self.ptr,\
                          self.data.ptr,\
                          jacp.ctypes.data_as(POINTER(c_double)),\
@@ -235,6 +240,7 @@ class MjModel(MjModelWrapper):
         assert(body_adr >= 0);
         jacp = np.zeros((3,1), dtype=np.double)
         jaca = np.zeros((3,1), dtype=np.double)
+	self.forward()
         mjlib.mj_jacPointAxis(self.ptr,\
                               self.data.ptr,\
                               jacp.ctypes.data_as(POINTER(c_double)),\
@@ -248,7 +254,8 @@ class MjModel(MjModelWrapper):
     def applyFT(self, point, force, torque, body_name):
 	body_adr = mjlib.mj_name2id(self.ptr, C.mjOBJ_BODY, body_name);
         assert(body_adr >= 0);
-	qfrc_target = np.zeros((6,1), dtype=np.double)
+	qfrc_target = 3#np.zeros((6,1), dtype=np.double)
+	self.forward()
 	mjlib.mj_applyFT(self.ptr,\
                          self.data.ptr,\
                          force.ctypes.data_as(POINTER(c_double)),\

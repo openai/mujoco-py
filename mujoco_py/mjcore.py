@@ -254,15 +254,15 @@ class MjModel(MjModelWrapper):
     def applyFT(self, point, force, torque, body_name):
 	body_adr = mjlib.mj_name2id(self.ptr, C.mjOBJ_BODY, body_name);
         assert(body_adr >= 0);
-	qfrc_target = np.zeros((6,1), dtype=np.double)
-	self.forward()
+	qfrc_target = np.zeros((6,1), dtype=np.double);
+	self.forward();
 	mjlib.mj_applyFT(self.ptr,\
                          self.data.ptr,\
                          force.ctypes.data_as(POINTER(c_double)),\
                          torque.ctypes.data_as(POINTER(c_double)),\
                          point.ctypes.data_as(POINTER(c_double)),\
                          body_adr,\
-                         qfrc_target.data_as(POINTER(c_double)));
+                         qfrc_target.ctypes.data_as(POINTER(c_double)));
 	
     def joint_adr(self, joint_name):
         """Return (qposadr, qveladr, dof) for the given joint name.
