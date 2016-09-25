@@ -16,7 +16,7 @@ setup(name="_jacMujoco",
                              include_dirs=['/home/mjm/Documents/mjpro131/include'],
                              library_dirs=['/home/mjm/Documents/mjpro131/bin'],
                              libraries=['mujoco131'],
-                             swig_opts=['-c++'],
+                             swig_opts=['-c++11'],
                              )]
       
       )

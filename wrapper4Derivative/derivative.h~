@@ -1,7 +1,7 @@
 #ifndef DERIVATIVE_H    // To make sure you don't declare the function more than once by including the header multiple times.
 #define DERIVATIVE_H
 
-#include "mujoco.h"
+#include "/home/mjm/Documents/mjpro131/include/mujoco.h"
 #include <stdlib.h>
 #include <stdio.h>
 #include <string.h>
