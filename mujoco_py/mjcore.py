@@ -77,6 +77,9 @@ class MjModel(MjModelWrapper):
     def step2(self):
         mjlib.mj_step(self.ptr, self.data.ptr)
 
+    def resetData(self):
+	mjlib.mj_resetData(self.ptr,self.data.ptr)
+
     @property
     def body_comvels(self):
         if self._body_comvels is None:
@@ -240,7 +243,7 @@ class MjModel(MjModelWrapper):
         assert(body_adr >= 0);
         jacp = np.zeros((3,1), dtype=np.double)
         jaca = np.zeros((3,1), dtype=np.double)
-	self.forward()
+	
         mjlib.mj_jacPointAxis(self.ptr,\
                               self.data.ptr,\
                               jacp.ctypes.data_as(POINTER(c_double)),\
@@ -254,16 +257,16 @@ class MjModel(MjModelWrapper):
     def applyFT(self, point, force, torque, body_name):
 	body_adr = mjlib.mj_name2id(self.ptr, C.mjOBJ_BODY, body_name);
         assert(body_adr >= 0);
-	qfrc_target = np.zeros((6,1), dtype=np.double);
-	self.forward();
+	qfrc_target = np.zeros((self.nv,1), dtype=np.double)
 	mjlib.mj_applyFT(self.ptr,\
                          self.data.ptr,\
                          force.ctypes.data_as(POINTER(c_double)),\
                          torque.ctypes.data_as(POINTER(c_double)),\
                          point.ctypes.data_as(POINTER(c_double)),\
                          body_adr,\
-                         qfrc_target.ctypes.data_as(POINTER(c_double)));
-	
+                         qfrc_target[(body_adr-1)*6].ctypes.data_as(POINTER(c_double)));
+	self.data.qfrc_applied = qfrc_target
+
     def joint_adr(self, joint_name):
         """Return (qposadr, qveladr, dof) for the given joint name.
 
