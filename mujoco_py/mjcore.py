@@ -134,7 +134,15 @@ class MjModel(MjModelWrapper):
         geom_adr = mjlib.mj_name2id(self.ptr, C.mjOBJ_GEOM, geom_name);
         assert(geom_adr >= 0);
         geom_loc = self.data.geom_xpos[geom_adr]
-        return geom_loc
+	geom_ori = self.data.geom_xmat[body_adr]
+        return (geom_loc, geom_ori)
+    
+    def site_location(self, site_name):
+        site_adr = mjlib.mj_name2id(self.ptr, C.mjOBJ_SITE, site_name);
+        assert(site_adr >= 0);
+        site_loc = self.data.site_xpos[site_adr]
+	site_ori = self.data.site_xmat[body_adr]
+        return (site_loc, site_ori)
     
     def body_location(self, body_name):
         body_adr = mjlib.mj_name2id(self.ptr, C.mjOBJ_BODY, body_name);
@@ -265,7 +273,7 @@ class MjModel(MjModelWrapper):
                          point.ctypes.data_as(POINTER(c_double)),\
                          body_adr,\
                          qfrc_target[(body_adr-1)*6].ctypes.data_as(POINTER(c_double)));
-	self.data.qfrc_applied = qfrc_target
+	return qfrc_target
 
     def joint_adr(self, joint_name):
         """Return (qposadr, qveladr, dof) for the given joint name.
