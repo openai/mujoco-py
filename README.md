@@ -26,9 +26,10 @@ MuJoCo binaries and obtain license key.
    https://www.roboti.us/license.html. The license key will arrive in
    an email with your username and password.
 2. Download the MuJoCo version 1.31 binaries for
-   [Linux](https://www.roboti.us/active/mjpro131_linux.zip),
-   [OSX](https://www.roboti.us/active/mjpro131_osx.zip), or
-   [Windows](https://www.roboti.us/active/mjpro131_windows.zip).
+   [Linux](https://www.roboti.us/download/mjpro131_linux.zip),
+   [OSX](https://www.roboti.us/download/mjpro131_osx.zip),
+   [Windows 32-bit](https://www.roboti.us/download/mjpro131_win32.zip) or
+   [Windows 64-bit](https://www.roboti.us/download/mjpro131_win64.zip).
 3. Download your license key (the `mjkey.txt` file from your email)
    and unzip the downloaded mjpro bundle.
 4. Place these in `~/.mujoco/mjkey.txt` and `~/.mujoco/mjpro131`. You
