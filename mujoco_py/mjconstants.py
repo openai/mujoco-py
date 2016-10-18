@@ -11,3 +11,9 @@ mjJNT_FREE  = 0
 mjJNT_BALL  = 1
 mjJNT_SLIDE = 2
 mjJNT_HINGE = 3
+
+# mjvGeom categories
+mjCAT_STATIC = 1
+mjCAT_DYNAMIC = 2
+mjCAT_DECOR = 4
+mjCAT_ALL = 7
