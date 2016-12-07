@@ -6,10 +6,6 @@ from .mjtypes import *  # import all for backwards compatibility
 from .mjlib import mjlib
 from six.moves import xrange
 
-class MjError(Exception):
-    pass
-
-
 def register_license(file_path):
     """
     activates mujoco with license at `file_path`
@@ -27,8 +23,7 @@ class MjModel(MjModelWrapper):
         buf = create_string_buffer(1000)
         model_ptr = mjlib.mj_loadXML(xml_path, None, buf, 1000)
         if len(buf.value) > 0:
-            super(MjModel, self).__init__(None)
-            raise MjError(buf.value)
+            print("Warning: %s" % buf.value)
         super(MjModel, self).__init__(model_ptr)
         data_ptr = mjlib.mj_makeData(model_ptr)
         data = MjData(data_ptr, self)
