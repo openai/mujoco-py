@@ -17,6 +17,12 @@ def register_license(file_path):
     return result
 
 
+class dict2(dict):
+    def __init__(self, **kwargs):
+        dict.__init__(self, kwargs)
+        self.__dict__ = self
+
+
 class MjModel(MjModelWrapper):
 
     def __init__(self, xml_path):
@@ -26,7 +32,9 @@ class MjModel(MjModelWrapper):
             print("Warning: %s" % buf.value)
         super(MjModel, self).__init__(model_ptr)
         data_ptr = mjlib.mj_makeData(model_ptr)
-        data = MjData(data_ptr, self)
+        fields = ["nq","nv","na","nu","nbody","nmocap","nuserdata","nsensordata","njnt","ngeom","nsite","ncam","nlight","ntendon","nwrap","nM","njmax","nemax"]
+        sizes = dict2(**{ k: getattr(self, k) for k in fields })
+        data = MjData(data_ptr, sizes)
         self.data = data
         self._body_comvels = None
         self.forward()
@@ -73,7 +81,9 @@ class MjModel(MjModelWrapper):
 
     def __del__(self):
         if self._wrapped is not None:
-            mjlib.mj_deleteModel(self._wrapped)
+            # At the very end of the process, mjlib can be unloaded before we are deleted.
+            # At that point, it's okay to leak this memory.
+            if mjlib: mjlib.mj_deleteModel(self._wrapped)
 
     @property
     def body_names(self):
@@ -86,6 +96,22 @@ class MjModel(MjModelWrapper):
         start_addr = ctypes.addressof(self.names.contents)
         return [ctypes.string_at(start_addr + int(inc))
                 for inc in self.name_jntadr.flatten()]
+
+    def joint_adr(self, joint_name):
+        """Return (qposadr, qveladr, dof) for the given joint name.
+
+        If dof is 4 or 7, then the last 4 degrees of freedom in qpos represent a
+        unit quaternion."""
+        jntadr = mjlib.mj_name2id(self.ptr, C.mjOBJ_JOINT, joint_name)
+        assert(jntadr >= 0)
+        dofmap = {C.mjJNT_FREE:  7,
+                  C.mjJNT_BALL:  4,
+                  C.mjJNT_SLIDE: 1,
+                  C.mjJNT_HINGE: 1}
+        qposadr = self.jnt_qposadr[jntadr][0]
+        qveladr = self.jnt_dofadr[jntadr][0]
+        dof     = dofmap[self.jnt_type[jntadr][0]]
+        return (qposadr, qveladr, dof)
 
     @property
     def geom_names(self):
@@ -119,4 +145,6 @@ class MjData(MjDataWrapper):
 
     def __del__(self):
         if self._wrapped is not None:
-            mjlib.mj_deleteData(self._wrapped)
+            # At the very end of the process, mjlib can be unloaded before we are deleted.
+            # At that point, it's okay to leak this memory.
+            if mjlib: mjlib.mj_deleteData(self._wrapped)

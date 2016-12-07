@@ -1,10 +1,10 @@
 #!/usr/bin/env python
 
-from distutils.core import setup
+from setuptools import setup
 
 setup(
     name='mujoco-py',
-    version='0.4.4',
+    version='0.5.6',
     description='Python wrapper for Mojoco',
     author='OpenAI',
     packages=['mujoco_py'],

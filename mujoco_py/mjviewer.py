@@ -57,6 +57,7 @@ class MjViewer(object):
         self._last_mouse_y = 0
 
     def set_model(self, model):
+        glfw.make_context_current(self.window)
         self.model = model
         if model:
             self.data = model.data
@@ -72,6 +73,7 @@ class MjViewer(object):
             self.autoscale()
 
     def autoscale(self):
+        glfw.make_context_current(self.window)
         self.cam.lookat[0] = self.model.stat.center[0]
         self.cam.lookat[1] = self.model.stat.center[1]
         self.cam.lookat[2] = self.model.stat.center[2]
@@ -89,6 +91,7 @@ class MjViewer(object):
     def render(self):
         if not self.data:
             return
+        glfw.make_context_current(self.window)
         self.gui_lock.acquire()
         rect = self.get_rect()
         arr = (ctypes.c_double*3)(0, 0, 0)
@@ -120,6 +123,7 @@ class MjViewer(object):
         - width is the width of the image
         - height is the height of the image
         """
+        glfw.make_context_current(self.window)
         width, height = self.get_dimensions()
         gl.glReadBuffer(gl.GL_BACK)
         data = gl.glReadPixels(0, 0, width, height, gl.GL_RGB, gl.GL_UNSIGNED_BYTE)
@@ -226,7 +230,6 @@ class MjViewer(object):
         glfw.set_scroll_callback(window, self.handle_scroll)
 
     def handle_mouse_move(self, window, xpos, ypos):
-
         # no buttons down: nothing to do
         if not self._button_left_pressed \
                 and not self._button_middle_pressed \
@@ -309,6 +312,7 @@ class MjViewer(object):
         return glfw.window_should_close(self.window)
 
     def loop_once(self):
+        glfw.make_context_current(self.window)
         self.render()
         # Swap front and back buffers
         glfw.swap_buffers(self.window)
@@ -316,7 +320,9 @@ class MjViewer(object):
         glfw.poll_events()
 
     def finish(self):
-        glfw.terminate()
+        glfw.make_context_current(self.window)
+        glfw.destroy_window(self.window)
+
         if gl.glIsFramebuffer(self._fbo):
             gl.glDeleteFramebuffers(int(self._fbo))
         if gl.glIsRenderbuffer(self._rbo):

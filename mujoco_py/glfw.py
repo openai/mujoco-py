@@ -809,7 +809,8 @@ def destroy_window(window):
     window_addr = ctypes.cast(ctypes.pointer(window),
                               ctypes.POINTER(ctypes.c_ulong)).contents.value
     for callback_repository in _callback_repositories:
-        del callback_repository[window_addr]
+        if window_addr in callback_repository:
+            del callback_repository[window_addr]
 
 _glfw.glfwWindowShouldClose.restype = ctypes.c_int
 _glfw.glfwWindowShouldClose.argtypes = [ctypes.POINTER(_GLFWwindow)]
