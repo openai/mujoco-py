@@ -170,6 +170,7 @@ class MjViewer(object):
         window = None
         if self.visible:
             glfw.window_hint(glfw.SAMPLES, 4)
+            glfw.window_hint(glfw.VISIBLE, 1);
         else:
             glfw.window_hint(glfw.VISIBLE, 0);
 
