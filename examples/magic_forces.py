@@ -123,45 +123,6 @@ class tableScenario():
         self.qfrc_applied = np.zeros((6,1))
         self.model.forward()
 
-
-    def knowledge_compute_torque_force(self, contact1, contact2): #two particles means there are two end effectors
-        com = self.model.data.xipos[1]
-        loc = self.particles.location[particle2]
-        force2_dir = (com-loc)/np.linalg.norm(com-loc)
-        torque2_dir = np.cross((com-loc),force2)
-        loc = self.particles.location[particle1]
-        force1_dir = (com-loc)/np.linalg.norm(com-loc)
-        torque1_dir = np.cross((com-loc),force1_dir)
-        return force1_dir+force2_dir, torque1_dir+torque2_dir
-    
-    def knowledge_compute_couple(self,force1, force2):
-        pass
-    
-    def knowledge_compute_force(self,force1, force2):
-        pass
-    
-    def get_torque_direction(self, q1, q2):
-        q_diff = np.array([q1[0]*q2[0] - q1[1]*q2[1] - q1[2]*q2[2] - q1[3]*q2[3],\
-                           q1[0]*q2[1] + q1[1]*q2[0] + q1[2]*q2[3] - q1[3]*q2[2],\
-                           q1[0]*q2[2] - q1[1]*q2[3] + q1[2]*q2[0] + q1[3]*q2[1],\
-                           q1[0]*q2[3] + q1[1]*q2[2] - q1[2]*q2[1] + q1[3]*q2[0]])
-        angle = 2*np.acos(d_diff[0])
-        if d_diff[0] == 1:
-            axis = np.zeros((3,1))
-        else:
-            axis = q_diff[1:4]/np.sqrt(1-d_diff[0]**2)
-        return axuis
-
-    def required_contact(self, currState, goalState):
-        forceDir = (goalState-currState)[0:3]
-        torqueDir = self.get_torque_direction(currState[3:6], goalState[3:6])
-        forceDir = forceDir/np.linalg.norm(forceDir)
-        torqueDir = torqueDir/np.linalg.norm(torqueDir)
-        return contact
-    
-    def motor_babling(self):
-        pass
-
     def applyFTOnObj2(self, point_name1, point_name2):
         point1 = self.model.geom_pose(point_name1)[0]
         point2 = self.model.geom_pose(point_name2)[0]
@@ -238,5 +199,4 @@ if __name__ == "__main__":
             if saveData:
                 np.savetxt('data_'+point1+point2+'.txt',np.asarray(data).squeeze())
                 data = [];
-                
     myBox.viewerEnd()
