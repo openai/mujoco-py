@@ -131,7 +131,7 @@ class tableScenario():
         point2_index = random.randint(0, len(site_names)-1)
 
         point1 = self.model.site_pose(site_names[point1_index])[0]
-        point2 = self.model.site_pose(site_names[point2_index])[0]
+        point2 = self.model.site_pose(point_name[point2_index])[0]
         com    = self.model.data.xipos[1]
 
         f_direction1 = (com-point1)/np.linalg.norm(com-point1)
