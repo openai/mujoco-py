@@ -62,6 +62,10 @@ class MjModel(MjModelWrapper):
         mjlib.mj_energy(self.ptr, self.data.ptr)
         self._body_comvels = None
 
+    def inverse(self):
+        mjlib.mj_inverse(self.ptr, self.data.ptr)
+        self._body_comvels = None
+
     def fullM(self):
         array_length = self.nv*self.nv
         fullqM = np.zeros((array_length,), dtype=np.double)
