@@ -137,6 +137,18 @@ class MjModel(MjModelWrapper):
         return [ctypes.string_at(start_addr + int(inc))
                 for inc in self.name_numericadr.flatten()]
 
+    @property
+    def actuator_names(self):
+        start_addr = ctypes.addressof(self.names.contents)
+        return [ctypes.string_at(start_addr + int(inc))
+                for inc in self.name_actuatoradr.flatten()]
+
+    @property
+    def camera_names(self):
+        start_addr = ctypes.addressof(self.names.contents)
+        return [ctypes.string_at(start_addr + int(inc))
+                for inc in self.name_camadr.flatten()]
+
 
 class MjData(MjDataWrapper):
 
