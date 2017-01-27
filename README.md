@@ -31,7 +31,7 @@ MuJoCo binaries and obtain license key.
    [Windows](https://www.roboti.us/active/mjpro131_windows.zip).
 3. Download your license key (the `mjkey.txt` file from your email)
    and unzip the downloaded mjpro bundle.
-4. Place these in `~/.mujoco/mjkey.txt` and `~/.mujoco/mjpro131`. You
+4. Create folder `~/.mujoco`. Place mjkey.txt and mjpro131 in `~/.mujoco`. You
    can alternatively set the following environment variables:
 
 ```
