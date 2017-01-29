@@ -52,19 +52,9 @@ class tableScenario():
             self.viewerSetup()
         return self.viewer       
 
-    def viewerRender(self, mode='human', close=False):
-        if close:
-            if self.viewer is not None:
-                self.viewerStart().finish()
-                self.viewer = None
-            return
-        if mode == 'rgb_array':
-            self.viewerStart().render()
-            self.viewerStart().set_model(self.model)
-            data, width, height = self.viewerStart().get_image()
-            return np.fromstring(data, dtype='uint8').reshape(height, width, 3)[::-1,:,:]
-        elif mode == 'human':
-            self.viewerStart().loop_once()
+    def viewerRender(self):
+ 
+        self.viewerStart().loop_once()
                                                
     def resetModel(self):
         self.model.resetData()
@@ -144,6 +134,12 @@ class tableScenario():
 
         self.model.data.qfrc_applied = np.hstack([force1+force2, torque])
 
+    def drawCube(self):
+        pos  = [0,0,0];
+        ori  = [0,0,0];
+        size = [100,100,100];
+        self.viewer.drawCube(pos, ori, size)
+
 if __name__ == "__main__":
     myBox = tableScenario()
     myBox.viewerSetup()
@@ -151,9 +147,11 @@ if __name__ == "__main__":
     myBox.viewer = myBox.viewerStart()
 
     while True:
-        myBox.resetBox()
-        myBox.applyFTOnObj()
-        for j in range(100):
-            myBox.viewerRender()
-            myBox.model.step()
+        myBox.drawCube()
+        myBox.viewerRender()
+        # myBox.resetBox()
+        # myBox.applyFTOnObj()
+        # for j in range(100):
+        #     myBox.viewerRender()
+        #     myBox.model.step()
     myBox.viewerEnd()

@@ -9,7 +9,7 @@
 
 	<visual>
         <map fogstart="1.5" fogend="3"/>
-		<quality shadowsize="2048"/>
+		<quality shadowsize="0"/>
 	</visual>
 	
    <default>
@@ -19,10 +19,10 @@
     <worldbody>
         <light directional="false" cutoff="90" exponent="1" diffuse="1 1 1" specular="0 0 0" pos="1 0 1.5" dir="-1 0 -2.5"/>
         <geom name="ground" type="plane" pos="0 0 -0.925" size="4 4 .05" rgba="0.7 0.6 0.5 1"/>
-        <geom name="tableTop" material="MatGnd" type="plane" pos="0.95 0.0 -0.2" size="0.75 0.95 0.5" rgba=".6 .6 .5 1" contype="1" conaffinity="1"/>
+        <geom name="tableTop" material="MatGnd" type="plane" pos="0. 0.0 -0.15" size="0.75 0.95 0.5" rgba=".6 .6 .5 1" contype="1" conaffinity="1"/>
         <!--  ================= OBJECT ================= /-->
-         <body name="object" pos="0.25 0.0 0.15" quat="0 -0 0 0">
-            <geom type="box" name="target_obj" size="0.15 0.15 0.15" pos="0.65 0.0 -0.199" rgba="0.5 0.6 0.8 1" user="1" contype="1" conaffinity="1"/>
+         <body name="object" pos="0.0 0.0 0.0" quat="0 -0 0 0">
+            <geom type="box" name="target_obj" size="0.15 0.15 0.15" pos="0.0 0.0 0" rgba="0.5 0.6 0.8 .1" user="1" contype="1" conaffinity="1"/>
             <joint name="fr" type="free" limited='false' damping="0" armature="0" user="010"/>
             <site name="f1" type="sphere" size="0.0001"  pos="0.65   0.    -0.349" />
             <site name="f2" type="sphere" size="0.0001"  pos="0.65   0.15  -0.199" />
