@@ -21,7 +21,7 @@
         <geom name="ground" type="plane" pos="0 0 -0.925" size="4 4 .05" rgba="0.7 0.6 0.5 1"/>
         <geom name="tableTop" material="MatGnd" type="plane" pos="0. 0.0 -0.15" size="0.75 0.95 0.5" rgba=".6 .6 .5 1" contype="1" conaffinity="1"/>
         <!--  ================= OBJECT ================= /-->
-         <body name="object" pos="0.0 0.0 0.0" quat="0 -0 0 0">
+         <body name="Box" pos="0.0 0.0 0.0" quat="0 -0 0 0">
             <geom type="box" name="target_obj" size="0.15 0.15 0.15" pos="0.0 0.0 0" rgba="0.5 0.6 0.8 .1" user="1" contype="1" conaffinity="1"/>
             <joint name="fr" type="free" limited='false' damping="0" armature="0" user="010"/>
             <site name="f1" type="sphere" size="0.0001"  pos="0.65   0.    -0.349" />
