@@ -4,7 +4,7 @@ from setuptools import setup
 
 setup(
     name='mujoco-py',
-    version='0.5.3',
+    version='0.5.7',
     description='Python wrapper for Mojoco',
     author='OpenAI',
     packages=['mujoco_py'],

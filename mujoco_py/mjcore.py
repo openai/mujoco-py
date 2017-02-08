@@ -6,10 +6,6 @@ from .mjtypes import *  # import all for backwards compatibility
 from .mjlib import mjlib #mjjaclib
 from six.moves import xrange
 
-class MjError(Exception):
-    pass
-
-
 def register_license(file_path):
     """
     activates mujoco with license at `file_path`
@@ -21,17 +17,24 @@ def register_license(file_path):
     return result
 
 
+class dict2(dict):
+    def __init__(self, **kwargs):
+        dict.__init__(self, kwargs)
+        self.__dict__ = self
+
+
 class MjModel(MjModelWrapper):
 
     def __init__(self, xml_path):
         buf = create_string_buffer(1000)
         model_ptr = mjlib.mj_loadXML(xml_path, None, buf, 1000)
         if len(buf.value) > 0:
-            super(MjModel, self).__init__(None)
-            raise MjError(buf.value)
+            print("Warning: %s" % buf.value)
         super(MjModel, self).__init__(model_ptr)
         data_ptr = mjlib.mj_makeData(model_ptr)
-        data = MjData(data_ptr, self)
+        fields = ["nq","nv","na","nu","nbody","nmocap","nuserdata","nsensordata","njnt","ngeom","nsite","ncam","nlight","ntendon","nwrap","nM","njmax","nemax"]
+        sizes = dict2(**{ k: getattr(self, k) for k in fields })
+        data = MjData(data_ptr, sizes)
         self.data = data
         self.model_ptr = model_ptr
         self.data_ptr = data_ptr
@@ -131,7 +134,9 @@ class MjModel(MjModelWrapper):
 
     def __del__(self):
         if self._wrapped is not None:
-            mjlib.mj_deleteModel(self._wrapped)
+            # At the very end of the process, mjlib can be unloaded before we are deleted.
+            # At that point, it's okay to leak this memory.
+            if mjlib: mjlib.mj_deleteModel(self._wrapped)
 
     @property
     def body_names(self):
@@ -342,6 +347,18 @@ class MjModel(MjModelWrapper):
         return [ctypes.string_at(start_addr + int(inc))
                 for inc in self.name_numericadr.flatten()]
 
+    @property
+    def actuator_names(self):
+        start_addr = ctypes.addressof(self.names.contents)
+        return [ctypes.string_at(start_addr + int(inc))
+                for inc in self.name_actuatoradr.flatten()]
+
+    @property
+    def camera_names(self):
+        start_addr = ctypes.addressof(self.names.contents)
+        return [ctypes.string_at(start_addr + int(inc))
+                for inc in self.name_camadr.flatten()]
+
 
 class MjData(MjDataWrapper):
 
@@ -350,6 +367,6 @@ class MjData(MjDataWrapper):
 
     def __del__(self):
         if self._wrapped is not None:
-            mjlib.mj_deleteData(self._wrapped)
-
-
+            # At the very end of the process, mjlib can be unloaded before we are deleted.
+            # At that point, it's okay to leak this memory.
+            if mjlib: mjlib.mj_deleteData(self._wrapped)
