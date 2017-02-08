@@ -9,6 +9,9 @@ from .mjlib import mjlib
 import numpy as np
 import OpenGL.GL as gl
 
+import OpenGL.GLU as glu
+import OpenGL.GLUT as glut
+
 logger = logging.getLogger(__name__)
 
 mjCAT_ALL = 7
@@ -56,6 +59,16 @@ class MjViewer(object):
         self._last_mouse_x = 0
         self._last_mouse_y = 0
 
+        #########################################added new code###############################
+        # create VAO
+        self._VAO = gl.glGenVertexArrays(1)
+        gl.glBindVertexArray(self._VAO)
+
+        # create VBO
+        self._VBO = gl.glGenBuffers(1)
+        ######################################################################################
+
+
     def set_model(self, model):
         glfw.make_context_current(self.window)
         self.model = model
@@ -92,9 +105,24 @@ class MjViewer(object):
         if not self.data:
             return
         glfw.make_context_current(self.window)
+
+        ##################################################################################
+
+        pos = np.array([0.,0.,0.])
+        ori = np.array([0.,0.,0.])
+        size = np.array([1,1,1])
+        
+        self.drawCube(pos, ori, size, col=None)
+
+        ##################################################################################
+
         self.gui_lock.acquire()
+
         rect = self.get_rect()
         arr = (ctypes.c_double*3)(0, 0, 0)
+
+
+
 
         mjlib.mjv_makeGeoms(self.model.ptr, self.data.ptr, byref(self.objects), byref(self.vopt), mjCAT_ALL, 0, None, None, ctypes.cast(arr, ctypes.POINTER(ctypes.c_double)))
         mjlib.mjv_makeLights(self.model.ptr, self.data.ptr, byref(self.objects))
@@ -230,6 +258,7 @@ class MjViewer(object):
         glfw.set_mouse_button_callback(window, self.handle_mouse_button)
         glfw.set_scroll_callback(window, self.handle_scroll)
 
+
     def handle_mouse_move(self, window, xpos, ypos):
         # no buttons down: nothing to do
         if not self._button_left_pressed \
@@ -313,7 +342,9 @@ class MjViewer(object):
         return glfw.window_should_close(self.window)
 
     def loop_once(self):
+
         glfw.make_context_current(self.window)
+
         self.render()
         # Swap front and back buffers
         glfw.swap_buffers(self.window)
@@ -332,3 +363,125 @@ class MjViewer(object):
         mjlib.mjr_freeContext(byref(self.con))
         mjlib.mjv_freeObjects(byref(self.objects))
         self.running = False
+
+    #######################################new functions#########################################
+
+    def trial(self):
+
+        # glfw.make_context_current(self.window)
+        # self.gui_lock.acquire()
+
+        vertexData = np.array([0.0, 0.5, 0.0, 1.0,
+                0.5, -0.366, 0.0, 1.0,
+                -0.5, -0.366, 0.0, 1.0,
+                1.0, 0.0, 0.0, 1.0,
+                0.0, 1.0, 0.0, 1.0,
+                0.0, 0.0, 1.0, 1.0, ],
+                dtype=np.float32)
+
+        gl.glBindBuffer(gl.GL_ARRAY_BUFFER, self._VBO)
+        # gl.glBufferData(gl.GL_ARRAY_BUFFER, vertexData.nbytes, vertexData, gl.GL_STATIC_DRAW)
+
+        # enable array and set up data
+        gl.glEnableVertexAttribArray(0)
+        gl.glEnableVertexAttribArray(1)
+        gl.glVertexAttribPointer(0, 4, gl.GL_FLOAT, gl.GL_FALSE, 0, None)
+        # the last parameter is a pointer
+        # python donot have pointer, have to using ctypes
+        gl.glVertexAttribPointer(1, 4, gl.GL_FLOAT, gl.GL_FALSE, 0, ctypes.c_void_p(48))
+
+        gl.glBindBuffer(gl.GL_ARRAY_BUFFER, 0)
+        gl.glBindVertexArray(0)
+
+        # self.gui_lock.release()
+
+    def draw_arrow(self, pos, ori, length, col):
+        # glfw.make_context_current(self.window)
+        # self.gui_lock.acquire()
+
+        gl.glLoadIdentity()
+
+        gl.glTranslatef(pos[0], pos[1], pos[2])
+
+        gl.glRotatef(ori[0],1.0,0.0,0.0)
+        gl.glRotatef(ori[1],0.0,1.0,0.0)
+        gl.glRotatef(ori[2],0.0,0.0,1.0)
+
+        gl.glColor3f(col[0], col[1], col[2])
+
+        quadObj=glu.gluNewQuadric()
+        
+        glu.gluCylinder(quadObj, 0.25, 0.25, length, 32, 16)
+
+        gl.glTranslatef(0, 0, length)
+
+        quadObj=glu.gluNewQuadric()
+        
+        glu.gluCylinder(quadObj, 0.45, 0., 4, 32, 16)
+
+        # self.gui_lock.release()
+
+
+    def drawCube(self, pos, ori, size, col=None):
+        #this function expects center of the cube, orientation, and size as (length(x), breadh(y), height(z))
+        # glfw.make_context_current(self.window)
+        # Draw Cube (multiple quads)
+        # self.gui_lock.acquire()
+
+        # gl.glBindVertexArray(self._VAO)
+
+        gl.glLoadIdentity()
+        gl.glTranslatef(pos[0],pos[1],pos[2])
+
+        gl.glScalef(size[0],size[1],size[0])
+ 
+        gl.glRotatef(ori[0],1.0,0.0,0.0)
+        gl.glRotatef(ori[1],0.0,1.0,0.0)
+        gl.glRotatef(ori[2],0.0,0.0,1.0)
+ 
+        # Draw Cube (multiple quads)
+        gl.glBegin(gl.GL_QUADS)
+ 
+        gl.glColor3f(0.0,1.0,0.0)
+        gl.glVertex3f( 1.0, 1.0,-1.0)
+        gl.glVertex3f(-1.0, 1.0,-1.0)
+        gl.glVertex3f(-1.0, 1.0, 1.0)
+        gl.glVertex3f( 1.0, 1.0, 1.0) 
+ 
+        gl.glColor3f(1.0,0.0,0.0)
+        gl.glVertex3f( 1.0,-1.0, 1.0)
+        gl.glVertex3f(-1.0,-1.0, 1.0)
+        gl.glVertex3f(-1.0,-1.0,-1.0)
+        gl.glVertex3f( 1.0,-1.0,-1.0) 
+ 
+        gl.glColor3f(0.0,1.0,0.0)
+        gl.glVertex3f( 1.0, 1.0, 1.0)
+        gl.glVertex3f(-1.0, 1.0, 1.0)
+        gl.glVertex3f(-1.0,-1.0, 1.0)
+        gl.glVertex3f( 1.0,-1.0, 1.0)
+ 
+        gl.glColor3f(1.0,1.0,0.0)
+        gl.glVertex3f( 1.0,-1.0,-1.0)
+        gl.glVertex3f(-1.0,-1.0,-1.0)
+        gl.glVertex3f(-1.0, 1.0,-1.0)
+        gl.glVertex3f( 1.0, 1.0,-1.0)
+ 
+        gl.glColor3f(0.0,0.0,1.0)
+        gl.glVertex3f(-1.0, 1.0, 1.0) 
+        gl.glVertex3f(-1.0, 1.0,-1.0)
+        gl.glVertex3f(-1.0,-1.0,-1.0) 
+        gl.glVertex3f(-1.0,-1.0, 1.0) 
+ 
+        gl.glColor3f(1.0,0.0,1.0)
+        gl.glVertex3f( 1.0, 1.0,-1.0) 
+        gl.glVertex3f( 1.0, 1.0, 1.0)
+        gl.glVertex3f( 1.0,-1.0, 1.0)
+        gl.glVertex3f( 1.0,-1.0,-1.0)
+
+        gl.glEnd()
+
+        gl.glBindVertexArray(0)
+
+        # self.gui_lock.release()
+ 
+

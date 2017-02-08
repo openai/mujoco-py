@@ -3841,7 +3841,7 @@ class MjModelWrapper(object):
     @property
     def body_pos(self):
         arr = np.reshape(np.fromiter(self._wrapped.contents.body_pos, dtype=np.double, count=(self.nbody*3)), (self.nbody, 3, ))
-        arr.setflags(write=False)
+        arr.setflags(write=True)
         return arr
     
     @body_pos.setter

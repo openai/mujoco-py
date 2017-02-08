@@ -1,0 +1,170 @@
+<mujoco model="box_with_tendon">
+
+<compiler coordinate="global" inertiafromgeom="true" angle="degree"/>
+
+<default>
+    <joint limited="true" damping="1" stiffness="0" armature=".1" user="0"/>
+    <geom solref="0.008 1" solimp="0.95 0.95 0.01" margin="0.001" user="0"/>
+    <motor ctrllimited="true" ctrlrange="-1 1"/>
+    <position ctrllimited="true"/>
+    
+    <default class="0">
+        <geom friction="1 0.005 0.001" rgba=".75 .6 .5 1" contype="1" conaffinity="0"/>
+    </default>
+
+    <default class="1">
+        <geom friction="1 0.005 0.001" rgba=".7 .6 .55 1" contype="1" conaffinity="0"/>
+    </default>
+    
+    <default class="2">
+        <geom friction="1 0.005 0.001" rgba=".75 .6 .5 1" contype="1" conaffinity="0"/>
+    </default>
+    
+     <default class="3">
+        <geom friction="1 0.005 0.001" rgba=".75 .6 .5 1" contype="1" conaffinity="0"/>
+    </default>
+    
+    <default class="arm1">
+        <joint damping="5"/>
+    </default>
+     <default class="arm2">
+        <joint damping="5"/>
+    </default>
+     <default class="arm3">
+        <joint damping="5"/>
+    </default>
+    <default class="arm4">
+        <joint damping="5"/>
+    </default>
+</default>
+
+<option timestep="0.002" iterations="50" solver="PGS">
+    <flag energy="enable"/>
+</option>
+
+<worldbody>
+    <light diffuse=".5 .5 .5" pos="0 0 3" dir="0 0 -1"/>	
+    <geom type="plane" size="1 1 0.1" rgba=".5 .5 .5 1"/>
+    
+    <!--  ================= Two link manipulator 1 ================= /-->
+    <body name="man1" >
+        <joint class="arm1" name="1joint1" type="hinge" pos="0 -0.85 0" axis="1 0 0" range="-90 90" damping="5" stiffness="20" armature="0.02"/>
+        <geom class="0" name="1link1" type="capsule" fromto="0 -0.85 0 0 -0.85 0.6" size=".05" rgba=".1 .9 .1 1"/>
+        
+        <body >
+            <joint class="arm1" name="1joint2" type="hinge" pos="0 -0.85 0.65" axis="1 0 0" range="-90 90" damping="5" stiffness="20" armature="0.02"/>
+            <geom class="0" name="link2" type="capsule" fromto="0 -0.85 0.65 0 -0.85 1.0" size=".05" rgba=".9 .8 .1 1"/>
+            <site name="endA1" pos="0 -0.85 1.05" type="sphere" size="0.01"/>
+        </body>
+    
+    </body>
+      <!--  ================= Two link manipulator 2 ================= /-->
+    <body name="man2">
+        <joint class="arm2" name="2joint1" type="hinge" pos="0 0.85 0" axis="1 0 0" range="-90 90" damping="5" stiffness="20" armature="0.02"/>
+        <geom class="1" name="2link1" type="capsule" fromto="0 0.85 0 0 0.85 0.6" size=".05" rgba=".1 .9 .1 1"/>
+        
+        <body >
+            <joint class="arm2" name="2joint2" type="hinge" pos="0 0.85 0.65" axis="1 0 0" range="-90 90" damping="5" stiffness="20" armature="0.02"/>
+            <geom class="1" name="2link2" type="capsule" fromto="0 0.85 0.65 0 0.85 1.0" size=".05" rgba=".9 .8 .1 1"/>
+            <site name="endA2" pos="0 0.85 1.05" type="sphere" size="0.01"/>
+        </body>
+    
+    </body>
+      <!--  ================= Two link manipulator 3 ================= /-->
+     <body name="man3">
+        <joint class="arm3" name="3joint1" type="hinge" pos="0.85 0 0" axis="0 1 0" range="-90 90" damping="5" stiffness="20" armature="0.02"/>
+        <geom class="2" name="3link1" type="capsule" fromto="0.85 0 0 0.85 0 0.6" size=".05" rgba=".1 .9 .1 1"/>
+        
+        <body >
+            <joint class="arm3" name="3joint2" type="hinge" pos="0.85 0 0.65" axis="0 1 0" range="-90 90" damping="5" stiffness="20" armature="0.02"/>
+            <geom class="2" name="3link2" type="capsule" fromto="0.85 0 0.65 0.85 0 1.0" size=".05" rgba=".9 .8 .1 1"/>
+            <site name="endA3" pos="0.85 0 1.05" type="sphere" size="0.01"/>
+        </body>
+    
+    </body>
+     <!--  ================= Two link manipulator 4 ================= /-->
+     <body name="man4">
+        <joint class="arm4" name="4joint1" type="hinge" pos="-0.85 0 0" axis="0 1 0" range="-90 90" damping="5" stiffness="20" armature="0.02"/>
+        <geom class="3" name="4link1" type="capsule" fromto="-0.85 0 0 -0.85 0 0.6" size=".05" rgba=".1 .9 .1 1"/>
+        
+        <body >
+            <joint class="arm4" name="4joint2" type="hinge" pos="-0.85 0 0.65" axis="0 1 0" range="-90 90" damping="5" stiffness="20" armature="0.02"/>
+            <geom class="3" name="4link2" type="capsule" fromto="-0.85 0 0.65 -0.85 0 1.0" size=".05" rgba=".9 .8 .1 1"/>
+            <site name="endA4" pos="-0.85 0 1.05" type="sphere" size="0.01"/>
+        </body>
+    
+    </body>
+
+<!--  ================= Object ================= /-->
+<body name="object">
+    <joint name="fr" type="free" limited="false"/>
+    <geom type="box" pos="0 0 0.1" size="0.08 0.08 0.08" rgba="0.5 0.6 0.8 1"/>
+    <site name="endO1" pos="0 -0.08 0.1" type="sphere" size="0.01"/>
+    <site name="endO2" pos="0 0.08 0.1" type="sphere" size="0.01"/>
+    <site name="endO3" pos="0.08 0 0.1" type="sphere" size="0.01"/>
+    <site name="endO4" pos="-0.08 0 0.1" type="sphere" size="0.01"/>
+</body>
+
+</worldbody>
+
+
+<tendon>
+    
+    <spatial limited="true" range="0 0.6" width="0.005">
+        <site site="endA1"/>
+        <site site="endO1"/>
+    </spatial>
+    
+    <spatial limited="true" range="0 0.6" width="0.005">
+        <site site="endA2"/>
+        <site site="endO2"/>
+    </spatial>
+    
+    <spatial limited="true" range="0 0.6" width="0.005">
+        <site site="endA3"/>
+        <site site="endO3"/>
+    </spatial>
+    
+    <spatial limited="true" range="0 0.6" width="0.005">
+        <site site="endA4"/>
+        <site site="endO4"/>
+    </spatial>
+
+</tendon>
+
+<actuator>
+
+<!--  ================= Torque actuators ================= -->
+
+    <motor name="1joint1" gear="200" joint="1joint1" ctrlrange="-1 1"/>
+    <motor name="1joint2" gear="200" joint="1joint2" ctrlrange="-1 1"/>
+    
+    <motor name="2joint1" gear="200" joint="2joint1" ctrlrange="-1 1"/>
+    <motor name="2joint2" gear="200" joint="2joint2" ctrlrange="-1 1"/>
+    
+    <motor name="3joint1" gear="200" joint="3joint1" ctrlrange="-1 1"/>
+    <motor name="3joint2" gear="200" joint="3joint2" ctrlrange="-1 1"/>
+
+    <motor name="4Joint1" gear="200" joint="4joint1" ctrlrange="-1 1"/>
+    <motor name="4Joint2" gear="200" joint="4joint2" ctrlrange="-1 1"/>
+
+
+ <!--  ================= Position actuators ================= -->
+
+ <!--
+ 
+   <position joint="1joint1" name="1Joint1" kp="100" ctrlrange="-2.57 2.57"/>
+   <position joint="1joint2" name="1Joint2" kp="100" ctrlrange="-2.57 2.57"/>
+    
+   <position joint="2joint1" name="2Joint1" kp="100" ctrlrange="-2.57 2.57"/>
+   <position joint="2joint2" name="2Joint2" kp="100" ctrlrange="-2.57 2.57"/>
+    
+   <position joint="3joint1" name="3Joint1" kp="100" ctrlrange="-2.57 2.57"/>
+   <position joint="3joint2" name="3Joint2" kp="100" ctrlrange="-2.57 2.57"/>
+   
+   <position joint="4joint1" name="4Joint1" kp="100" ctrlrange="-2.57 2.57"/>
+   <position joint="4joint2" name="4Joint2" kp="100" ctrlrange="-2.57 2.57"/>
+-->
+
+</actuator>
+</mujoco>
