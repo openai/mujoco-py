@@ -324,9 +324,9 @@ class MjViewer(object):
         glfw.make_context_current(self.window)
         glfw.destroy_window(self.window)
 
-        if gl.glIsFramebuffer(self._fbo):
+        if gl.glIsFramebuffer and gl.glIsFramebuffer(self._fbo):
             gl.glDeleteFramebuffers(int(self._fbo))
-        if gl.glIsRenderbuffer(self._rbo):
+        if gl.glIsRenderbuffer and gl.glIsRenderbuffer(self._rbo):
             gl.glDeleteRenderbuffers(1, int(self._rbo))
 
         mjlib.mjr_freeContext(byref(self.con))

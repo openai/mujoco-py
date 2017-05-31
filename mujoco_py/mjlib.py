@@ -11,7 +11,7 @@ if sys.platform.startswith("darwin"):
 elif sys.platform.startswith("linux"):
     libfile = os.path.join(path_prefix, "bin/libmujoco131.so")
 elif sys.platform.startswith("win"):
-    libfile = os.path.join(path_prefix, "bin/mujoco131.lib")
+    libfile = os.path.join(path_prefix, "bin/mujoco131.dll")
 else:
     raise RuntimeError("Unrecognized platform %s" % sys.platform)
 
