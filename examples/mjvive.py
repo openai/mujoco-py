@@ -1,8 +1,8 @@
 # Displays MuJoCo model in VR.
-# Based on http://www.mujoco.org/book/source/mjvive.cpp
-# requires HTC vive, microsoft windows, and openvr python library.
-# Install openvr with:
-# pip install openvr
+# This code is a Python port of http://www.mujoco.org/book/source/mjvive.cpp
+# Dependencies: Windows 7 with SteamVR, HTC Vive.
+# Install py-openvr with `pip install openvr`.
+# NOTE: THIS CODE IS EXPERIMENTAL.
 
 import math
 import sys
