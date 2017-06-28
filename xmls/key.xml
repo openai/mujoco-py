@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="utf-8"?>
+<mujoco>
+	<worldbody>
+		<body pos="0.07 0.025 0.0001">
+			<geom name="Wall" type="box" pos="0 0.1 0.15" size="0.07 0.01 0.1501"></geom>
+			<body name="Key" pos="0 0.05 0.2">
+				<geom name="teeth" type="box" pos="0 0.02 0" size="0.001 0.02 0.01" condim="3" friction="1 0.001 0.001"></geom>
+				<geom name="Pad" type="cylinder" pos="0 -0.035 0" size="0.04 0.003" euler="0 1.57 0" condim="3" friction="1 0.001 0.001"></geom>
+				<joint name="key" type="hinge" axis="0 1 0" pos="0 0 0" limited="true" range="0 1.57" stiffness="0.02" damping="0.001"></joint>
+			</body>
+		</body>
+	</worldbody>
+</mujoco>

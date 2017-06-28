@@ -1,0 +1,29 @@
+<?xml version="1.0" encoding="utf-8"?>
+<mujoco>
+	<worldbody>
+		<body pos="0.21 0.197 0.3">
+			<geom condim="4" friction="1 1 0.001" name="jright" pos="0.2 0 0" rgba="0.8 0.8 0 1" size="0.01 0.1 0.3" type="box"></geom>
+			<geom condim="4" friction="1 1 0.001" name="jleft" pos="-0.2 0 0" rgba="0.8 0.8 0 1" size="0.01 0.1 0.3" type="box"></geom>
+			<geom condim="4" friction="1 1 0.001" name="jbehind" pos="0 0.09 0" rgba="0.8 0.8 0 1" size="0.2 0.01 0.3" type="box"></geom>
+			<geom condim="4" friction="1 1 0.001" name="jup" pos="0 0 0.29" rgba="0.8 0.8 0 1" size="0.2 0.1 0.01" type="box"></geom>
+			<geom condim="4" friction="1 1 0.001" name="j_shelf1" pos="0 0 0.15" rgba="0.8 0 0 1" size="0.2 0.1 0.01" type="box"></geom>
+			<geom condim="4" friction="1 1 0.001" name="j_shelf2" pos="0 0 0.01" rgba="0.8 0 0 1" size="0.2 0.1 0.01" type="box"></geom>
+			<geom condim="4" friction="1 1 0.001" name="j_shelf3" pos="0 0 -0.15" rgba="0.8 0 0 1" size="0.2 0.1 0.01" type="box"></geom>
+			<geom condim="4" friction="1 1 0.001" name="jdown" pos="0 0 -0.29" rgba="0.8 0.8 0 1" size="0.2 0.1 0.01" type="box" mass="1000"></geom>
+			<body name="door1" pos="0 -0.08 0">
+				<geom condim="4" friction="1 1 0.001" name="door1_rectangle" pos="-0.11 -0.03 0" rgba="0 0.8 0 1" size="0.1 0.01 0.3" type="box"></geom>
+				<joint name="door1_slide" type="slide" axis="1 0 0" pos="0 0 0" limited="true" range="0 0.8" stiffness="2" damping="0.1" armature="0.01"></joint>
+				<body name="door1_handle" pos="0 0 0">
+					<geom name="knob" type="capsule" pos="-0.08 -0.08 0" size="0.007 0.03" euler="1.57 0 0" condim="3" rgba="1 0 0 1"></geom>
+				</body>
+			</body>
+			<body name="door2" pos="0.22 -0.08 0">
+				<geom condim="4" friction="1 1 0.001" name="door2_rectangle" pos="-0.11 -0.03 0" rgba="0 0.8 0 1" size="0.1 0.01 0.3" type="box"></geom>
+				<joint name="door2_slide" type="slide" axis="1 0 0" pos="0 0 0" limited="true" range="0 0.8" stiffness="2" damping="0.1" armature="0.01"></joint>
+				<body name="door2_handle" pos="0 0 0">
+					<geom name="knob2" type="capsule" pos="-0.12 -0.08 0" size="0.007 0.03" euler="1.57 0 0" condim="3" rgba="1 0 0 1"></geom>
+				</body>
+			</body>
+		</body>
+	</worldbody>
+</mujoco>

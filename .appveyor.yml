@@ -1,0 +1,39 @@
+version: 1.0.{build}
+
+environment:
+
+    global:
+        # SDK v7.0 MSVC Express 2008's SetEnv.cmd script will fail if the
+        # /E:ON and /V:ON options are not enabled in the batch script intepreter
+        # See: http://stackoverflow.com/a/13751649/163740
+        CMD_IN_ENV: "cmd /E:ON /V:ON /C .\\continuous-integration\\appveyor\\run_with_env.cmd"
+
+platform: 
+    - x64 
+
+
+install:
+    - mkdir %userprofile%\.mujoco
+    - curl %MUJOCO_FOR_WINDOWS% -o %userprofile%\.mujoco\mjpro.tar.gz
+    - curl https://github.com/glfw/glfw/releases/download/3.2.1/glfw-3.2.1.bin.WIN64.zip -o %userprofile%\glfw.zip
+    - cd %userprofile%\.mujoco\
+    - tar -zxvf mjpro.tar.gz 
+    - echo "%PYTHON_VERSION% C:\Miniconda35-x64 %userprofile%"
+    - set PATH=C:\Miniconda35-x64;C:\Miniconda35-x64\Scripts;%PATH%
+    - conda config --set always_yes yes --set changeps1 no
+    - conda update -q conda
+    - conda info -a
+    - conda create -q -n test-environment python=3.5 numpy scipy
+    - activate test-environment
+    - SET PATH=%userprofile%\.mujoco\mjpro150\bin;%PATH%;
+    - SET RENDERING_OFF=1
+    - cd C:\projects\pymj
+    - pip install -r requirements.txt
+    - pip install -r requirements.dev.txt
+
+build: off
+
+test_script:
+    - pytest -s --verbose --durations=10 --instafail
+
+

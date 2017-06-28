@@ -1,0 +1,7 @@
+<mujocoinclude>
+    <worldbody>
+        <body name="blabla" pos="0.15 0.15 0.15">
+            <geom conaffinity="1" contype="1" mass="0" pos="0 0 0" rgba="0.417 0.7203 0.0001 0.1" size="0.15 0.15 0.15" type="box"></geom>
+        </body>
+    </worldbody>
+</mujocoinclude>

@@ -1,0 +1,1366 @@
+
+
+<!DOCTYPE html>
+<!--[if IE 8]><html class="no-js lt-ie9" lang="en" > <![endif]-->
+<!--[if gt IE 8]><!--> <html class="no-js" lang="en" > <!--<![endif]-->
+<head>
+  <meta charset="utf-8">
+  
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  
+  <title>API reference &mdash; mujoco-py 1.50.0.14 documentation</title>
+  
+
+  
+  
+  
+  
+
+  
+
+  
+  
+    
+
+  
+
+  
+  
+    <link rel="stylesheet" href="_static/css/theme.css" type="text/css" />
+  
+
+  
+
+  
+        <link rel="index" title="Index"
+              href="genindex.html"/>
+        <link rel="search" title="Search" href="search.html"/>
+    <link rel="top" title="mujoco-py 1.50.0.14 documentation" href="index.html"/>
+        <link rel="next" title="Internals" href="internals.html"/>
+        <link rel="prev" title="mujoco-py Documentation" href="index.html"/> 
+
+  
+  <script src="_static/js/modernizr.min.js"></script>
+
+</head>
+
+<body class="wy-body-for-nav" role="document">
+
+   
+  <div class="wy-grid-for-nav">
+
+    
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search">
+          
+
+          
+            <a href="index.html" class="icon icon-home"> mujoco-py
+          
+
+          
+          </a>
+
+          
+            
+            
+              <div class="version">
+                1.50.0.14
+              </div>
+            
+          
+
+          
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+
+          
+        </div>
+
+        <div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="main navigation">
+          
+            
+            
+              
+            
+            
+              <ul class="current">
+<li class="toctree-l1 current"><a class="current reference internal" href="#">API reference</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="#mjsim-basic-simulation">MjSim: Basic simulation</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#pymjdata-time-dependent-data">PyMjData: Time-dependent data</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#mjsimpool-batched-simulation">MjSimPool: Batched simulation</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#mjviewer-3d-rendering">MjViewer: 3D rendering</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="internals.html">Internals</a></li>
+</ul>
+
+            
+          
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap">
+
+      
+      <nav class="wy-nav-top" role="navigation" aria-label="top navigation">
+        
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="index.html">mujoco-py</a>
+        
+      </nav>
+
+
+      
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<div role="navigation" aria-label="breadcrumbs navigation">
+
+  <ul class="wy-breadcrumbs">
+    
+      <li><a href="index.html">Docs</a> &raquo;</li>
+        
+      <li>API reference</li>
+    
+    
+      <li class="wy-breadcrumbs-aside">
+        
+            
+            <a href="_sources/reference.rst.txt" rel="nofollow"> View page source</a>
+          
+        
+      </li>
+    
+  </ul>
+
+  
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+            
+  <div class="section" id="api-reference">
+<h1>API reference<a class="headerlink" href="#api-reference" title="Permalink to this headline">¶</a></h1>
+<div class="contents local topic" id="contents">
+<ul class="simple">
+<li><a class="reference internal" href="#mjsim-basic-simulation" id="id1">MjSim: Basic simulation</a></li>
+<li><a class="reference internal" href="#pymjdata-time-dependent-data" id="id2">PyMjData: Time-dependent data</a></li>
+<li><a class="reference internal" href="#mjsimpool-batched-simulation" id="id3">MjSimPool: Batched simulation</a></li>
+<li><a class="reference internal" href="#mjviewer-3d-rendering" id="id4">MjViewer: 3D rendering</a></li>
+</ul>
+</div>
+<div class="section" id="mjsim-basic-simulation">
+<h2><a class="toc-backref" href="#id1">MjSim: Basic simulation</a><a class="headerlink" href="#mjsim-basic-simulation" title="Permalink to this headline">¶</a></h2>
+<dl class="function">
+<dt id="mujoco_py.load_model_from_path">
+<code class="descclassname">mujoco_py.</code><code class="descname">load_model_from_path</code><span class="sig-paren">(</span><em>path</em><span class="sig-paren">)</span><a class="headerlink" href="#mujoco_py.load_model_from_path" title="Permalink to this definition">¶</a></dt>
+<dd><p>Loads model from path.</p>
+</dd></dl>
+
+<dl class="function">
+<dt id="mujoco_py.load_model_from_xml">
+<code class="descclassname">mujoco_py.</code><code class="descname">load_model_from_xml</code><span class="sig-paren">(</span><em>xml_string</em><span class="sig-paren">)</span><a class="headerlink" href="#mujoco_py.load_model_from_xml" title="Permalink to this definition">¶</a></dt>
+<dd><p>Loads and returns a PyMjModel model from a string containing XML markup.
+Saves the XML string used to create the returned model in <cite>model.xml</cite>.</p>
+</dd></dl>
+
+<dl class="function">
+<dt id="mujoco_py.load_model_from_mjb">
+<code class="descclassname">mujoco_py.</code><code class="descname">load_model_from_mjb</code><span class="sig-paren">(</span><em>path</em><span class="sig-paren">)</span><a class="headerlink" href="#mujoco_py.load_model_from_mjb" title="Permalink to this definition">¶</a></dt>
+<dd><p>Loads and returns a PyMjModel model from bytes encoded MJB.
+MJB is a MuJoCo-custom format that includes assets like meshes/textures.</p>
+</dd></dl>
+
+<dl class="class">
+<dt id="mujoco_py.MjSim">
+<em class="property">class </em><code class="descclassname">mujoco_py.</code><code class="descname">MjSim</code><span class="sig-paren">(</span><em>model</em>, <em>data=None</em>, <em>nsubsteps=1</em>, <em>udd_callback=None</em><span class="sig-paren">)</span><a class="headerlink" href="#mujoco_py.MjSim" title="Permalink to this definition">¶</a></dt>
+<dd><p>MjSim represents a running simulation including its state.</p>
+<p>Similar to Gym’s <code class="docutils literal"><span class="pre">MujocoEnv</span></code>, it internally wraps a <code class="xref py py-class docutils literal"><span class="pre">PyMjModel</span></code>
+and a <code class="xref py py-class docutils literal"><span class="pre">PyMjData</span></code>.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><p class="first"><strong>model</strong> : <code class="xref py py-class docutils literal"><span class="pre">PyMjModel</span></code></p>
+<blockquote>
+<div><p>The model to simulate.</p>
+</div></blockquote>
+<p><strong>data</strong> : <code class="xref py py-class docutils literal"><span class="pre">PyMjData</span></code></p>
+<blockquote>
+<div><p>Optional container for the simulation state. Will be created if <code class="docutils literal"><span class="pre">None</span></code>.</p>
+</div></blockquote>
+<p><strong>nsubsteps</strong> : int</p>
+<blockquote>
+<div><p>Optional number of MuJoCo steps to run for every call to <a class="reference internal" href="#mujoco_py.MjSim.step" title="mujoco_py.MjSim.step"><code class="xref py py-meth docutils literal"><span class="pre">step()</span></code></a>.
+Buffers will be swapped only once per step.</p>
+</div></blockquote>
+<p><strong>udd_callback</strong> : fn(<a class="reference internal" href="#mujoco_py.MjSim" title="mujoco_py.MjSim"><code class="xref py py-class docutils literal"><span class="pre">MjSim</span></code></a>) -&gt; dict</p>
+<blockquote class="last">
+<div><p>Optional callback for user-defined dynamics. At every call to
+<a class="reference internal" href="#mujoco_py.MjSim.step" title="mujoco_py.MjSim.step"><code class="xref py py-meth docutils literal"><span class="pre">step()</span></code></a>, it receives an MjSim object <code class="docutils literal"><span class="pre">sim</span></code> containing the
+current user-defined dynamics state in <code class="docutils literal"><span class="pre">sim.udd_state</span></code>, and returns the
+next <code class="docutils literal"><span class="pre">udd_state</span></code> after applying the user-defined dynamics. This is
+useful e.g. for reward functions that operate over functions of historical
+state.</p>
+</div></blockquote>
+</td>
+</tr>
+</tbody>
+</table>
+<p class="rubric">Attributes</p>
+<p class="rubric">Methods</p>
+<dl class="method">
+<dt id="mujoco_py.MjSim.get_state">
+<code class="descname">get_state</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#mujoco_py.MjSim.get_state" title="Permalink to this definition">¶</a></dt>
+<dd><p>Returns a copy of the simulator state.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="mujoco_py.MjSim.render">
+<code class="descname">render</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#mujoco_py.MjSim.render" title="Permalink to this definition">¶</a></dt>
+<dd><p>Renders view from a camera and returns image as an <cite>numpy.ndarray</cite>.</p>
+<p>Args:
+- width (int): desired image width.
+- height (int): desired image height.
+- camera_name (str): name of camera in model. If None, the free</p>
+<blockquote>
+<div>camera will be used.</div></blockquote>
+<ul class="simple">
+<li>depth (bool): if True, also return depth buffer</li>
+</ul>
+<p>Returns:
+- rgb (uint8 array): image buffer from camera
+- depth (float array): depth buffer from camera (only returned</p>
+<blockquote>
+<div>if depth=True)</div></blockquote>
+</dd></dl>
+
+<dl class="method">
+<dt id="mujoco_py.MjSim.reset">
+<code class="descname">reset</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#mujoco_py.MjSim.reset" title="Permalink to this definition">¶</a></dt>
+<dd><p>Resets the simulation data and clears buffers.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="mujoco_py.MjSim.save">
+<code class="descname">save</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#mujoco_py.MjSim.save" title="Permalink to this definition">¶</a></dt>
+<dd><p>Saves the simulator model and state to a file as either
+a MuJoCo XML or MJB file. The current state is saved as
+a keyframe in the model file. This is useful for debugging
+using MuJoCo’s <cite>simulate</cite> utility.</p>
+<p>Note that this doesn’t save the UDD-state which is
+part of MjSimState, since that’s not supported natively
+by MuJoCo. If you want to save the model together with
+the UDD-state, you should use the <cite>get_xml</cite> or <cite>get_mjb</cite>
+methods on <cite>MjModel</cite> together with <cite>MjSim.get_state</cite> and
+save them with e.g. pickle.</p>
+<p>Args:
+- file (IO stream): stream to write model to.
+- format: format to use (either ‘xml’ or ‘mjb’)
+- keep_inertials (bool): if False, removes all &lt;inertial&gt;</p>
+<blockquote>
+<div>properties derived automatically for geoms by MuJoco. Note
+that this removes ones that were provided by the user
+as well.</div></blockquote>
+</dd></dl>
+
+<dl class="method">
+<dt id="mujoco_py.MjSim.set_state">
+<code class="descname">set_state</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#mujoco_py.MjSim.set_state" title="Permalink to this definition">¶</a></dt>
+<dd><p>Sets the state from an MjSimState.
+If the MjSimState was previously unflattened from a numpy array, consider
+set_state_from_flattened, as the defensive copy is a substantial overhead
+in an inner loop.</p>
+<p>Args:
+- value (MjSimState): the desired state.
+- call_forward: optionally call sim.forward(). Called by default if</p>
+<blockquote>
+<div>the udd_callback is set.</div></blockquote>
+</dd></dl>
+
+<dl class="method">
+<dt id="mujoco_py.MjSim.set_state_from_flattened">
+<code class="descname">set_state_from_flattened</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#mujoco_py.MjSim.set_state_from_flattened" title="Permalink to this definition">¶</a></dt>
+<dd><p>This helper method sets the state from an array without requiring a defensive copy.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="mujoco_py.MjSim.step">
+<code class="descname">step</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#mujoco_py.MjSim.step" title="Permalink to this definition">¶</a></dt>
+<dd><p>Advances the simulation by calling <code class="docutils literal"><span class="pre">mj_step</span></code>.</p>
+<p>If <code class="docutils literal"><span class="pre">qpos</span></code> or <code class="docutils literal"><span class="pre">qvel</span></code> have been modified directly, the user is required to call
+<a class="reference internal" href="#mujoco_py.MjSimPool.forward" title="mujoco_py.MjSimPool.forward"><code class="xref py py-meth docutils literal"><span class="pre">forward()</span></code></a> before <a class="reference internal" href="#mujoco_py.MjSim.step" title="mujoco_py.MjSim.step"><code class="xref py py-meth docutils literal"><span class="pre">step()</span></code></a> if their <code class="docutils literal"><span class="pre">udd_callback</span></code> requires access to MuJoCo state
+set during the forward dynamics.</p>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="class">
+<dt id="mujoco_py.MjSimState">
+<em class="property">class </em><code class="descclassname">mujoco_py.</code><code class="descname">MjSimState</code><a class="headerlink" href="#mujoco_py.MjSimState" title="Permalink to this definition">¶</a></dt>
+<dd><p>Represents a snapshot of the simulator’s state.</p>
+<p>This includes time, qpos, qvel, act, and udd_state.</p>
+<p class="rubric">Attributes</p>
+<p class="rubric">Methods</p>
+</dd></dl>
+
+<dl class="function">
+<dt id="mujoco_py.ignore_mujoco_warnings">
+<code class="descclassname">mujoco_py.</code><code class="descname">ignore_mujoco_warnings</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/mujoco_py/builder.html#ignore_mujoco_warnings"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#mujoco_py.ignore_mujoco_warnings" title="Permalink to this definition">¶</a></dt>
+<dd><p>Class to turn off mujoco warning exceptions within a scope. Useful for
+large, vectorized rollouts.</p>
+</dd></dl>
+
+</div>
+<div class="section" id="pymjdata-time-dependent-data">
+<span id="pymjdata"></span><h2><a class="toc-backref" href="#id2">PyMjData: Time-dependent data</a><a class="headerlink" href="#pymjdata-time-dependent-data" title="Permalink to this headline">¶</a></h2>
+<p><code class="docutils literal"><span class="pre">PyMjData</span></code> and related classes are automatically generated from the MuJoCo C header files. For more information on this process, see <a class="reference internal" href="internals.html#genwrapper"><span class="std std-ref">Autogenerated wrappers</span></a>. Their structure therefore directly follows the MuJoCo structs.</p>
+<dl class="class">
+<dt id="mujoco_py.PyMjData">
+<em class="property">class </em><code class="descclassname">mujoco_py.</code><code class="descname">PyMjData</code><a class="headerlink" href="#mujoco_py.PyMjData" title="Permalink to this definition">¶</a></dt>
+<dd>
+<p class="rubric">Attributes</p><dl class="attribute">
+<dt id="act">
+<code class="descname">act</code><a class="headerlink" href="#act" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="attribute">
+<dt id="act_dot">
+<code class="descname">act_dot</code><a class="headerlink" href="#act_dot" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="attribute">
+<dt id="active_contacts_efc_pos">
+<code class="descname">active_contacts_efc_pos</code><a class="headerlink" href="#active_contacts_efc_pos" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="attribute">
+<dt id="actuator_force">
+<code class="descname">actuator_force</code><a class="headerlink" href="#actuator_force" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="attribute">
+<dt id="actuator_length">
+<code class="descname">actuator_length</code><a class="headerlink" href="#actuator_length" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="attribute">
+<dt id="actuator_moment">
+<code class="descname">actuator_moment</code><a class="headerlink" href="#actuator_moment" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="attribute">
+<dt id="actuator_velocity">
+<code class="descname">actuator_velocity</code><a class="headerlink" href="#actuator_velocity" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="attribute">
+<dt id="body_jacp">
+<code class="descname">body_jacp</code><a class="headerlink" href="#body_jacp" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="attribute">
+<dt id="body_jacr">
+<code class="descname">body_jacr</code><a class="headerlink" href="#body_jacr" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="attribute">
+<dt id="body_xmat">
+<code class="descname">body_xmat</code><a class="headerlink" href="#body_xmat" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="attribute">
+<dt id="body_xpos">
+<code class="descname">body_xpos</code><a class="headerlink" href="#body_xpos" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="attribute">
+<dt id="body_xquat">
+<code class="descname">body_xquat</code><a class="headerlink" href="#body_xquat" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="attribute">
+<dt id="body_xvelp">
+<code class="descname">body_xvelp</code><a class="headerlink" href="#body_xvelp" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="attribute">
+<dt id="body_xvelr">
+<code class="descname">body_xvelr</code><a class="headerlink" href="#body_xvelr" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="attribute">
+<dt id="cacc">
+<code class="descname">cacc</code><a class="headerlink" href="#cacc" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="attribute">
+<dt id="cam_xmat">
+<code class="descname">cam_xmat</code><a class="headerlink" href="#cam_xmat" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="attribute">
+<dt id="cam_xpos">
+<code class="descname">cam_xpos</code><a class="headerlink" href="#cam_xpos" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="attribute">
+<dt id="cdof">
+<code class="descname">cdof</code><a class="headerlink" href="#cdof" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="attribute">
+<dt id="cdof_dot">
+<code class="descname">cdof_dot</code><a class="headerlink" href="#cdof_dot" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="attribute">
+<dt id="cfrc_ext">
+<code class="descname">cfrc_ext</code><a class="headerlink" href="#cfrc_ext" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="attribute">
+<dt id="cfrc_int">
+<code class="descname">cfrc_int</code><a class="headerlink" href="#cfrc_int" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="attribute">
+<dt id="cinert">
+<code class="descname">cinert</code><a class="headerlink" href="#cinert" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="attribute">
+<dt id="contact">
+<code class="descname">contact</code><a class="headerlink" href="#contact" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="attribute">
+<dt id="crb">
+<code class="descname">crb</code><a class="headerlink" href="#crb" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="attribute">
+<dt id="ctrl">
+<code class="descname">ctrl</code><a class="headerlink" href="#ctrl" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="attribute">
+<dt id="cvel">
+<code class="descname">cvel</code><a class="headerlink" href="#cvel" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="attribute">
+<dt id="efc_AR">
+<code class="descname">efc_AR</code><a class="headerlink" href="#efc_AR" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="attribute">
+<dt id="efc_AR_colind">
+<code class="descname">efc_AR_colind</code><a class="headerlink" href="#efc_AR_colind" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="attribute">
+<dt id="efc_AR_rowadr">
+<code class="descname">efc_AR_rowadr</code><a class="headerlink" href="#efc_AR_rowadr" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="attribute">
+<dt id="efc_AR_rownnz">
+<code class="descname">efc_AR_rownnz</code><a class="headerlink" href="#efc_AR_rownnz" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="attribute">
+<dt id="efc_D">
+<code class="descname">efc_D</code><a class="headerlink" href="#efc_D" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="attribute">
+<dt id="efc_J">
+<code class="descname">efc_J</code><a class="headerlink" href="#efc_J" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="attribute">
+<dt id="efc_JT">
+<code class="descname">efc_JT</code><a class="headerlink" href="#efc_JT" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="attribute">
+<dt id="efc_JT_colind">
+<code class="descname">efc_JT_colind</code><a class="headerlink" href="#efc_JT_colind" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="attribute">
+<dt id="efc_JT_rowadr">
+<code class="descname">efc_JT_rowadr</code><a class="headerlink" href="#efc_JT_rowadr" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="attribute">
+<dt id="efc_JT_rownnz">
+<code class="descname">efc_JT_rownnz</code><a class="headerlink" href="#efc_JT_rownnz" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="attribute">
+<dt id="efc_J_colind">
+<code class="descname">efc_J_colind</code><a class="headerlink" href="#efc_J_colind" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="attribute">
+<dt id="efc_J_rowadr">
+<code class="descname">efc_J_rowadr</code><a class="headerlink" href="#efc_J_rowadr" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="attribute">
+<dt id="efc_J_rownnz">
+<code class="descname">efc_J_rownnz</code><a class="headerlink" href="#efc_J_rownnz" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="attribute">
+<dt id="efc_R">
+<code class="descname">efc_R</code><a class="headerlink" href="#efc_R" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="attribute">
+<dt id="efc_aref">
+<code class="descname">efc_aref</code><a class="headerlink" href="#efc_aref" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="attribute">
+<dt id="efc_b">
+<code class="descname">efc_b</code><a class="headerlink" href="#efc_b" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="attribute">
+<dt id="efc_diagApprox">
+<code class="descname">efc_diagApprox</code><a class="headerlink" href="#efc_diagApprox" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="attribute">
+<dt id="efc_force">
+<code class="descname">efc_force</code><a class="headerlink" href="#efc_force" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="attribute">
+<dt id="efc_frictionloss">
+<code class="descname">efc_frictionloss</code><a class="headerlink" href="#efc_frictionloss" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="attribute">
+<dt id="efc_id">
+<code class="descname">efc_id</code><a class="headerlink" href="#efc_id" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="attribute">
+<dt id="efc_margin">
+<code class="descname">efc_margin</code><a class="headerlink" href="#efc_margin" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="attribute">
+<dt id="efc_solimp">
+<code class="descname">efc_solimp</code><a class="headerlink" href="#efc_solimp" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="attribute">
+<dt id="efc_solref">
+<code class="descname">efc_solref</code><a class="headerlink" href="#efc_solref" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="attribute">
+<dt id="efc_state">
+<code class="descname">efc_state</code><a class="headerlink" href="#efc_state" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="attribute">
+<dt id="efc_type">
+<code class="descname">efc_type</code><a class="headerlink" href="#efc_type" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="attribute">
+<dt id="efc_vel">
+<code class="descname">efc_vel</code><a class="headerlink" href="#efc_vel" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="attribute">
+<dt id="energy">
+<code class="descname">energy</code><a class="headerlink" href="#energy" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="attribute">
+<dt id="geom_jacp">
+<code class="descname">geom_jacp</code><a class="headerlink" href="#geom_jacp" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="attribute">
+<dt id="geom_jacr">
+<code class="descname">geom_jacr</code><a class="headerlink" href="#geom_jacr" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="attribute">
+<dt id="geom_xmat">
+<code class="descname">geom_xmat</code><a class="headerlink" href="#geom_xmat" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="attribute">
+<dt id="geom_xpos">
+<code class="descname">geom_xpos</code><a class="headerlink" href="#geom_xpos" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="attribute">
+<dt id="geom_xvelp">
+<code class="descname">geom_xvelp</code><a class="headerlink" href="#geom_xvelp" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="attribute">
+<dt id="geom_xvelr">
+<code class="descname">geom_xvelr</code><a class="headerlink" href="#geom_xvelr" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="attribute">
+<dt id="light_xdir">
+<code class="descname">light_xdir</code><a class="headerlink" href="#light_xdir" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="attribute">
+<dt id="light_xpos">
+<code class="descname">light_xpos</code><a class="headerlink" href="#light_xpos" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="attribute">
+<dt id="maxuse_con">
+<code class="descname">maxuse_con</code><a class="headerlink" href="#maxuse_con" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="attribute">
+<dt id="maxuse_efc">
+<code class="descname">maxuse_efc</code><a class="headerlink" href="#maxuse_efc" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="attribute">
+<dt id="maxuse_stack">
+<code class="descname">maxuse_stack</code><a class="headerlink" href="#maxuse_stack" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="attribute">
+<dt id="mocap_pos">
+<code class="descname">mocap_pos</code><a class="headerlink" href="#mocap_pos" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="attribute">
+<dt id="mocap_quat">
+<code class="descname">mocap_quat</code><a class="headerlink" href="#mocap_quat" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="attribute">
+<dt id="nbuffer">
+<code class="descname">nbuffer</code><a class="headerlink" href="#nbuffer" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="attribute">
+<dt id="ncon">
+<code class="descname">ncon</code><a class="headerlink" href="#ncon" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="attribute">
+<dt id="ne">
+<code class="descname">ne</code><a class="headerlink" href="#ne" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="attribute">
+<dt id="nefc">
+<code class="descname">nefc</code><a class="headerlink" href="#nefc" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="attribute">
+<dt id="nf">
+<code class="descname">nf</code><a class="headerlink" href="#nf" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="attribute">
+<dt id="nstack">
+<code class="descname">nstack</code><a class="headerlink" href="#nstack" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="attribute">
+<dt id="pstack">
+<code class="descname">pstack</code><a class="headerlink" href="#pstack" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="attribute">
+<dt id="qLD">
+<code class="descname">qLD</code><a class="headerlink" href="#qLD" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="attribute">
+<dt id="qLDiagInv">
+<code class="descname">qLDiagInv</code><a class="headerlink" href="#qLDiagInv" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="attribute">
+<dt id="qLDiagSqrtInv">
+<code class="descname">qLDiagSqrtInv</code><a class="headerlink" href="#qLDiagSqrtInv" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="attribute">
+<dt id="qM">
+<code class="descname">qM</code><a class="headerlink" href="#qM" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="attribute">
+<dt id="qacc">
+<code class="descname">qacc</code><a class="headerlink" href="#qacc" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="attribute">
+<dt id="qacc_unc">
+<code class="descname">qacc_unc</code><a class="headerlink" href="#qacc_unc" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="attribute">
+<dt id="qacc_warmstart">
+<code class="descname">qacc_warmstart</code><a class="headerlink" href="#qacc_warmstart" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="attribute">
+<dt id="qfrc_actuator">
+<code class="descname">qfrc_actuator</code><a class="headerlink" href="#qfrc_actuator" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="attribute">
+<dt id="qfrc_applied">
+<code class="descname">qfrc_applied</code><a class="headerlink" href="#qfrc_applied" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="attribute">
+<dt id="qfrc_bias">
+<code class="descname">qfrc_bias</code><a class="headerlink" href="#qfrc_bias" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="attribute">
+<dt id="qfrc_constraint">
+<code class="descname">qfrc_constraint</code><a class="headerlink" href="#qfrc_constraint" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="attribute">
+<dt id="qfrc_inverse">
+<code class="descname">qfrc_inverse</code><a class="headerlink" href="#qfrc_inverse" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="attribute">
+<dt id="qfrc_passive">
+<code class="descname">qfrc_passive</code><a class="headerlink" href="#qfrc_passive" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="attribute">
+<dt id="qfrc_unc">
+<code class="descname">qfrc_unc</code><a class="headerlink" href="#qfrc_unc" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="attribute">
+<dt id="qpos">
+<code class="descname">qpos</code><a class="headerlink" href="#qpos" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="attribute">
+<dt id="qvel">
+<code class="descname">qvel</code><a class="headerlink" href="#qvel" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="attribute">
+<dt id="sensordata">
+<code class="descname">sensordata</code><a class="headerlink" href="#sensordata" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="attribute">
+<dt id="set_joint_qpos">
+<code class="descname">set_joint_qpos</code><a class="headerlink" href="#set_joint_qpos" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="attribute">
+<dt id="set_joint_qvel">
+<code class="descname">set_joint_qvel</code><a class="headerlink" href="#set_joint_qvel" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="attribute">
+<dt id="set_mocap_pos">
+<code class="descname">set_mocap_pos</code><a class="headerlink" href="#set_mocap_pos" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="attribute">
+<dt id="set_mocap_quat">
+<code class="descname">set_mocap_quat</code><a class="headerlink" href="#set_mocap_quat" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="attribute">
+<dt id="site_jacp">
+<code class="descname">site_jacp</code><a class="headerlink" href="#site_jacp" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="attribute">
+<dt id="site_jacr">
+<code class="descname">site_jacr</code><a class="headerlink" href="#site_jacr" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="attribute">
+<dt id="site_xmat">
+<code class="descname">site_xmat</code><a class="headerlink" href="#site_xmat" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="attribute">
+<dt id="site_xpos">
+<code class="descname">site_xpos</code><a class="headerlink" href="#site_xpos" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="attribute">
+<dt id="site_xvelp">
+<code class="descname">site_xvelp</code><a class="headerlink" href="#site_xvelp" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="attribute">
+<dt id="site_xvelr">
+<code class="descname">site_xvelr</code><a class="headerlink" href="#site_xvelr" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="attribute">
+<dt id="solver">
+<code class="descname">solver</code><a class="headerlink" href="#solver" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="attribute">
+<dt id="solver_fwdinv">
+<code class="descname">solver_fwdinv</code><a class="headerlink" href="#solver_fwdinv" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="attribute">
+<dt id="solver_iter">
+<code class="descname">solver_iter</code><a class="headerlink" href="#solver_iter" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="attribute">
+<dt id="solver_nnz">
+<code class="descname">solver_nnz</code><a class="headerlink" href="#solver_nnz" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="attribute">
+<dt id="subtree_angmom">
+<code class="descname">subtree_angmom</code><a class="headerlink" href="#subtree_angmom" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="attribute">
+<dt id="subtree_com">
+<code class="descname">subtree_com</code><a class="headerlink" href="#subtree_com" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="attribute">
+<dt id="subtree_linvel">
+<code class="descname">subtree_linvel</code><a class="headerlink" href="#subtree_linvel" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="attribute">
+<dt id="ten_length">
+<code class="descname">ten_length</code><a class="headerlink" href="#ten_length" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="attribute">
+<dt id="ten_moment">
+<code class="descname">ten_moment</code><a class="headerlink" href="#ten_moment" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="attribute">
+<dt id="ten_velocity">
+<code class="descname">ten_velocity</code><a class="headerlink" href="#ten_velocity" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="attribute">
+<dt id="ten_wrapadr">
+<code class="descname">ten_wrapadr</code><a class="headerlink" href="#ten_wrapadr" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="attribute">
+<dt id="ten_wrapnum">
+<code class="descname">ten_wrapnum</code><a class="headerlink" href="#ten_wrapnum" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="attribute">
+<dt id="time">
+<code class="descname">time</code><a class="headerlink" href="#time" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="attribute">
+<dt id="timer">
+<code class="descname">timer</code><a class="headerlink" href="#timer" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="attribute">
+<dt id="userdata">
+<code class="descname">userdata</code><a class="headerlink" href="#userdata" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="attribute">
+<dt id="warning">
+<code class="descname">warning</code><a class="headerlink" href="#warning" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="attribute">
+<dt id="wrap_obj">
+<code class="descname">wrap_obj</code><a class="headerlink" href="#wrap_obj" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="attribute">
+<dt id="wrap_xpos">
+<code class="descname">wrap_xpos</code><a class="headerlink" href="#wrap_xpos" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="attribute">
+<dt id="xanchor">
+<code class="descname">xanchor</code><a class="headerlink" href="#xanchor" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="attribute">
+<dt id="xaxis">
+<code class="descname">xaxis</code><a class="headerlink" href="#xaxis" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="attribute">
+<dt id="xfrc_applied">
+<code class="descname">xfrc_applied</code><a class="headerlink" href="#xfrc_applied" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="attribute">
+<dt id="ximat">
+<code class="descname">ximat</code><a class="headerlink" href="#ximat" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="attribute">
+<dt id="xipos">
+<code class="descname">xipos</code><a class="headerlink" href="#xipos" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<p class="rubric">Methods</p><dl class="method">
+<dt id="get_body_jacp">
+<code class="descname">get_body_jacp</code><span class="sig-paren">(</span><em>name</em><span class="sig-paren">)</span><a class="headerlink" href="#get_body_jacp" title="Permalink to this definition">¶</a></dt>
+<dd><p>Get the entry in <code class="docutils literal"><span class="pre">jacp</span></code> corresponding to the body with the given <cite>name</cite></p>
+</dd></dl>
+
+<dl class="method">
+<dt id="get_body_jacr">
+<code class="descname">get_body_jacr</code><span class="sig-paren">(</span><em>name</em><span class="sig-paren">)</span><a class="headerlink" href="#get_body_jacr" title="Permalink to this definition">¶</a></dt>
+<dd><p>Get the entry in <code class="docutils literal"><span class="pre">jacr</span></code> corresponding to the body with the given <cite>name</cite></p>
+</dd></dl>
+
+<dl class="method">
+<dt id="get_body_ximat">
+<code class="descname">get_body_ximat</code><span class="sig-paren">(</span><em>name</em><span class="sig-paren">)</span><a class="headerlink" href="#get_body_ximat" title="Permalink to this definition">¶</a></dt>
+<dd><p>Get the entry in <code class="docutils literal"><span class="pre">ximat</span></code> corresponding to the body with the given <cite>name</cite></p>
+</dd></dl>
+
+<dl class="method">
+<dt id="get_body_xipos">
+<code class="descname">get_body_xipos</code><span class="sig-paren">(</span><em>name</em><span class="sig-paren">)</span><a class="headerlink" href="#get_body_xipos" title="Permalink to this definition">¶</a></dt>
+<dd><p>Get the entry in <code class="docutils literal"><span class="pre">xipos</span></code> corresponding to the body with the given <cite>name</cite></p>
+</dd></dl>
+
+<dl class="method">
+<dt id="get_body_xmat">
+<code class="descname">get_body_xmat</code><span class="sig-paren">(</span><em>name</em><span class="sig-paren">)</span><a class="headerlink" href="#get_body_xmat" title="Permalink to this definition">¶</a></dt>
+<dd><p>Get the entry in <code class="docutils literal"><span class="pre">xmat</span></code> corresponding to the body with the given <cite>name</cite></p>
+</dd></dl>
+
+<dl class="method">
+<dt id="get_body_xpos">
+<code class="descname">get_body_xpos</code><span class="sig-paren">(</span><em>name</em><span class="sig-paren">)</span><a class="headerlink" href="#get_body_xpos" title="Permalink to this definition">¶</a></dt>
+<dd><p>Get the entry in <code class="docutils literal"><span class="pre">xpos</span></code> corresponding to the body with the given <cite>name</cite></p>
+</dd></dl>
+
+<dl class="method">
+<dt id="get_body_xquat">
+<code class="descname">get_body_xquat</code><span class="sig-paren">(</span><em>name</em><span class="sig-paren">)</span><a class="headerlink" href="#get_body_xquat" title="Permalink to this definition">¶</a></dt>
+<dd><p>Get the entry in <code class="docutils literal"><span class="pre">xquat</span></code> corresponding to the body with the given <cite>name</cite></p>
+</dd></dl>
+
+<dl class="method">
+<dt id="get_body_xvelp">
+<code class="descname">get_body_xvelp</code><span class="sig-paren">(</span><em>name</em><span class="sig-paren">)</span><a class="headerlink" href="#get_body_xvelp" title="Permalink to this definition">¶</a></dt>
+<dd><p>Get the entry in <code class="docutils literal"><span class="pre">xvelp</span></code> corresponding to the body with the given <cite>name</cite></p>
+</dd></dl>
+
+<dl class="method">
+<dt id="get_body_xvelr">
+<code class="descname">get_body_xvelr</code><span class="sig-paren">(</span><em>name</em><span class="sig-paren">)</span><a class="headerlink" href="#get_body_xvelr" title="Permalink to this definition">¶</a></dt>
+<dd><p>Get the entry in <code class="docutils literal"><span class="pre">xvelr</span></code> corresponding to the body with the given <cite>name</cite></p>
+</dd></dl>
+
+<dl class="method">
+<dt id="get_cam_xmat">
+<code class="descname">get_cam_xmat</code><span class="sig-paren">(</span><em>name</em><span class="sig-paren">)</span><a class="headerlink" href="#get_cam_xmat" title="Permalink to this definition">¶</a></dt>
+<dd><p>Get the entry in <code class="docutils literal"><span class="pre">xmat</span></code> corresponding to the cam with the given <cite>name</cite></p>
+</dd></dl>
+
+<dl class="method">
+<dt id="get_cam_xpos">
+<code class="descname">get_cam_xpos</code><span class="sig-paren">(</span><em>name</em><span class="sig-paren">)</span><a class="headerlink" href="#get_cam_xpos" title="Permalink to this definition">¶</a></dt>
+<dd><p>Get the entry in <code class="docutils literal"><span class="pre">xpos</span></code> corresponding to the cam with the given <cite>name</cite></p>
+</dd></dl>
+
+<dl class="method">
+<dt id="get_camera_xmat">
+<code class="descname">get_camera_xmat</code><span class="sig-paren">(</span><em>name</em><span class="sig-paren">)</span><a class="headerlink" href="#get_camera_xmat" title="Permalink to this definition">¶</a></dt>
+<dd><p>Get the entry in <code class="docutils literal"><span class="pre">xmat</span></code> corresponding to the camera with the given <cite>name</cite></p>
+</dd></dl>
+
+<dl class="method">
+<dt id="get_camera_xpos">
+<code class="descname">get_camera_xpos</code><span class="sig-paren">(</span><em>name</em><span class="sig-paren">)</span><a class="headerlink" href="#get_camera_xpos" title="Permalink to this definition">¶</a></dt>
+<dd><p>Get the entry in <code class="docutils literal"><span class="pre">xpos</span></code> corresponding to the camera with the given <cite>name</cite></p>
+</dd></dl>
+
+<dl class="method">
+<dt id="get_geom_jacp">
+<code class="descname">get_geom_jacp</code><span class="sig-paren">(</span><em>name</em><span class="sig-paren">)</span><a class="headerlink" href="#get_geom_jacp" title="Permalink to this definition">¶</a></dt>
+<dd><p>Get the entry in <code class="docutils literal"><span class="pre">jacp</span></code> corresponding to the geom with the given <cite>name</cite></p>
+</dd></dl>
+
+<dl class="method">
+<dt id="get_geom_jacr">
+<code class="descname">get_geom_jacr</code><span class="sig-paren">(</span><em>name</em><span class="sig-paren">)</span><a class="headerlink" href="#get_geom_jacr" title="Permalink to this definition">¶</a></dt>
+<dd><p>Get the entry in <code class="docutils literal"><span class="pre">jacr</span></code> corresponding to the geom with the given <cite>name</cite></p>
+</dd></dl>
+
+<dl class="method">
+<dt id="get_geom_xmat">
+<code class="descname">get_geom_xmat</code><span class="sig-paren">(</span><em>name</em><span class="sig-paren">)</span><a class="headerlink" href="#get_geom_xmat" title="Permalink to this definition">¶</a></dt>
+<dd><p>Get the entry in <code class="docutils literal"><span class="pre">xmat</span></code> corresponding to the geom with the given <cite>name</cite></p>
+</dd></dl>
+
+<dl class="method">
+<dt id="get_geom_xpos">
+<code class="descname">get_geom_xpos</code><span class="sig-paren">(</span><em>name</em><span class="sig-paren">)</span><a class="headerlink" href="#get_geom_xpos" title="Permalink to this definition">¶</a></dt>
+<dd><p>Get the entry in <code class="docutils literal"><span class="pre">xpos</span></code> corresponding to the geom with the given <cite>name</cite></p>
+</dd></dl>
+
+<dl class="method">
+<dt id="get_geom_xvelp">
+<code class="descname">get_geom_xvelp</code><span class="sig-paren">(</span><em>name</em><span class="sig-paren">)</span><a class="headerlink" href="#get_geom_xvelp" title="Permalink to this definition">¶</a></dt>
+<dd><p>Get the entry in <code class="docutils literal"><span class="pre">xvelp</span></code> corresponding to the geom with the given <cite>name</cite></p>
+</dd></dl>
+
+<dl class="method">
+<dt id="get_geom_xvelr">
+<code class="descname">get_geom_xvelr</code><span class="sig-paren">(</span><em>name</em><span class="sig-paren">)</span><a class="headerlink" href="#get_geom_xvelr" title="Permalink to this definition">¶</a></dt>
+<dd><p>Get the entry in <code class="docutils literal"><span class="pre">xvelr</span></code> corresponding to the geom with the given <cite>name</cite></p>
+</dd></dl>
+
+<dl class="method">
+<dt id="get_joint_qpos">
+<code class="descname">get_joint_qpos</code><span class="sig-paren">(</span><em>name</em><span class="sig-paren">)</span><a class="headerlink" href="#get_joint_qpos" title="Permalink to this definition">¶</a></dt>
+<dd><p>Get the entry in <code class="docutils literal"><span class="pre">qpos</span></code> corresponding to the joint with the given <cite>name</cite></p>
+</dd></dl>
+
+<dl class="method">
+<dt id="get_joint_qvel">
+<code class="descname">get_joint_qvel</code><span class="sig-paren">(</span><em>name</em><span class="sig-paren">)</span><a class="headerlink" href="#get_joint_qvel" title="Permalink to this definition">¶</a></dt>
+<dd><p>Get the entry in <code class="docutils literal"><span class="pre">qvel</span></code> corresponding to the joint with the given <cite>name</cite></p>
+</dd></dl>
+
+<dl class="method">
+<dt id="get_joint_xanchor">
+<code class="descname">get_joint_xanchor</code><span class="sig-paren">(</span><em>name</em><span class="sig-paren">)</span><a class="headerlink" href="#get_joint_xanchor" title="Permalink to this definition">¶</a></dt>
+<dd><p>Get the entry in <code class="docutils literal"><span class="pre">xanchor</span></code> corresponding to the joint with the given <cite>name</cite></p>
+</dd></dl>
+
+<dl class="method">
+<dt id="get_joint_xaxis">
+<code class="descname">get_joint_xaxis</code><span class="sig-paren">(</span><em>name</em><span class="sig-paren">)</span><a class="headerlink" href="#get_joint_xaxis" title="Permalink to this definition">¶</a></dt>
+<dd><p>Get the entry in <code class="docutils literal"><span class="pre">xaxis</span></code> corresponding to the joint with the given <cite>name</cite></p>
+</dd></dl>
+
+<dl class="method">
+<dt id="get_light_xdir">
+<code class="descname">get_light_xdir</code><span class="sig-paren">(</span><em>name</em><span class="sig-paren">)</span><a class="headerlink" href="#get_light_xdir" title="Permalink to this definition">¶</a></dt>
+<dd><p>Get the entry in <code class="docutils literal"><span class="pre">xdir</span></code> corresponding to the light with the given <cite>name</cite></p>
+</dd></dl>
+
+<dl class="method">
+<dt id="get_light_xpos">
+<code class="descname">get_light_xpos</code><span class="sig-paren">(</span><em>name</em><span class="sig-paren">)</span><a class="headerlink" href="#get_light_xpos" title="Permalink to this definition">¶</a></dt>
+<dd><p>Get the entry in <code class="docutils literal"><span class="pre">xpos</span></code> corresponding to the light with the given <cite>name</cite></p>
+</dd></dl>
+
+<dl class="method">
+<dt id="get_mocap_pos">
+<code class="descname">get_mocap_pos</code><span class="sig-paren">(</span><em>name</em><span class="sig-paren">)</span><a class="headerlink" href="#get_mocap_pos" title="Permalink to this definition">¶</a></dt>
+<dd><p>Get the entry in <code class="docutils literal"><span class="pre">pos</span></code> corresponding to the mocap with the given <cite>name</cite></p>
+</dd></dl>
+
+<dl class="method">
+<dt id="get_mocap_quat">
+<code class="descname">get_mocap_quat</code><span class="sig-paren">(</span><em>name</em><span class="sig-paren">)</span><a class="headerlink" href="#get_mocap_quat" title="Permalink to this definition">¶</a></dt>
+<dd><p>Get the entry in <code class="docutils literal"><span class="pre">quat</span></code> corresponding to the mocap with the given <cite>name</cite></p>
+</dd></dl>
+
+<dl class="method">
+<dt id="get_site_jacp">
+<code class="descname">get_site_jacp</code><span class="sig-paren">(</span><em>name</em><span class="sig-paren">)</span><a class="headerlink" href="#get_site_jacp" title="Permalink to this definition">¶</a></dt>
+<dd><p>Get the entry in <code class="docutils literal"><span class="pre">jacp</span></code> corresponding to the site with the given <cite>name</cite></p>
+</dd></dl>
+
+<dl class="method">
+<dt id="get_site_jacr">
+<code class="descname">get_site_jacr</code><span class="sig-paren">(</span><em>name</em><span class="sig-paren">)</span><a class="headerlink" href="#get_site_jacr" title="Permalink to this definition">¶</a></dt>
+<dd><p>Get the entry in <code class="docutils literal"><span class="pre">jacr</span></code> corresponding to the site with the given <cite>name</cite></p>
+</dd></dl>
+
+<dl class="method">
+<dt id="get_site_xmat">
+<code class="descname">get_site_xmat</code><span class="sig-paren">(</span><em>name</em><span class="sig-paren">)</span><a class="headerlink" href="#get_site_xmat" title="Permalink to this definition">¶</a></dt>
+<dd><p>Get the entry in <code class="docutils literal"><span class="pre">xmat</span></code> corresponding to the site with the given <cite>name</cite></p>
+</dd></dl>
+
+<dl class="method">
+<dt id="get_site_xpos">
+<code class="descname">get_site_xpos</code><span class="sig-paren">(</span><em>name</em><span class="sig-paren">)</span><a class="headerlink" href="#get_site_xpos" title="Permalink to this definition">¶</a></dt>
+<dd><p>Get the entry in <code class="docutils literal"><span class="pre">xpos</span></code> corresponding to the site with the given <cite>name</cite></p>
+</dd></dl>
+
+<dl class="method">
+<dt id="get_site_xvelp">
+<code class="descname">get_site_xvelp</code><span class="sig-paren">(</span><em>name</em><span class="sig-paren">)</span><a class="headerlink" href="#get_site_xvelp" title="Permalink to this definition">¶</a></dt>
+<dd><p>Get the entry in <code class="docutils literal"><span class="pre">xvelp</span></code> corresponding to the site with the given <cite>name</cite></p>
+</dd></dl>
+
+<dl class="method">
+<dt id="get_site_xvelr">
+<code class="descname">get_site_xvelr</code><span class="sig-paren">(</span><em>name</em><span class="sig-paren">)</span><a class="headerlink" href="#get_site_xvelr" title="Permalink to this definition">¶</a></dt>
+<dd><p>Get the entry in <code class="docutils literal"><span class="pre">xvelr</span></code> corresponding to the site with the given <cite>name</cite></p>
+</dd></dl>
+
+</dd></dl></div>
+<div class="section" id="mjsimpool-batched-simulation">
+<h2><a class="toc-backref" href="#id3">MjSimPool: Batched simulation</a><a class="headerlink" href="#mjsimpool-batched-simulation" title="Permalink to this headline">¶</a></h2>
+<dl class="class">
+<dt id="mujoco_py.MjSimPool">
+<em class="property">class </em><code class="descclassname">mujoco_py.</code><code class="descname">MjSimPool</code><a class="headerlink" href="#mujoco_py.MjSimPool" title="Permalink to this definition">¶</a></dt>
+<dd><p>Keeps a pool of multiple MjSims and enables stepping them quickly
+in parallel.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><p class="first"><strong>sims</strong> : list of <a class="reference internal" href="#mujoco_py.MjSim" title="mujoco_py.MjSim"><code class="xref py py-class docutils literal"><span class="pre">MjSim</span></code></a></p>
+<blockquote>
+<div><p>List of simulators that make up the pool.</p>
+</div></blockquote>
+<p><strong>nsubsteps:</strong></p>
+<blockquote class="last">
+<div><p>Number of substeps to run on <a class="reference internal" href="#mujoco_py.MjSim.step" title="mujoco_py.MjSim.step"><code class="xref py py-meth docutils literal"><span class="pre">step()</span></code></a>. The individual
+simulators’ <code class="docutils literal"><span class="pre">nsubstep</span></code> will be ignored.</p>
+</div></blockquote>
+</td>
+</tr>
+</tbody>
+</table>
+<p class="rubric">Attributes</p>
+<p class="rubric">Methods</p>
+<dl class="staticmethod">
+<dt id="mujoco_py.MjSimPool.create_from_sim">
+<em class="property">static </em><code class="descname">create_from_sim</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#mujoco_py.MjSimPool.create_from_sim" title="Permalink to this definition">¶</a></dt>
+<dd><p>Create an <a class="reference internal" href="#mujoco_py.MjSimPool" title="mujoco_py.MjSimPool"><code class="xref py py-class docutils literal"><span class="pre">MjSimPool</span></code></a> by cloning the provided <code class="docutils literal"><span class="pre">sim</span></code> a total of <code class="docutils literal"><span class="pre">nsims</span></code> times.
+Returns the created <a class="reference internal" href="#mujoco_py.MjSimPool" title="mujoco_py.MjSimPool"><code class="xref py py-class docutils literal"><span class="pre">MjSimPool</span></code></a>.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><p class="first"><strong>sim</strong> : <a class="reference internal" href="#mujoco_py.MjSim" title="mujoco_py.MjSim"><code class="xref py py-class docutils literal"><span class="pre">MjSim</span></code></a></p>
+<blockquote>
+<div><p>The prototype to clone.</p>
+</div></blockquote>
+<p><strong>nsims</strong> : int</p>
+<blockquote class="last">
+<div><p>Number of clones to create.</p>
+</div></blockquote>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="method">
+<dt id="mujoco_py.MjSimPool.forward">
+<code class="descname">forward</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#mujoco_py.MjSimPool.forward" title="Permalink to this definition">¶</a></dt>
+<dd><p>Calls <code class="docutils literal"><span class="pre">mj_forward</span></code> on all simulations in parallel.
+If <code class="xref py py-attr docutils literal"><span class="pre">nsims</span></code> is specified, than only the first <code class="xref py py-attr docutils literal"><span class="pre">nsims</span></code> simulator are forwarded.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="mujoco_py.MjSimPool.reset">
+<code class="descname">reset</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#mujoco_py.MjSimPool.reset" title="Permalink to this definition">¶</a></dt>
+<dd><p>Resets all simulations in pool.
+If <code class="xref py py-attr docutils literal"><span class="pre">nsims</span></code> is specified, than only the first <code class="xref py py-attr docutils literal"><span class="pre">nsims</span></code> simulators are reset.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="mujoco_py.MjSimPool.step">
+<code class="descname">step</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#mujoco_py.MjSimPool.step" title="Permalink to this definition">¶</a></dt>
+<dd><p>Calls <code class="docutils literal"><span class="pre">mj_step</span></code> on all simulations in parallel, with <code class="docutils literal"><span class="pre">nsubsteps</span></code> as
+specified when the pool was created.</p>
+<p>If <code class="xref py py-attr docutils literal"><span class="pre">nsims</span></code> is specified, than only the first <code class="xref py py-attr docutils literal"><span class="pre">nsims</span></code> simulator are stepped.</p>
+</dd></dl>
+
+</dd></dl>
+
+</div>
+<div class="section" id="mjviewer-3d-rendering">
+<h2><a class="toc-backref" href="#id4">MjViewer: 3D rendering</a><a class="headerlink" href="#mjviewer-3d-rendering" title="Permalink to this headline">¶</a></h2>
+<dl class="class">
+<dt id="mujoco_py.MjViewerBasic">
+<em class="property">class </em><code class="descclassname">mujoco_py.</code><code class="descname">MjViewerBasic</code><span class="sig-paren">(</span><em>sim</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/mujoco_py/mjviewer.html#MjViewerBasic"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#mujoco_py.MjViewerBasic" title="Permalink to this definition">¶</a></dt>
+<dd><p>A simple display GUI showing the scene of an <a class="reference internal" href="#mujoco_py.MjSim" title="mujoco_py.MjSim"><code class="xref py py-class docutils literal"><span class="pre">MjSim</span></code></a> with a mouse-movable camera.</p>
+<p><a class="reference internal" href="#mujoco_py.MjViewer" title="mujoco_py.MjViewer"><code class="xref py py-class docutils literal"><span class="pre">MjViewer</span></code></a> extends this class to provide more sophisticated playback and interaction controls.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><p class="first"><strong>sim</strong> : <a class="reference internal" href="#mujoco_py.MjSim" title="mujoco_py.MjSim"><code class="xref py py-class docutils literal"><span class="pre">MjSim</span></code></a></p>
+<blockquote class="last">
+<div><p>The simulator to display.</p>
+</div></blockquote>
+</td>
+</tr>
+</tbody>
+</table>
+<p class="rubric">Attributes</p>
+<p class="rubric">Methods</p>
+</dd></dl>
+
+<dl class="class">
+<dt id="mujoco_py.MjViewer">
+<em class="property">class </em><code class="descclassname">mujoco_py.</code><code class="descname">MjViewer</code><span class="sig-paren">(</span><em>sim</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/mujoco_py/mjviewer.html#MjViewer"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#mujoco_py.MjViewer" title="Permalink to this definition">¶</a></dt>
+<dd><p>Extends <a class="reference internal" href="#mujoco_py.MjViewerBasic" title="mujoco_py.MjViewerBasic"><code class="xref py py-class docutils literal"><span class="pre">MjViewerBasic</span></code></a> to add video recording, interactive time and interaction controls.</p>
+<p>The key bindings are as follows:</p>
+<ul class="simple">
+<li>TAB: Switch between MuJoCo cameras.</li>
+<li>H: Toggle hiding all GUI components.</li>
+<li>SPACE: Pause/unpause the simulation.</li>
+<li>RIGHT: Advance simulation by one step.</li>
+<li>V: Start/stop video recording.</li>
+<li>T: Capture screenshot.</li>
+<li>I: Drop into <code class="docutils literal"><span class="pre">ipdb</span></code> debugger.</li>
+<li>S/F: Decrease/Increase simulation playback speed.</li>
+<li>C: Toggle visualization of contact forces (off by default).</li>
+<li>D: Enable/disable frame skipping when rendering lags behind real time.</li>
+<li>R: Toggle transparency of geoms.</li>
+<li>M: Toggle display of mocap bodies.</li>
+</ul>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><p class="first"><strong>sim</strong> : <a class="reference internal" href="#mujoco_py.MjSim" title="mujoco_py.MjSim"><code class="xref py py-class docutils literal"><span class="pre">MjSim</span></code></a></p>
+<blockquote class="last">
+<div><p>The simulator to display.</p>
+</div></blockquote>
+</td>
+</tr>
+</tbody>
+</table>
+<p class="rubric">Attributes</p>
+<p class="rubric">Methods</p>
+</dd></dl>
+
+</div>
+</div>
+
+
+           </div>
+           <div class="articleComments">
+            
+           </div>
+          </div>
+          <footer>
+  
+    <div class="rst-footer-buttons" role="navigation" aria-label="footer navigation">
+      
+        <a href="internals.html" class="btn btn-neutral float-right" title="Internals" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right"></span></a>
+      
+      
+        <a href="index.html" class="btn btn-neutral" title="mujoco-py Documentation" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left"></span> Previous</a>
+      
+    </div>
+  
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>
+        &copy; Copyright 2017, OpenAI.
+
+    </p>
+  </div>
+  Built with <a href="http://sphinx-doc.org/">Sphinx</a> using a <a href="https://github.com/snide/sphinx_rtd_theme">theme</a> provided by <a href="https://readthedocs.org">Read the Docs</a>. 
+
+</footer>
+
+        </div>
+      </div>
+
+    </section>
+
+  </div>
+  
+
+
+  
+
+    <script type="text/javascript">
+        var DOCUMENTATION_OPTIONS = {
+            URL_ROOT:'./',
+            VERSION:'1.50.0.14',
+            COLLAPSE_INDEX:false,
+            FILE_SUFFIX:'.html',
+            HAS_SOURCE:  true,
+            SOURCELINK_SUFFIX: '.txt'
+        };
+    </script>
+      <script type="text/javascript" src="_static/jquery.js"></script>
+      <script type="text/javascript" src="_static/underscore.js"></script>
+      <script type="text/javascript" src="_static/doctools.js"></script>
+
+  
+
+  
+  
+    <script type="text/javascript" src="_static/js/theme.js"></script>
+  
+
+  
+  
+  <script type="text/javascript">
+      jQuery(function () {
+          SphinxRtdTheme.StickyNav.enable();
+      });
+  </script>
+   
+
+</body>
+</html>

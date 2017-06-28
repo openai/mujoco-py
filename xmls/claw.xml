@@ -1,0 +1,79 @@
+<?xml version="1.0" encoding="utf-8"?>
+<mujoco>
+	<default>
+		<default class="position">
+			<position ctrllimited="true" forcelimited="false"></position>
+		</default>
+		<default class="geom0">
+			<geom conaffinity="0" contype="1" friction="1 0.005 0.001" margin="0.001" rgba="0.75 0.6 0.5 1" solimp="0.95 0.95 0.01" solref="0.008 1" user="0"></geom>
+		</default>
+		<default class="geom1">
+			<geom conaffinity="0" contype="1" friction="1 0.005 0.001" margin="0.001" rgba="0.7 0.6 0.55 1" solimp="0.95 0.95 0.01" solref="0.008 1" user="0"></geom>
+		</default>
+		<default class="arm">
+			<joint armature="0.1" damping="5" limited="true" stiffness="0" user="0"></joint>
+		</default>
+		<default class="not_arm">
+			<joint armature="0.1" damping="1" limited="true" stiffness="0" user="0"></joint>
+		</default>
+	</default>
+	<equality>
+		<weld body1="mocap" body2="claw" solimp="0.02 0.1 0.05" solref="0.06 1"></weld>
+	</equality>
+	<worldbody>
+		<body mocap="true" name="mocap" pos="0.37 0.1 -0.065" euler="3.1416 0 0">
+			<geom class="geom1" conaffinity="0" contype="0" fromto="0 0.02 0 0 -0.02 0" rgba="0.5 0.5 0.5 0.15" size="0.01" type="capsule"></geom>
+		</body>
+		<body name="basearm" pos="0.1 0.1 0.395">
+			<camera euler="0 0 0" fovy="40" name="rgb" pos="0 0 2"></camera>
+			<geom class="geom0" pos="0 0 0.025" size="0.1 0.1 0.025" type="box"></geom>
+			<joint axis="1 0 0" class="not_arm" damping="10" limited="false" margin="0.001" name="slide0" pos="0 0 0" type="slide"></joint>
+			<joint axis="0 1 0" class="not_arm" damping="10" limited="false" margin="0.001" name="slide1" pos="0 0 0" type="slide"></joint>
+			<joint axis="0 0 1" class="not_arm" damping="1000000" limited="false" margin="0.001" name="slide2" pos="0 0 0" type="slide"></joint>
+			<body name="upperarm" pos="0 0 0">
+				<geom class="geom0" fromto="0 0 0 0 0 -0.345" size="0.05" type="capsule"></geom>
+				<joint axis="1 0 0" class="arm" name="s_abduction" pos="0 0 0" range="-1.57 1.57" type="hinge" user="1"></joint>
+				<joint axis="0 -1 0" class="arm" name="s_flexion" pos="0 0 0" range="-0.85 1.2" type="hinge" user="2"></joint>
+				<joint axis="0 0 1" class="arm" name="s_rotation" pos="0 0 0" range="-0.85 0.85" type="hinge" user="3"></joint>
+				<body name="forearm" pos="0 0 -0.36">
+					<geom class="geom0" fromto="0 0 0 0.225 0 0" size="0.035" type="capsule"></geom>
+					<joint axis="0 -1 0" class="arm" name="e_flexion" pos="0 0 0" range="-1.5 1.05" type="hinge" user="4"></joint>
+					<joint axis="-1 0 0" class="arm" name="e_pronation" pos="0 0 0" range="-1.5 1.57" type="hinge" user="5"></joint>
+					<body name="claw" pos="0.27 0 0" euler="3.1416 0 0">
+						<geom class="geom1" fromto="0 0.02 0 0 -0.02 0" name="Geomclaw" size="0.01" type="capsule"></geom>
+						<joint axis="0 0 1" class="not_arm" name="w_abduction" pos="0 0 0" range="-0.5 0.5" type="hinge" user="6"></joint>
+						<joint axis="0 -1 0" class="not_arm" name="w_flexion" pos="0 0 0" range="-1.05 1.05" type="hinge" user="7"></joint>
+						<body name="rightclaw" pos="0.01 -0.02 0">
+							<geom class="geom1" fromto="0 0 0.015 0.03 -0.02 0.015" name="rightclaw_it" size="0.005" type="capsule"></geom>
+							<geom class="geom1" fromto="0.03 -0.02 0.015 0.07 0 0.015" name="rightclaw_ot" size="0.005" type="capsule"></geom>
+							<geom class="geom1" fromto="0 0 -0.015 0.03 -0.02 -0.015" name="rightclaw_ib" size="0.005" type="capsule"></geom>
+							<geom class="geom1" fromto="0.03 -0.02 -0.015 0.07 0 -0.015" name="rightclaw_ob" size="0.005" type="capsule"></geom>
+							<joint axis="0 0 -1" class="not_arm" name="rc_close" pos="0 0 0" range="-1.05 1.05" type="hinge" user="8"></joint>
+						</body>
+						<body name="leftclaw" pos="0.01 0.02 0">
+							<geom class="geom1" fromto="0 0 0.015 0.03 0.02 0.015" name="leftclaw_it" size="0.005" type="capsule"></geom>
+							<geom class="geom1" fromto="0.03 0.02 0.015 0.07 0 0.015" name="leftclaw_ot" size="0.005" type="capsule"></geom>
+							<geom class="geom1" fromto="0 0 -0.015 0.03 0.02 -0.015" name="leftclaw_ib" size="0.005" type="capsule"></geom>
+							<geom class="geom1" fromto="0.03 0.02 -0.015 0.07 0 -0.015" name="leftclaw_ob" size="0.005" type="capsule"></geom>
+							<joint axis="0 0 1" class="not_arm" name="lc_close" pos="0 0 0" range="-1.05 1.05" type="hinge" user="9"></joint>
+						</body>
+						<site name="grip" pos="0.04 0 0" rgba="1 0 0 1" size="0.01 0.01 0.01"></site>
+					</body>
+				</body>
+			</body>
+		</body>
+	</worldbody>
+	<actuator>
+		<position class="position" ctrllimited="false" joint="slide0" kp="100" name="slide0"></position>
+		<position class="position" ctrllimited="false" joint="slide1" kp="100" name="slide1"></position>
+		<position class="position" ctrlrange="-1.57 0.7" joint="s_abduction" kp="100" name="As_abduction"></position>
+		<position class="position" ctrlrange="-0.85 1.57" joint="s_flexion" kp="100" name="As_flexion"></position>
+		<position class="position" ctrlrange="-0.85 0.85" joint="s_rotation" kp="100" name="As_rotation"></position>
+		<position class="position" ctrlrange="-1.5 1.05" joint="e_flexion" kp="70" name="Ae_flexion"></position>
+		<position class="position" ctrlrange="-1.5 1.57" joint="e_pronation" kp="70" name="Ae_pronation"></position>
+		<position class="position" ctrlrange="-0.5 0.5" joint="w_abduction" kp="30" name="Aw_abduction"></position>
+		<position class="position" ctrlrange="-1.05 1.05" joint="w_flexion" kp="30" name="Aw_flexion"></position>
+		<position class="position" ctrlrange="-1.05 1.05" joint="rc_close" kp="10" name="Arc_close" user="1"></position>
+		<position class="position" ctrlrange="-1.05 1.05" joint="lc_close" kp="10" name="Alc_close" user="1"></position>
+	</actuator>
+</mujoco>

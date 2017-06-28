@@ -1,0 +1,17 @@
+<?xml version="1.0" encoding="utf-8"?>
+<mujoco>
+    <include file="include.xml"/>
+    <worldbody>
+        <body name="particle" pos="0.15 0.15 0.15">
+            <joint axis="1 0 0" damping="0.1" name="slide0" pos="0 0 0" type="slide"></joint>
+            <joint axis="0 1 0" damping="0.1" name="slide1" pos="0 0 0" type="slide"></joint>
+            <joint axis="0 0 1" damping="10000" name="slide2" pos="0 0 0" type="slide"></joint>
+            <geom mass="1" pos="0 0 0" rgba="1 0 0 1" size="0.15" type="sphere"></geom>
+            <camera euler="0 0 0" fovy="40" name="rgb" pos="0 0 2.5"></camera>
+        </body>
+    </worldbody>
+    <actuator>
+        <motor gear="100" joint="slide0"></motor>
+        <motor gear="100" joint="slide1"></motor>
+    </actuator>
+</mujoco>

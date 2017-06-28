@@ -1,0 +1,32 @@
+<?xml version="1.0" encoding="utf-8"?>
+<mujoco>
+	<compiler angle="radian" eulerseq="xyz" coordinate="local"></compiler>
+	<worldbody>
+		<body pos="0 0 0">
+			<inertial diaginertia="1 1 1" mass="1" pos="0 0 0"></inertial>
+			<body name="door" pos="0.34 0.17 0.25">
+				<inertial diaginertia="0.0914 0.0522 0.0437" mass="2.4346" pos="0.0297 -0.0015 0" quat="0.7011 0 0 0.7131"></inertial>
+				<joint armature="0.01" axis="0 0 1" damping="1" frictionloss="0.1" limited="true" name="door_hinge" pos="0.25 0 0" range="0 1.57" type="hinge"></joint>
+				<geom condim="3" friction="1 1 1" size="0.2 0.05 0.25" type="box"></geom>
+				<geom pos="0.2 0 0" size="0.05 0.05 0.25" type="box"></geom>
+				<geom pos="-0.15 -0.065 -0.051" size="0.05 0.015 0.01" type="box"></geom>
+				<geom pos="-0.15 -0.065 0.051" size="0.05 0.015 0.01" type="box"></geom>
+				<geom pos="-0.15 -0.09 0" size="0.05 0.011 0.06" type="box"></geom>
+				<geom pos="-0.15 -0.16 0" size="0.01 0.01 0.05" type="box" euler="0 -1.5708 0"></geom>
+				<body name="latch" pos="-0.16 -0.065 0">
+					<inertial diaginertia="0.0038 0.0036 0.0002" mass="0.4657" pos="0.0042 -0.001 0" quat="0.504 0.504 0.496 0.496"></inertial>
+					<geom condim="1" size="0.15 0.01 0.0375" type="box"></geom>
+					<geom pos="0.125 -0.03 0" size="0.01 0.01 0.02" type="box"></geom>
+					<joint axis="1 0 0" frictionloss="0.1" limited="true" name="latch_joint" pos="0 0 0" range="0 0.15" type="slide"></joint>
+				</body>
+			</body>
+			<body name="frame" pos="0.05 0.17 0.25">
+				<geom condim="3" pos="0.65 0 0" size="0.05 0.05 0.25" type="box"></geom>
+				<geom condim="3" size="0.05 0.05 0.25" type="box"></geom>
+				<geom pos="0 -0.065 -0.051" size="0.05 0.015 0.01" type="box"></geom>
+				<geom pos="0 -0.065 0.051" size="0.05 0.015 0.01" type="box"></geom>
+				<geom pos="0 -0.09 0" size="0.05 0.011 0.06" type="box"></geom>
+			</body>
+		</body>
+	</worldbody>
+</mujoco>

@@ -1,0 +1,580 @@
+
+
+<!DOCTYPE html>
+<!--[if IE 8]><html class="no-js lt-ie9" lang="en" > <![endif]-->
+<!--[if gt IE 8]><!--> <html class="no-js" lang="en" > <!--<![endif]-->
+<head>
+  <meta charset="utf-8">
+  
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  
+  <title>mujoco_py.mjviewer &mdash; mujoco-py 1.50.0.14 documentation</title>
+  
+
+  
+  
+  
+  
+
+  
+
+  
+  
+    
+
+  
+
+  
+  
+    <link rel="stylesheet" href="../../_static/css/theme.css" type="text/css" />
+  
+
+  
+
+  
+        <link rel="index" title="Index"
+              href="../../genindex.html"/>
+        <link rel="search" title="Search" href="../../search.html"/>
+    <link rel="top" title="mujoco-py 1.50.0.14 documentation" href="../../index.html"/>
+        <link rel="up" title="Module code" href="../index.html"/> 
+
+  
+  <script src="../../_static/js/modernizr.min.js"></script>
+
+</head>
+
+<body class="wy-body-for-nav" role="document">
+
+   
+  <div class="wy-grid-for-nav">
+
+    
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search">
+          
+
+          
+            <a href="../../index.html" class="icon icon-home"> mujoco-py
+          
+
+          
+          </a>
+
+          
+            
+            
+              <div class="version">
+                1.50.0.14
+              </div>
+            
+          
+
+          
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+
+          
+        </div>
+
+        <div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="main navigation">
+          
+            
+            
+              
+            
+            
+              <ul>
+<li class="toctree-l1"><a class="reference internal" href="../../reference.html">API reference</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../internals.html">Internals</a></li>
+</ul>
+
+            
+          
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap">
+
+      
+      <nav class="wy-nav-top" role="navigation" aria-label="top navigation">
+        
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../../index.html">mujoco-py</a>
+        
+      </nav>
+
+
+      
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<div role="navigation" aria-label="breadcrumbs navigation">
+
+  <ul class="wy-breadcrumbs">
+    
+      <li><a href="../../index.html">Docs</a> &raquo;</li>
+        
+          <li><a href="../index.html">Module code</a> &raquo;</li>
+        
+      <li>mujoco_py.mjviewer</li>
+    
+    
+      <li class="wy-breadcrumbs-aside">
+        
+            
+        
+      </li>
+    
+  </ul>
+
+  
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+            
+  <h1>Source code for mujoco_py.mjviewer</h1><div class="highlight"><pre>
+<span></span><span class="kn">from</span> <span class="nn">threading</span> <span class="k">import</span> <span class="n">Lock</span>
+<span class="kn">import</span> <span class="nn">glfw</span>
+<span class="kn">from</span> <span class="nn">mujoco_py.builder</span> <span class="k">import</span> <span class="n">cymj</span>
+<span class="kn">from</span> <span class="nn">mujoco_py.generated</span> <span class="k">import</span> <span class="n">const</span>
+<span class="kn">import</span> <span class="nn">time</span>
+<span class="kn">import</span> <span class="nn">copy</span>
+<span class="kn">from</span> <span class="nn">multiprocessing</span> <span class="k">import</span> <span class="n">Process</span>
+<span class="kn">from</span> <span class="nn">mujoco_py.utils</span> <span class="k">import</span> <span class="n">rec_copy</span><span class="p">,</span> <span class="n">rec_assign</span>
+<span class="kn">import</span> <span class="nn">imageio</span>
+
+
+<div class="viewcode-block" id="MjViewerBasic"><a class="viewcode-back" href="../../reference.html#mujoco_py.MjViewerBasic">[docs]</a><span class="k">class</span> <span class="nc">MjViewerBasic</span><span class="p">(</span><span class="n">cymj</span><span class="o">.</span><span class="n">MjRenderContextWindow</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    A simple display GUI showing the scene of an :class:`.MjSim` with a mouse-movable camera.</span>
+
+<span class="sd">    :class:`.MjViewer` extends this class to provide more sophisticated playback and interaction controls.</span>
+
+<span class="sd">    Parameters</span>
+<span class="sd">    ----------</span>
+<span class="sd">    sim : :class:`.MjSim`</span>
+<span class="sd">        The simulator to display.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">sim</span><span class="p">):</span>
+        <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="n">sim</span><span class="p">)</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">_gui_lock</span> <span class="o">=</span> <span class="n">Lock</span><span class="p">()</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_button_left_pressed</span> <span class="o">=</span> <span class="kc">False</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_button_right_pressed</span> <span class="o">=</span> <span class="kc">False</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_last_mouse_x</span> <span class="o">=</span> <span class="mi">0</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_last_mouse_y</span> <span class="o">=</span> <span class="mi">0</span>
+
+        <span class="n">framebuffer_width</span><span class="p">,</span> <span class="n">_</span> <span class="o">=</span> <span class="n">glfw</span><span class="o">.</span><span class="n">get_framebuffer_size</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">window</span><span class="p">)</span>
+        <span class="n">window_width</span><span class="p">,</span> <span class="n">_</span> <span class="o">=</span> <span class="n">glfw</span><span class="o">.</span><span class="n">get_window_size</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">window</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_scale</span> <span class="o">=</span> <span class="n">framebuffer_width</span> <span class="o">*</span> <span class="mf">1.0</span> <span class="o">/</span> <span class="n">window_width</span>
+
+        <span class="n">glfw</span><span class="o">.</span><span class="n">set_cursor_pos_callback</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">window</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">_cursor_pos_callback</span><span class="p">)</span>
+        <span class="n">glfw</span><span class="o">.</span><span class="n">set_mouse_button_callback</span><span class="p">(</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">window</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">_mouse_button_callback</span><span class="p">)</span>
+        <span class="n">glfw</span><span class="o">.</span><span class="n">set_scroll_callback</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">window</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">_scroll_callback</span><span class="p">)</span>
+        <span class="n">glfw</span><span class="o">.</span><span class="n">set_key_callback</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">window</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">key_callback</span><span class="p">)</span>
+
+    <span class="k">def</span> <span class="nf">render</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Render the current simulation state to the screen or off-screen buffer.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">window</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="k">return</span>
+        <span class="k">elif</span> <span class="n">glfw</span><span class="o">.</span><span class="n">window_should_close</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">window</span><span class="p">):</span>
+            <span class="n">exit</span><span class="p">(</span><span class="mi">0</span><span class="p">)</span>
+
+        <span class="k">with</span> <span class="bp">self</span><span class="o">.</span><span class="n">_gui_lock</span><span class="p">:</span>
+            <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="n">render</span><span class="p">()</span>
+
+        <span class="n">glfw</span><span class="o">.</span><span class="n">poll_events</span><span class="p">()</span>
+
+    <span class="k">def</span> <span class="nf">key_callback</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">window</span><span class="p">,</span> <span class="n">key</span><span class="p">,</span> <span class="n">scancode</span><span class="p">,</span> <span class="n">action</span><span class="p">,</span> <span class="n">mods</span><span class="p">):</span>
+        <span class="k">if</span> <span class="n">action</span> <span class="o">==</span> <span class="n">glfw</span><span class="o">.</span><span class="n">RELEASE</span> <span class="ow">and</span> <span class="n">key</span> <span class="o">==</span> <span class="n">glfw</span><span class="o">.</span><span class="n">KEY_ESCAPE</span><span class="p">:</span>
+            <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;Pressed ESC&quot;</span><span class="p">)</span>
+            <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;Quitting.&quot;</span><span class="p">)</span>
+            <span class="n">exit</span><span class="p">(</span><span class="mi">0</span><span class="p">)</span>
+
+    <span class="k">def</span> <span class="nf">_cursor_pos_callback</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">window</span><span class="p">,</span> <span class="n">xpos</span><span class="p">,</span> <span class="n">ypos</span><span class="p">):</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_button_left_pressed</span> <span class="ow">or</span> <span class="bp">self</span><span class="o">.</span><span class="n">_button_right_pressed</span><span class="p">):</span>
+            <span class="k">return</span>
+
+        <span class="c1"># Determine whether to move, zoom or rotate view</span>
+        <span class="n">mod_shift</span> <span class="o">=</span> <span class="p">(</span>
+            <span class="n">glfw</span><span class="o">.</span><span class="n">get_key</span><span class="p">(</span><span class="n">window</span><span class="p">,</span> <span class="n">glfw</span><span class="o">.</span><span class="n">KEY_LEFT_SHIFT</span><span class="p">)</span> <span class="o">==</span> <span class="n">glfw</span><span class="o">.</span><span class="n">PRESS</span> <span class="ow">or</span>
+            <span class="n">glfw</span><span class="o">.</span><span class="n">get_key</span><span class="p">(</span><span class="n">window</span><span class="p">,</span> <span class="n">glfw</span><span class="o">.</span><span class="n">KEY_RIGHT_SHIFT</span><span class="p">)</span> <span class="o">==</span> <span class="n">glfw</span><span class="o">.</span><span class="n">PRESS</span><span class="p">)</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">_button_right_pressed</span><span class="p">:</span>
+            <span class="n">action</span> <span class="o">=</span> <span class="n">const</span><span class="o">.</span><span class="n">MOUSE_MOVE_H</span> <span class="k">if</span> <span class="n">mod_shift</span> <span class="k">else</span> <span class="n">const</span><span class="o">.</span><span class="n">MOUSE_MOVE_V</span>
+        <span class="k">elif</span> <span class="bp">self</span><span class="o">.</span><span class="n">_button_left_pressed</span><span class="p">:</span>
+            <span class="n">action</span> <span class="o">=</span> <span class="n">const</span><span class="o">.</span><span class="n">MOUSE_ROTATE_H</span> <span class="k">if</span> <span class="n">mod_shift</span> <span class="k">else</span> <span class="n">const</span><span class="o">.</span><span class="n">MOUSE_ROTATE_V</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">action</span> <span class="o">=</span> <span class="n">const</span><span class="o">.</span><span class="n">MOUSE_ZOOM</span>
+
+        <span class="c1"># Determine</span>
+        <span class="n">dx</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_scale</span> <span class="o">*</span> <span class="n">xpos</span><span class="p">)</span> <span class="o">-</span> <span class="bp">self</span><span class="o">.</span><span class="n">_last_mouse_x</span>
+        <span class="n">dy</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_scale</span> <span class="o">*</span> <span class="n">ypos</span><span class="p">)</span> <span class="o">-</span> <span class="bp">self</span><span class="o">.</span><span class="n">_last_mouse_y</span>
+        <span class="n">width</span><span class="p">,</span> <span class="n">height</span> <span class="o">=</span> <span class="n">glfw</span><span class="o">.</span><span class="n">get_framebuffer_size</span><span class="p">(</span><span class="n">window</span><span class="p">)</span>
+
+        <span class="k">with</span> <span class="bp">self</span><span class="o">.</span><span class="n">_gui_lock</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">move_camera</span><span class="p">(</span><span class="n">action</span><span class="p">,</span> <span class="n">dx</span> <span class="o">/</span> <span class="n">height</span><span class="p">,</span> <span class="n">dy</span> <span class="o">/</span> <span class="n">height</span><span class="p">)</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">_last_mouse_x</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_scale</span> <span class="o">*</span> <span class="n">xpos</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_last_mouse_y</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_scale</span> <span class="o">*</span> <span class="n">ypos</span><span class="p">)</span>
+
+    <span class="k">def</span> <span class="nf">_mouse_button_callback</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">window</span><span class="p">,</span> <span class="n">button</span><span class="p">,</span> <span class="n">act</span><span class="p">,</span> <span class="n">mods</span><span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_button_left_pressed</span> <span class="o">=</span> <span class="p">(</span>
+            <span class="n">glfw</span><span class="o">.</span><span class="n">get_mouse_button</span><span class="p">(</span><span class="n">window</span><span class="p">,</span> <span class="n">glfw</span><span class="o">.</span><span class="n">MOUSE_BUTTON_LEFT</span><span class="p">)</span> <span class="o">==</span> <span class="n">glfw</span><span class="o">.</span><span class="n">PRESS</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_button_right_pressed</span> <span class="o">=</span> <span class="p">(</span>
+            <span class="n">glfw</span><span class="o">.</span><span class="n">get_mouse_button</span><span class="p">(</span><span class="n">window</span><span class="p">,</span> <span class="n">glfw</span><span class="o">.</span><span class="n">MOUSE_BUTTON_RIGHT</span><span class="p">)</span> <span class="o">==</span> <span class="n">glfw</span><span class="o">.</span><span class="n">PRESS</span><span class="p">)</span>
+
+        <span class="n">x</span><span class="p">,</span> <span class="n">y</span> <span class="o">=</span> <span class="n">glfw</span><span class="o">.</span><span class="n">get_cursor_pos</span><span class="p">(</span><span class="n">window</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_last_mouse_x</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_scale</span> <span class="o">*</span> <span class="n">x</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_last_mouse_y</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_scale</span> <span class="o">*</span> <span class="n">y</span><span class="p">)</span>
+
+    <span class="k">def</span> <span class="nf">_scroll_callback</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">window</span><span class="p">,</span> <span class="n">x_offset</span><span class="p">,</span> <span class="n">y_offset</span><span class="p">):</span>
+        <span class="k">with</span> <span class="bp">self</span><span class="o">.</span><span class="n">_gui_lock</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">move_camera</span><span class="p">(</span><span class="n">const</span><span class="o">.</span><span class="n">MOUSE_ZOOM</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="o">-</span><span class="mf">0.05</span> <span class="o">*</span> <span class="n">y_offset</span><span class="p">)</span></div>
+
+
+<div class="viewcode-block" id="MjViewer"><a class="viewcode-back" href="../../reference.html#mujoco_py.MjViewer">[docs]</a><span class="k">class</span> <span class="nc">MjViewer</span><span class="p">(</span><span class="n">MjViewerBasic</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Extends :class:`.MjViewerBasic` to add video recording, interactive time and interaction controls.</span>
+
+<span class="sd">    The key bindings are as follows:</span>
+
+<span class="sd">    - TAB: Switch between MuJoCo cameras.</span>
+<span class="sd">    - H: Toggle hiding all GUI components.</span>
+<span class="sd">    - SPACE: Pause/unpause the simulation.</span>
+<span class="sd">    - RIGHT: Advance simulation by one step.</span>
+<span class="sd">    - V: Start/stop video recording.</span>
+<span class="sd">    - T: Capture screenshot.</span>
+<span class="sd">    - I: Drop into ``ipdb`` debugger.</span>
+<span class="sd">    - S/F: Decrease/Increase simulation playback speed.</span>
+<span class="sd">    - C: Toggle visualization of contact forces (off by default).</span>
+<span class="sd">    - D: Enable/disable frame skipping when rendering lags behind real time.</span>
+<span class="sd">    - R: Toggle transparency of geoms.</span>
+<span class="sd">    - M: Toggle display of mocap bodies.</span>
+
+<span class="sd">    Parameters</span>
+<span class="sd">    ----------</span>
+<span class="sd">    sim : :class:`.MjSim`</span>
+<span class="sd">        The simulator to display.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">sim</span><span class="p">):</span>
+        <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="n">sim</span><span class="p">)</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">_ncam</span> <span class="o">=</span> <span class="n">sim</span><span class="o">.</span><span class="n">model</span><span class="o">.</span><span class="n">ncam</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_paused</span> <span class="o">=</span> <span class="kc">False</span>  <span class="c1"># is viewer paused.</span>
+        <span class="c1"># should we advance viewer just by one step.</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_advance_by_one_step</span> <span class="o">=</span> <span class="kc">False</span>
+
+        <span class="c1"># Vars for recording video</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_record_video</span> <span class="o">=</span> <span class="kc">False</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_video_frames</span> <span class="o">=</span> <span class="p">[]</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_video_idx</span> <span class="o">=</span> <span class="mi">0</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_video_path</span> <span class="o">=</span> <span class="s2">&quot;/tmp/video_</span><span class="si">%07d</span><span class="s2">.mp4&quot;</span>
+
+        <span class="c1"># vars for capturing screen</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_image_idx</span> <span class="o">=</span> <span class="mi">0</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_image_path</span> <span class="o">=</span> <span class="s2">&quot;/tmp/frame_</span><span class="si">%07d</span><span class="s2">.png&quot;</span>
+
+        <span class="c1"># run_speed = x1, means running real time, x2 means fast-forward times</span>
+        <span class="c1"># two.</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_run_speed</span> <span class="o">=</span> <span class="mf">1.0</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_loop_count</span> <span class="o">=</span> <span class="mi">0</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_render_every_frame</span> <span class="o">=</span> <span class="kc">False</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">_show_mocap</span> <span class="o">=</span> <span class="kc">True</span>  <span class="c1"># Show / hide mocap bodies.</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_transparent</span> <span class="o">=</span> <span class="kc">False</span>  <span class="c1"># Make everything transparent.</span>
+
+        <span class="c1"># this variable is estamated as a running average.</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_time_per_render</span> <span class="o">=</span> <span class="mi">1</span> <span class="o">/</span> <span class="mf">60.0</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_hide_overlay</span> <span class="o">=</span> <span class="kc">False</span>  <span class="c1"># hide the entire overlay.</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_user_overlay</span> <span class="o">=</span> <span class="p">{}</span>
+
+    <span class="k">def</span> <span class="nf">render</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">def</span> <span class="nf">render_inner_loop</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+            <span class="n">render_start</span> <span class="o">=</span> <span class="n">time</span><span class="o">.</span><span class="n">time</span><span class="p">()</span>
+
+            <span class="bp">self</span><span class="o">.</span><span class="n">_overlay</span><span class="o">.</span><span class="n">clear</span><span class="p">()</span>
+            <span class="k">if</span> <span class="ow">not</span> <span class="bp">self</span><span class="o">.</span><span class="n">_hide_overlay</span><span class="p">:</span>
+                <span class="k">for</span> <span class="n">k</span><span class="p">,</span> <span class="n">v</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">_user_overlay</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
+                    <span class="bp">self</span><span class="o">.</span><span class="n">_overlay</span><span class="p">[</span><span class="n">k</span><span class="p">]</span> <span class="o">=</span> <span class="n">v</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">_create_full_overlay</span><span class="p">()</span>
+
+            <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="n">render</span><span class="p">()</span>
+            <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">_record_video</span><span class="p">:</span>
+                <span class="n">frame</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_read_pixels_as_in_window</span><span class="p">()</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">_video_frames</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">frame</span><span class="p">)</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">_time_per_render</span> <span class="o">=</span> <span class="mf">0.9</span> <span class="o">*</span> <span class="bp">self</span><span class="o">.</span><span class="n">_time_per_render</span> <span class="o">+</span> \
+                    <span class="mf">0.1</span> <span class="o">*</span> <span class="p">(</span><span class="n">time</span><span class="o">.</span><span class="n">time</span><span class="p">()</span> <span class="o">-</span> <span class="n">render_start</span><span class="p">)</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">_user_overlay</span> <span class="o">=</span> <span class="n">copy</span><span class="o">.</span><span class="n">deepcopy</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_overlay</span><span class="p">)</span>
+        <span class="c1"># Render the same frame if paused.</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">_paused</span><span class="p">:</span>
+            <span class="k">while</span> <span class="bp">self</span><span class="o">.</span><span class="n">_paused</span><span class="p">:</span>
+                <span class="n">render_inner_loop</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span>
+                <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">_advance_by_one_step</span><span class="p">:</span>
+                    <span class="bp">self</span><span class="o">.</span><span class="n">_advance_by_one_step</span> <span class="o">=</span> <span class="kc">False</span>
+                    <span class="k">break</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="c1"># inner_loop runs &quot;_loop_count&quot; times in expectation (where &quot;_loop_count&quot; is a float).</span>
+            <span class="c1"># Therefore, frames are displayed in the real-time.</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_loop_count</span> <span class="o">+=</span> <span class="bp">self</span><span class="o">.</span><span class="n">sim</span><span class="o">.</span><span class="n">model</span><span class="o">.</span><span class="n">opt</span><span class="o">.</span><span class="n">timestep</span> <span class="o">*</span> <span class="bp">self</span><span class="o">.</span><span class="n">sim</span><span class="o">.</span><span class="n">nsubsteps</span> <span class="o">/</span> \
+                <span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_time_per_render</span> <span class="o">*</span> <span class="bp">self</span><span class="o">.</span><span class="n">_run_speed</span><span class="p">)</span>
+            <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">_render_every_frame</span><span class="p">:</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">_loop_count</span> <span class="o">=</span> <span class="mi">1</span>
+            <span class="k">while</span> <span class="bp">self</span><span class="o">.</span><span class="n">_loop_count</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">:</span>
+                <span class="n">render_inner_loop</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">_loop_count</span> <span class="o">-=</span> <span class="mi">1</span>
+        <span class="c1"># Markers and overlay are regenerated in every pass.</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_markers</span><span class="p">[:]</span> <span class="o">=</span> <span class="p">[]</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_overlay</span><span class="o">.</span><span class="n">clear</span><span class="p">()</span>
+
+    <span class="k">def</span> <span class="nf">_read_pixels_as_in_window</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="c1"># Reads pixels with markers and overlay from the same camera as screen.</span>
+        <span class="n">resolution</span> <span class="o">=</span> <span class="n">glfw</span><span class="o">.</span><span class="n">get_framebuffer_size</span><span class="p">(</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">sim</span><span class="o">.</span><span class="n">_render_context_window</span><span class="o">.</span><span class="n">window</span><span class="p">)</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">sim</span><span class="o">.</span><span class="n">_render_context_offscreen</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">sim</span><span class="o">.</span><span class="n">render</span><span class="p">(</span><span class="o">*</span><span class="n">resolution</span><span class="p">)</span>
+        <span class="n">offscreen_ctx</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">sim</span><span class="o">.</span><span class="n">_render_context_offscreen</span>
+        <span class="n">window_ctx</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">sim</span><span class="o">.</span><span class="n">_render_context_window</span>
+        <span class="c1"># Save markers and overlay from offscreen.</span>
+        <span class="n">saved</span> <span class="o">=</span> <span class="p">[</span><span class="n">copy</span><span class="o">.</span><span class="n">deepcopy</span><span class="p">(</span><span class="n">offscreen_ctx</span><span class="o">.</span><span class="n">_markers</span><span class="p">),</span>
+                 <span class="n">copy</span><span class="o">.</span><span class="n">deepcopy</span><span class="p">(</span><span class="n">offscreen_ctx</span><span class="o">.</span><span class="n">_overlay</span><span class="p">),</span>
+                 <span class="n">rec_copy</span><span class="p">(</span><span class="n">offscreen_ctx</span><span class="o">.</span><span class="n">cam</span><span class="p">)]</span>
+        <span class="c1"># Copy markers and overlay from window.</span>
+        <span class="n">offscreen_ctx</span><span class="o">.</span><span class="n">_markers</span><span class="p">[:]</span> <span class="o">=</span> <span class="n">window_ctx</span><span class="o">.</span><span class="n">_markers</span><span class="p">[:]</span>
+        <span class="n">offscreen_ctx</span><span class="o">.</span><span class="n">_overlay</span><span class="o">.</span><span class="n">clear</span><span class="p">()</span>
+        <span class="n">offscreen_ctx</span><span class="o">.</span><span class="n">_overlay</span><span class="o">.</span><span class="n">update</span><span class="p">(</span><span class="n">window_ctx</span><span class="o">.</span><span class="n">_overlay</span><span class="p">)</span>
+        <span class="n">rec_assign</span><span class="p">(</span><span class="n">offscreen_ctx</span><span class="o">.</span><span class="n">cam</span><span class="p">,</span> <span class="n">rec_copy</span><span class="p">(</span><span class="n">window_ctx</span><span class="o">.</span><span class="n">cam</span><span class="p">))</span>
+
+        <span class="n">img</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">sim</span><span class="o">.</span><span class="n">render</span><span class="p">(</span><span class="o">*</span><span class="n">resolution</span><span class="p">)</span>
+        <span class="c1"># Restore markers and overlay to offscreen.</span>
+        <span class="n">offscreen_ctx</span><span class="o">.</span><span class="n">_markers</span><span class="p">[:]</span> <span class="o">=</span> <span class="n">saved</span><span class="p">[</span><span class="mi">0</span><span class="p">][:]</span>
+        <span class="n">offscreen_ctx</span><span class="o">.</span><span class="n">_overlay</span><span class="o">.</span><span class="n">clear</span><span class="p">()</span>
+        <span class="n">offscreen_ctx</span><span class="o">.</span><span class="n">_overlay</span><span class="o">.</span><span class="n">update</span><span class="p">(</span><span class="n">saved</span><span class="p">[</span><span class="mi">1</span><span class="p">])</span>
+        <span class="n">rec_assign</span><span class="p">(</span><span class="n">offscreen_ctx</span><span class="o">.</span><span class="n">cam</span><span class="p">,</span> <span class="n">saved</span><span class="p">[</span><span class="mi">2</span><span class="p">])</span>
+        <span class="k">return</span> <span class="n">img</span>
+
+    <span class="k">def</span> <span class="nf">_create_full_overlay</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">_render_every_frame</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">add_overlay</span><span class="p">(</span><span class="n">const</span><span class="o">.</span><span class="n">GRID_TOPLEFT</span><span class="p">,</span> <span class="s2">&quot;&quot;</span><span class="p">,</span> <span class="s2">&quot;&quot;</span><span class="p">)</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">add_overlay</span><span class="p">(</span><span class="n">const</span><span class="o">.</span><span class="n">GRID_TOPLEFT</span><span class="p">,</span> <span class="s2">&quot;Run speed = </span><span class="si">%.3f</span><span class="s2"> x real time&quot;</span> <span class="o">%</span>
+                             <span class="bp">self</span><span class="o">.</span><span class="n">_run_speed</span><span class="p">,</span> <span class="s2">&quot;[S]lower, [F]aster&quot;</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">add_overlay</span><span class="p">(</span>
+            <span class="n">const</span><span class="o">.</span><span class="n">GRID_TOPLEFT</span><span class="p">,</span> <span class="s2">&quot;Ren[d]er every frame&quot;</span><span class="p">,</span> <span class="s2">&quot;Off&quot;</span> <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">_render_every_frame</span> <span class="k">else</span> <span class="s2">&quot;On&quot;</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">add_overlay</span><span class="p">(</span><span class="n">const</span><span class="o">.</span><span class="n">GRID_TOPLEFT</span><span class="p">,</span> <span class="s2">&quot;Switch camera (#cams = </span><span class="si">%d</span><span class="s2">)&quot;</span> <span class="o">%</span> <span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_ncam</span> <span class="o">+</span> <span class="mi">1</span><span class="p">),</span>
+                                             <span class="s2">&quot;[Tab] (camera ID = </span><span class="si">%d</span><span class="s2">)&quot;</span> <span class="o">%</span> <span class="bp">self</span><span class="o">.</span><span class="n">cam</span><span class="o">.</span><span class="n">fixedcamid</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">add_overlay</span><span class="p">(</span><span class="n">const</span><span class="o">.</span><span class="n">GRID_TOPLEFT</span><span class="p">,</span> <span class="s2">&quot;[C]ontact forces&quot;</span><span class="p">,</span> <span class="s2">&quot;Off&quot;</span> <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">vopt</span><span class="o">.</span><span class="n">flags</span><span class="p">[</span>
+                         <span class="mi">10</span><span class="p">]</span> <span class="o">==</span> <span class="mi">1</span> <span class="k">else</span> <span class="s2">&quot;On&quot;</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">add_overlay</span><span class="p">(</span>
+            <span class="n">const</span><span class="o">.</span><span class="n">GRID_TOPLEFT</span><span class="p">,</span> <span class="s2">&quot;Referenc[e] frames&quot;</span><span class="p">,</span> <span class="s2">&quot;Off&quot;</span> <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">vopt</span><span class="o">.</span><span class="n">frame</span> <span class="o">==</span> <span class="mi">1</span> <span class="k">else</span> <span class="s2">&quot;On&quot;</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">add_overlay</span><span class="p">(</span><span class="n">const</span><span class="o">.</span><span class="n">GRID_TOPLEFT</span><span class="p">,</span>
+                         <span class="s2">&quot;T[r]ansparent&quot;</span><span class="p">,</span> <span class="s2">&quot;On&quot;</span> <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">_transparent</span> <span class="k">else</span> <span class="s2">&quot;Off&quot;</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">add_overlay</span><span class="p">(</span>
+            <span class="n">const</span><span class="o">.</span><span class="n">GRID_TOPLEFT</span><span class="p">,</span> <span class="s2">&quot;Display [M]ocap bodies&quot;</span><span class="p">,</span> <span class="s2">&quot;On&quot;</span> <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">_show_mocap</span> <span class="k">else</span> <span class="s2">&quot;Off&quot;</span><span class="p">)</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">_paused</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="k">if</span> <span class="ow">not</span> <span class="bp">self</span><span class="o">.</span><span class="n">_paused</span><span class="p">:</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">add_overlay</span><span class="p">(</span><span class="n">const</span><span class="o">.</span><span class="n">GRID_TOPLEFT</span><span class="p">,</span> <span class="s2">&quot;Stop&quot;</span><span class="p">,</span> <span class="s2">&quot;[Space]&quot;</span><span class="p">)</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">add_overlay</span><span class="p">(</span><span class="n">const</span><span class="o">.</span><span class="n">GRID_TOPLEFT</span><span class="p">,</span> <span class="s2">&quot;Start&quot;</span><span class="p">,</span> <span class="s2">&quot;[Space]&quot;</span><span class="p">)</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">add_overlay</span><span class="p">(</span><span class="n">const</span><span class="o">.</span><span class="n">GRID_TOPLEFT</span><span class="p">,</span>
+                             <span class="s2">&quot;Advance simulation by one step&quot;</span><span class="p">,</span> <span class="s2">&quot;[right arrow]&quot;</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">add_overlay</span><span class="p">(</span><span class="n">const</span><span class="o">.</span><span class="n">GRID_TOPLEFT</span><span class="p">,</span> <span class="s2">&quot;[H]ide Menu&quot;</span><span class="p">,</span> <span class="s2">&quot;&quot;</span><span class="p">)</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">_record_video</span><span class="p">:</span>
+            <span class="n">ndots</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="mi">7</span> <span class="o">*</span> <span class="p">(</span><span class="n">time</span><span class="o">.</span><span class="n">time</span><span class="p">()</span> <span class="o">%</span> <span class="mi">1</span><span class="p">))</span>
+            <span class="n">dots</span> <span class="o">=</span> <span class="p">(</span><span class="s2">&quot;.&quot;</span> <span class="o">*</span> <span class="n">ndots</span><span class="p">)</span> <span class="o">+</span> <span class="p">(</span><span class="s2">&quot; &quot;</span> <span class="o">*</span> <span class="p">(</span><span class="mi">6</span> <span class="o">-</span> <span class="n">ndots</span><span class="p">))</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">add_overlay</span><span class="p">(</span><span class="n">const</span><span class="o">.</span><span class="n">GRID_TOPLEFT</span><span class="p">,</span>
+                             <span class="s2">&quot;Record [V]ideo (On) &quot;</span> <span class="o">+</span> <span class="n">dots</span><span class="p">,</span> <span class="s2">&quot;&quot;</span><span class="p">)</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">add_overlay</span><span class="p">(</span><span class="n">const</span><span class="o">.</span><span class="n">GRID_TOPLEFT</span><span class="p">,</span> <span class="s2">&quot;Record [V]ideo (Off) &quot;</span><span class="p">,</span> <span class="s2">&quot;&quot;</span><span class="p">)</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">_video_idx</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">:</span>
+            <span class="n">fname</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_video_path</span> <span class="o">%</span> <span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_video_idx</span> <span class="o">-</span> <span class="mi">1</span><span class="p">)</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">add_overlay</span><span class="p">(</span><span class="n">const</span><span class="o">.</span><span class="n">GRID_TOPLEFT</span><span class="p">,</span> <span class="s2">&quot;   saved as </span><span class="si">%s</span><span class="s2">&quot;</span> <span class="o">%</span> <span class="n">fname</span><span class="p">,</span> <span class="s2">&quot;&quot;</span><span class="p">)</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">add_overlay</span><span class="p">(</span><span class="n">const</span><span class="o">.</span><span class="n">GRID_TOPLEFT</span><span class="p">,</span> <span class="s2">&quot;Cap[t]ure frame&quot;</span><span class="p">,</span> <span class="s2">&quot;&quot;</span><span class="p">)</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">_image_idx</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">:</span>
+            <span class="n">fname</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_image_path</span> <span class="o">%</span> <span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_image_idx</span> <span class="o">-</span> <span class="mi">1</span><span class="p">)</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">add_overlay</span><span class="p">(</span><span class="n">const</span><span class="o">.</span><span class="n">GRID_TOPLEFT</span><span class="p">,</span> <span class="s2">&quot;   saved as </span><span class="si">%s</span><span class="s2">&quot;</span> <span class="o">%</span> <span class="n">fname</span><span class="p">,</span> <span class="s2">&quot;&quot;</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">add_overlay</span><span class="p">(</span><span class="n">const</span><span class="o">.</span><span class="n">GRID_TOPLEFT</span><span class="p">,</span> <span class="s2">&quot;Start [i]pdb&quot;</span><span class="p">,</span> <span class="s2">&quot;&quot;</span><span class="p">)</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">_record_video</span><span class="p">:</span>
+            <span class="n">extra</span> <span class="o">=</span> <span class="s2">&quot; (while video is not recorded)&quot;</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">extra</span> <span class="o">=</span> <span class="s2">&quot;&quot;</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">add_overlay</span><span class="p">(</span><span class="n">const</span><span class="o">.</span><span class="n">GRID_BOTTOMLEFT</span><span class="p">,</span> <span class="s2">&quot;FPS&quot;</span><span class="p">,</span> <span class="s2">&quot;</span><span class="si">%d%s</span><span class="s2">&quot;</span> <span class="o">%</span>
+                         <span class="p">(</span><span class="mi">1</span> <span class="o">/</span> <span class="bp">self</span><span class="o">.</span><span class="n">_time_per_render</span><span class="p">,</span> <span class="n">extra</span><span class="p">))</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">add_overlay</span><span class="p">(</span><span class="n">const</span><span class="o">.</span><span class="n">GRID_BOTTOMLEFT</span><span class="p">,</span> <span class="s2">&quot;Solver iterations&quot;</span><span class="p">,</span> <span class="nb">str</span><span class="p">(</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">sim</span><span class="o">.</span><span class="n">data</span><span class="o">.</span><span class="n">solver_iter</span> <span class="o">+</span> <span class="mi">1</span><span class="p">))</span>
+
+    <span class="k">def</span> <span class="nf">key_callback</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">window</span><span class="p">,</span> <span class="n">key</span><span class="p">,</span> <span class="n">scancode</span><span class="p">,</span> <span class="n">action</span><span class="p">,</span> <span class="n">mods</span><span class="p">):</span>
+        <span class="k">if</span> <span class="n">action</span> <span class="o">!=</span> <span class="n">glfw</span><span class="o">.</span><span class="n">RELEASE</span><span class="p">:</span>
+            <span class="k">return</span>
+        <span class="k">elif</span> <span class="n">key</span> <span class="o">==</span> <span class="n">glfw</span><span class="o">.</span><span class="n">KEY_TAB</span><span class="p">:</span>  <span class="c1"># Switches cameras.</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">cam</span><span class="o">.</span><span class="n">fixedcamid</span> <span class="o">+=</span> <span class="mi">1</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">cam</span><span class="o">.</span><span class="n">type</span> <span class="o">=</span> <span class="n">const</span><span class="o">.</span><span class="n">CAMERA_FIXED</span>
+            <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">cam</span><span class="o">.</span><span class="n">fixedcamid</span> <span class="o">&gt;=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_ncam</span><span class="p">:</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">cam</span><span class="o">.</span><span class="n">fixedcamid</span> <span class="o">=</span> <span class="o">-</span><span class="mi">1</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">cam</span><span class="o">.</span><span class="n">type</span> <span class="o">=</span> <span class="n">const</span><span class="o">.</span><span class="n">CAMERA_FREE</span>
+        <span class="k">elif</span> <span class="n">key</span> <span class="o">==</span> <span class="n">glfw</span><span class="o">.</span><span class="n">KEY_H</span><span class="p">:</span>  <span class="c1"># hides all overlay.</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_hide_overlay</span> <span class="o">=</span> <span class="ow">not</span> <span class="bp">self</span><span class="o">.</span><span class="n">_hide_overlay</span>
+        <span class="k">elif</span> <span class="n">key</span> <span class="o">==</span> <span class="n">glfw</span><span class="o">.</span><span class="n">KEY_SPACE</span> <span class="ow">and</span> <span class="bp">self</span><span class="o">.</span><span class="n">_paused</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>  <span class="c1"># stops simulation.</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_paused</span> <span class="o">=</span> <span class="ow">not</span> <span class="bp">self</span><span class="o">.</span><span class="n">_paused</span>
+        <span class="c1"># Advances simulation by one step.</span>
+        <span class="k">elif</span> <span class="n">key</span> <span class="o">==</span> <span class="n">glfw</span><span class="o">.</span><span class="n">KEY_RIGHT</span> <span class="ow">and</span> <span class="bp">self</span><span class="o">.</span><span class="n">_paused</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_advance_by_one_step</span> <span class="o">=</span> <span class="kc">True</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_paused</span> <span class="o">=</span> <span class="kc">True</span>
+        <span class="k">elif</span> <span class="n">key</span> <span class="o">==</span> <span class="n">glfw</span><span class="o">.</span><span class="n">KEY_V</span> <span class="ow">or</span> \
+                <span class="p">(</span><span class="n">key</span> <span class="o">==</span> <span class="n">glfw</span><span class="o">.</span><span class="n">KEY_ESCAPE</span> <span class="ow">and</span> <span class="bp">self</span><span class="o">.</span><span class="n">_record_video</span><span class="p">):</span>  <span class="c1"># Records video. Trigers with V or if in progress by ESC.</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_record_video</span> <span class="o">=</span> <span class="ow">not</span> <span class="bp">self</span><span class="o">.</span><span class="n">_record_video</span>
+            <span class="k">if</span> <span class="ow">not</span> <span class="bp">self</span><span class="o">.</span><span class="n">_record_video</span> <span class="ow">and</span> <span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_video_frames</span><span class="p">)</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">:</span>
+                <span class="c1"># This include captures console, if in the top declaration.</span>
+                <span class="n">frames</span> <span class="o">=</span> <span class="p">[</span><span class="n">f</span> <span class="k">for</span> <span class="n">f</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">_video_frames</span><span class="p">]</span>
+                <span class="n">fps</span> <span class="o">=</span> <span class="p">(</span><span class="mi">1</span> <span class="o">/</span> <span class="bp">self</span><span class="o">.</span><span class="n">_time_per_render</span><span class="p">)</span>
+                <span class="n">process</span> <span class="o">=</span> <span class="n">Process</span><span class="p">(</span><span class="n">target</span><span class="o">=</span><span class="n">save_video</span><span class="p">,</span>
+                                  <span class="n">args</span><span class="o">=</span><span class="p">(</span><span class="n">frames</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">_video_path</span> <span class="o">%</span> <span class="bp">self</span><span class="o">.</span><span class="n">_video_idx</span><span class="p">,</span> <span class="n">fps</span><span class="p">))</span>
+                <span class="n">process</span><span class="o">.</span><span class="n">start</span><span class="p">()</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">_video_frames</span> <span class="o">=</span> <span class="p">[]</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">_video_idx</span> <span class="o">+=</span> <span class="mi">1</span>
+        <span class="k">elif</span> <span class="n">key</span> <span class="o">==</span> <span class="n">glfw</span><span class="o">.</span><span class="n">KEY_T</span><span class="p">:</span>  <span class="c1"># capture screenshot</span>
+            <span class="n">img</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_read_pixels_as_in_window</span><span class="p">()</span>
+            <span class="n">imageio</span><span class="o">.</span><span class="n">imwrite</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_image_path</span> <span class="o">%</span> <span class="bp">self</span><span class="o">.</span><span class="n">_image_idx</span><span class="p">,</span> <span class="n">img</span><span class="p">)</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_image_idx</span> <span class="o">+=</span> <span class="mi">1</span>
+        <span class="k">elif</span> <span class="n">key</span> <span class="o">==</span> <span class="n">glfw</span><span class="o">.</span><span class="n">KEY_I</span><span class="p">:</span>  <span class="c1"># drops in debugger.</span>
+            <span class="nb">print</span><span class="p">(</span><span class="s1">&#39;You can access the simulator by self.sim&#39;</span><span class="p">)</span>
+            <span class="kn">import</span> <span class="nn">ipdb</span>
+            <span class="n">ipdb</span><span class="o">.</span><span class="n">set_trace</span><span class="p">()</span>
+        <span class="k">elif</span> <span class="n">key</span> <span class="o">==</span> <span class="n">glfw</span><span class="o">.</span><span class="n">KEY_S</span><span class="p">:</span>  <span class="c1"># Slows down simulation.</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_run_speed</span> <span class="o">/=</span> <span class="mf">2.0</span>
+        <span class="k">elif</span> <span class="n">key</span> <span class="o">==</span> <span class="n">glfw</span><span class="o">.</span><span class="n">KEY_F</span><span class="p">:</span>  <span class="c1"># Speeds up simulation.</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_run_speed</span> <span class="o">*=</span> <span class="mf">2.0</span>
+        <span class="k">elif</span> <span class="n">key</span> <span class="o">==</span> <span class="n">glfw</span><span class="o">.</span><span class="n">KEY_C</span><span class="p">:</span>  <span class="c1"># Displays contact forces.</span>
+            <span class="n">vopt</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">vopt</span>
+            <span class="n">vopt</span><span class="o">.</span><span class="n">flags</span><span class="p">[</span><span class="mi">10</span><span class="p">]</span> <span class="o">=</span> <span class="n">vopt</span><span class="o">.</span><span class="n">flags</span><span class="p">[</span><span class="mi">11</span><span class="p">]</span> <span class="o">=</span> <span class="ow">not</span> <span class="n">vopt</span><span class="o">.</span><span class="n">flags</span><span class="p">[</span><span class="mi">10</span><span class="p">]</span>
+        <span class="k">elif</span> <span class="n">key</span> <span class="o">==</span> <span class="n">glfw</span><span class="o">.</span><span class="n">KEY_D</span><span class="p">:</span>  <span class="c1"># turn off / turn on rendering every frame.</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_render_every_frame</span> <span class="o">=</span> <span class="ow">not</span> <span class="bp">self</span><span class="o">.</span><span class="n">_render_every_frame</span>
+        <span class="k">elif</span> <span class="n">key</span> <span class="o">==</span> <span class="n">glfw</span><span class="o">.</span><span class="n">KEY_E</span><span class="p">:</span>
+            <span class="n">vopt</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">vopt</span>
+            <span class="n">vopt</span><span class="o">.</span><span class="n">frame</span> <span class="o">=</span> <span class="mi">1</span> <span class="o">-</span> <span class="n">vopt</span><span class="o">.</span><span class="n">frame</span>
+        <span class="k">elif</span> <span class="n">key</span> <span class="o">==</span> <span class="n">glfw</span><span class="o">.</span><span class="n">KEY_R</span><span class="p">:</span>  <span class="c1"># makes everything little bit transparent.</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_transparent</span> <span class="o">=</span> <span class="ow">not</span> <span class="bp">self</span><span class="o">.</span><span class="n">_transparent</span>
+            <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">_transparent</span><span class="p">:</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">sim</span><span class="o">.</span><span class="n">model</span><span class="o">.</span><span class="n">geom_rgba</span><span class="p">[:,</span> <span class="mi">3</span><span class="p">]</span> <span class="o">/=</span> <span class="mf">5.0</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">sim</span><span class="o">.</span><span class="n">model</span><span class="o">.</span><span class="n">geom_rgba</span><span class="p">[:,</span> <span class="mi">3</span><span class="p">]</span> <span class="o">*=</span> <span class="mf">5.0</span>
+        <span class="k">elif</span> <span class="n">key</span> <span class="o">==</span> <span class="n">glfw</span><span class="o">.</span><span class="n">KEY_M</span><span class="p">:</span>  <span class="c1"># Shows / hides mocap bodies</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_show_mocap</span> <span class="o">=</span> <span class="ow">not</span> <span class="bp">self</span><span class="o">.</span><span class="n">_show_mocap</span>
+            <span class="k">for</span> <span class="n">body_idx1</span><span class="p">,</span> <span class="n">val</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">sim</span><span class="o">.</span><span class="n">model</span><span class="o">.</span><span class="n">body_mocapid</span><span class="p">):</span>
+                <span class="k">if</span> <span class="n">val</span> <span class="o">!=</span> <span class="o">-</span><span class="mi">1</span><span class="p">:</span>
+                    <span class="k">for</span> <span class="n">geom_idx</span><span class="p">,</span> <span class="n">body_idx2</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">sim</span><span class="o">.</span><span class="n">model</span><span class="o">.</span><span class="n">geom_bodyid</span><span class="p">):</span>
+                        <span class="k">if</span> <span class="n">body_idx1</span> <span class="o">==</span> <span class="n">body_idx2</span><span class="p">:</span>
+                            <span class="k">if</span> <span class="ow">not</span> <span class="bp">self</span><span class="o">.</span><span class="n">_show_mocap</span><span class="p">:</span>
+                                <span class="c1"># Store transparency for later to show it.</span>
+                                <span class="bp">self</span><span class="o">.</span><span class="n">sim</span><span class="o">.</span><span class="n">extras</span><span class="p">[</span>
+                                    <span class="n">geom_idx</span><span class="p">]</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">sim</span><span class="o">.</span><span class="n">model</span><span class="o">.</span><span class="n">geom_rgba</span><span class="p">[</span><span class="n">geom_idx</span><span class="p">,</span> <span class="mi">3</span><span class="p">]</span>
+                                <span class="bp">self</span><span class="o">.</span><span class="n">sim</span><span class="o">.</span><span class="n">model</span><span class="o">.</span><span class="n">geom_rgba</span><span class="p">[</span><span class="n">geom_idx</span><span class="p">,</span> <span class="mi">3</span><span class="p">]</span> <span class="o">=</span> <span class="mi">0</span>
+                            <span class="k">else</span><span class="p">:</span>
+                                <span class="bp">self</span><span class="o">.</span><span class="n">sim</span><span class="o">.</span><span class="n">model</span><span class="o">.</span><span class="n">geom_rgba</span><span class="p">[</span>
+                                    <span class="n">geom_idx</span><span class="p">,</span> <span class="mi">3</span><span class="p">]</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">sim</span><span class="o">.</span><span class="n">extras</span><span class="p">[</span><span class="n">geom_idx</span><span class="p">]</span>
+        <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="n">key_callback</span><span class="p">(</span><span class="n">window</span><span class="p">,</span> <span class="n">key</span><span class="p">,</span> <span class="n">scancode</span><span class="p">,</span> <span class="n">action</span><span class="p">,</span> <span class="n">mods</span><span class="p">)</span></div>
+
+<span class="c1"># Separate Process to save video. This way visualization is</span>
+<span class="c1"># less slowed down.</span>
+
+
+<span class="k">def</span> <span class="nf">save_video</span><span class="p">(</span><span class="n">frames</span><span class="p">,</span> <span class="n">filename</span><span class="p">,</span> <span class="n">fps</span><span class="p">):</span>
+    <span class="n">writer</span> <span class="o">=</span> <span class="n">imageio</span><span class="o">.</span><span class="n">get_writer</span><span class="p">(</span><span class="n">filename</span><span class="p">,</span> <span class="n">fps</span><span class="o">=</span><span class="n">fps</span><span class="p">)</span>
+    <span class="k">for</span> <span class="n">f</span> <span class="ow">in</span> <span class="n">frames</span><span class="p">:</span>
+        <span class="n">writer</span><span class="o">.</span><span class="n">append_data</span><span class="p">(</span><span class="n">f</span><span class="p">)</span>
+    <span class="n">writer</span><span class="o">.</span><span class="n">close</span><span class="p">()</span>
+</pre></div>
+
+           </div>
+           <div class="articleComments">
+            
+           </div>
+          </div>
+          <footer>
+  
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>
+        &copy; Copyright 2017, OpenAI.
+
+    </p>
+  </div>
+  Built with <a href="http://sphinx-doc.org/">Sphinx</a> using a <a href="https://github.com/snide/sphinx_rtd_theme">theme</a> provided by <a href="https://readthedocs.org">Read the Docs</a>. 
+
+</footer>
+
+        </div>
+      </div>
+
+    </section>
+
+  </div>
+  
+
+
+  
+
+    <script type="text/javascript">
+        var DOCUMENTATION_OPTIONS = {
+            URL_ROOT:'../../',
+            VERSION:'1.50.0.14',
+            COLLAPSE_INDEX:false,
+            FILE_SUFFIX:'.html',
+            HAS_SOURCE:  true,
+            SOURCELINK_SUFFIX: '.txt'
+        };
+    </script>
+      <script type="text/javascript" src="../../_static/jquery.js"></script>
+      <script type="text/javascript" src="../../_static/underscore.js"></script>
+      <script type="text/javascript" src="../../_static/doctools.js"></script>
+
+  
+
+  
+  
+    <script type="text/javascript" src="../../_static/js/theme.js"></script>
+  
+
+  
+  
+  <script type="text/javascript">
+      jQuery(function () {
+          SphinxRtdTheme.StickyNav.enable();
+      });
+  </script>
+   
+
+</body>
+</html>

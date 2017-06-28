@@ -1,0 +1,522 @@
+
+
+<!DOCTYPE html>
+<!--[if IE 8]><html class="no-js lt-ie9" lang="en" > <![endif]-->
+<!--[if gt IE 8]><!--> <html class="no-js" lang="en" > <!--<![endif]-->
+<head>
+  <meta charset="utf-8">
+  
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  
+  <title>mujoco_py.builder &mdash; mujoco-py 1.50.0.14 documentation</title>
+  
+
+  
+  
+  
+  
+
+  
+
+  
+  
+    
+
+  
+
+  
+  
+    <link rel="stylesheet" href="../../_static/css/theme.css" type="text/css" />
+  
+
+  
+
+  
+        <link rel="index" title="Index"
+              href="../../genindex.html"/>
+        <link rel="search" title="Search" href="../../search.html"/>
+    <link rel="top" title="mujoco-py 1.50.0.14 documentation" href="../../index.html"/>
+        <link rel="up" title="Module code" href="../index.html"/> 
+
+  
+  <script src="../../_static/js/modernizr.min.js"></script>
+
+</head>
+
+<body class="wy-body-for-nav" role="document">
+
+   
+  <div class="wy-grid-for-nav">
+
+    
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search">
+          
+
+          
+            <a href="../../index.html" class="icon icon-home"> mujoco-py
+          
+
+          
+          </a>
+
+          
+            
+            
+              <div class="version">
+                1.50.0.14
+              </div>
+            
+          
+
+          
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+
+          
+        </div>
+
+        <div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="main navigation">
+          
+            
+            
+              
+            
+            
+              <ul>
+<li class="toctree-l1"><a class="reference internal" href="../../reference.html">API reference</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../internals.html">Internals</a></li>
+</ul>
+
+            
+          
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap">
+
+      
+      <nav class="wy-nav-top" role="navigation" aria-label="top navigation">
+        
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../../index.html">mujoco-py</a>
+        
+      </nav>
+
+
+      
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<div role="navigation" aria-label="breadcrumbs navigation">
+
+  <ul class="wy-breadcrumbs">
+    
+      <li><a href="../../index.html">Docs</a> &raquo;</li>
+        
+          <li><a href="../index.html">Module code</a> &raquo;</li>
+        
+      <li>mujoco_py.builder</li>
+    
+    
+      <li class="wy-breadcrumbs-aside">
+        
+            
+        
+      </li>
+    
+  </ul>
+
+  
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+            
+  <h1>Source code for mujoco_py.builder</h1><div class="highlight"><pre>
+<span></span><span class="kn">import</span> <span class="nn">distutils</span>
+<span class="kn">import</span> <span class="nn">imp</span>
+<span class="kn">import</span> <span class="nn">os</span>
+<span class="kn">import</span> <span class="nn">shutil</span>
+<span class="kn">import</span> <span class="nn">subprocess</span>
+<span class="kn">import</span> <span class="nn">sys</span>
+<span class="kn">from</span> <span class="nn">distutils.core</span> <span class="k">import</span> <span class="n">Extension</span>
+<span class="kn">from</span> <span class="nn">distutils.dist</span> <span class="k">import</span> <span class="n">Distribution</span>
+<span class="kn">from</span> <span class="nn">distutils.sysconfig</span> <span class="k">import</span> <span class="n">customize_compiler</span>
+<span class="kn">from</span> <span class="nn">os.path</span> <span class="k">import</span> <span class="n">abspath</span><span class="p">,</span> <span class="n">dirname</span><span class="p">,</span> <span class="n">exists</span><span class="p">,</span> <span class="n">join</span><span class="p">,</span> <span class="n">getmtime</span>
+
+<span class="kn">import</span> <span class="nn">numpy</span> <span class="k">as</span> <span class="nn">np</span>
+<span class="kn">from</span> <span class="nn">Cython.Build</span> <span class="k">import</span> <span class="n">cythonize</span>
+<span class="kn">from</span> <span class="nn">Cython.Distutils.old_build_ext</span> <span class="k">import</span> <span class="n">old_build_ext</span> <span class="k">as</span> <span class="n">build_ext</span>
+
+<span class="kn">from</span> <span class="nn">mujoco_py.utils</span> <span class="k">import</span> <span class="n">discover_mujoco</span>
+
+
+<span class="k">def</span> <span class="nf">load_cython_ext</span><span class="p">(</span><span class="n">mjpro_path</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Loads the cymj Cython extension. This is safe to be called from</span>
+<span class="sd">    multiple processes running on the same machine.</span>
+
+<span class="sd">    Cython only gives us back the raw path, regardless of whether</span>
+<span class="sd">    it found a cached version or actually compiled. Since we do</span>
+<span class="sd">    non-idempotent postprocessing of the DLL, be extra careful</span>
+<span class="sd">    to only do that once and then atomically move to the final</span>
+<span class="sd">    location.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">if</span> <span class="p">(</span><span class="s1">&#39;glfw&#39;</span> <span class="ow">in</span> <span class="n">sys</span><span class="o">.</span><span class="n">modules</span> <span class="ow">and</span>
+            <span class="s1">&#39;mujoco&#39;</span> <span class="ow">in</span> <span class="n">abspath</span><span class="p">(</span><span class="n">sys</span><span class="o">.</span><span class="n">modules</span><span class="p">[</span><span class="s2">&quot;glfw&quot;</span><span class="p">]</span><span class="o">.</span><span class="vm">__file__</span><span class="p">)):</span>
+        <span class="nb">print</span><span class="p">(</span><span class="s1">&#39;&#39;&#39;</span>
+<span class="s1">WARNING: Existing glfw python module detected!</span>
+
+<span class="s1">MuJoCo comes with its own version of GLFW, so it&#39;s preferable to use that one.</span>
+
+<span class="s1">The easy solution is to `import mujoco_py` _before_ `import glfw`.</span>
+<span class="s1">&#39;&#39;&#39;</span><span class="p">)</span>
+
+    <span class="k">if</span> <span class="n">sys</span><span class="o">.</span><span class="n">platform</span> <span class="o">==</span> <span class="s1">&#39;darwin&#39;</span><span class="p">:</span>
+        <span class="n">Builder</span> <span class="o">=</span> <span class="n">MacExtensionBuilder</span>
+    <span class="k">elif</span> <span class="n">sys</span><span class="o">.</span><span class="n">platform</span> <span class="o">==</span> <span class="s1">&#39;linux&#39;</span><span class="p">:</span>
+        <span class="k">if</span> <span class="n">exists</span><span class="p">(</span><span class="s1">&#39;/usr/local/nvidia/lib64&#39;</span><span class="p">):</span>
+            <span class="n">Builder</span> <span class="o">=</span> <span class="n">LinuxGPUExtensionBuilder</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">Builder</span> <span class="o">=</span> <span class="n">LinuxCPUExtensionBuilder</span>
+    <span class="k">elif</span> <span class="n">sys</span><span class="o">.</span><span class="n">platform</span><span class="o">.</span><span class="n">startswith</span><span class="p">(</span><span class="s2">&quot;win&quot;</span><span class="p">):</span>
+        <span class="n">Builder</span> <span class="o">=</span> <span class="n">WindowsExtensionBuilder</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="k">raise</span> <span class="ne">RuntimeError</span><span class="p">(</span><span class="s2">&quot;Unsupported platform </span><span class="si">%s</span><span class="s2">&quot;</span> <span class="o">%</span> <span class="n">sys</span><span class="o">.</span><span class="n">platform</span><span class="p">)</span>
+
+    <span class="n">builder</span> <span class="o">=</span> <span class="n">Builder</span><span class="p">(</span><span class="n">mjpro_path</span><span class="p">)</span>
+
+    <span class="n">cext_so_path</span> <span class="o">=</span> <span class="n">builder</span><span class="o">.</span><span class="n">build</span><span class="p">()</span>
+    <span class="n">mod</span> <span class="o">=</span> <span class="n">imp</span><span class="o">.</span><span class="n">load_dynamic</span><span class="p">(</span><span class="s2">&quot;cymj&quot;</span><span class="p">,</span> <span class="n">cext_so_path</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">mod</span>
+
+
+<span class="k">class</span> <span class="nc">custom_build_ext</span><span class="p">(</span><span class="n">build_ext</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Custom build_ext to suppress the &quot;-Wstrict-prototypes&quot; warning.</span>
+<span class="sd">    It arises from the fact that we&#39;re using C++. This seems to be</span>
+<span class="sd">    the cleanest way to get rid of the extra flag.</span>
+
+<span class="sd">    See http://stackoverflow.com/a/36293331/248400</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="k">def</span> <span class="nf">build_extensions</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="n">customize_compiler</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">compiler</span><span class="p">)</span>
+
+        <span class="k">try</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">compiler</span><span class="o">.</span><span class="n">compiler_so</span><span class="o">.</span><span class="n">remove</span><span class="p">(</span><span class="s2">&quot;-Wstrict-prototypes&quot;</span><span class="p">)</span>
+        <span class="k">except</span> <span class="p">(</span><span class="ne">AttributeError</span><span class="p">,</span> <span class="ne">ValueError</span><span class="p">):</span>
+            <span class="k">pass</span>
+        <span class="n">build_ext</span><span class="o">.</span><span class="n">build_extensions</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span>
+
+
+<span class="k">def</span> <span class="nf">fix_shared_library</span><span class="p">(</span><span class="n">so_file</span><span class="p">,</span> <span class="n">name</span><span class="p">,</span> <span class="n">library_path</span><span class="p">):</span>
+    <span class="n">ldd_output</span> <span class="o">=</span> <span class="n">subprocess</span><span class="o">.</span><span class="n">check_output</span><span class="p">(</span>
+        <span class="p">[</span><span class="s1">&#39;ldd&#39;</span><span class="p">,</span> <span class="n">so_file</span><span class="p">])</span><span class="o">.</span><span class="n">decode</span><span class="p">(</span><span class="s1">&#39;utf-8&#39;</span><span class="p">)</span>
+
+    <span class="k">if</span> <span class="n">name</span> <span class="ow">in</span> <span class="n">ldd_output</span><span class="p">:</span>
+        <span class="n">subprocess</span><span class="o">.</span><span class="n">check_call</span><span class="p">([</span><span class="s1">&#39;patchelf&#39;</span><span class="p">,</span>
+                               <span class="s1">&#39;--remove-needed&#39;</span><span class="p">,</span>
+                               <span class="n">name</span><span class="p">,</span>
+                               <span class="n">so_file</span><span class="p">])</span>
+    <span class="n">subprocess</span><span class="o">.</span><span class="n">check_call</span><span class="p">(</span>
+        <span class="p">[</span><span class="s1">&#39;patchelf&#39;</span><span class="p">,</span> <span class="s1">&#39;--add-needed&#39;</span><span class="p">,</span>
+         <span class="n">library_path</span><span class="p">,</span>
+         <span class="n">so_file</span><span class="p">])</span>
+
+
+<span class="k">class</span> <span class="nc">MujocoExtensionBuilder</span><span class="p">():</span>
+
+    <span class="n">CYMJ_DIR_PATH</span> <span class="o">=</span> <span class="n">abspath</span><span class="p">(</span><span class="n">dirname</span><span class="p">(</span><span class="vm">__file__</span><span class="p">))</span>
+
+    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">mjpro_path</span><span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">mjpro_path</span> <span class="o">=</span> <span class="n">mjpro_path</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">extension</span> <span class="o">=</span> <span class="n">Extension</span><span class="p">(</span>
+            <span class="s1">&#39;mujoco_py.cymj&#39;</span><span class="p">,</span>
+            <span class="n">sources</span><span class="o">=</span><span class="p">[</span><span class="n">join</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">CYMJ_DIR_PATH</span><span class="p">,</span> <span class="s2">&quot;cymj.pyx&quot;</span><span class="p">)],</span>
+            <span class="n">include_dirs</span><span class="o">=</span><span class="p">[</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">CYMJ_DIR_PATH</span><span class="p">,</span>
+                <span class="n">join</span><span class="p">(</span><span class="n">mjpro_path</span><span class="p">,</span> <span class="s1">&#39;include&#39;</span><span class="p">),</span>
+                <span class="n">np</span><span class="o">.</span><span class="n">get_include</span><span class="p">(),</span>
+            <span class="p">],</span>
+            <span class="n">libraries</span><span class="o">=</span><span class="p">[</span><span class="s1">&#39;mujoco150&#39;</span><span class="p">],</span>
+            <span class="n">library_dirs</span><span class="o">=</span><span class="p">[</span><span class="n">join</span><span class="p">(</span><span class="n">mjpro_path</span><span class="p">,</span> <span class="s1">&#39;bin&#39;</span><span class="p">)],</span>
+            <span class="n">extra_compile_args</span><span class="o">=</span><span class="p">[</span>
+                <span class="s1">&#39;-fopenmp&#39;</span><span class="p">,</span>  <span class="c1"># needed for OpenMP</span>
+                <span class="s1">&#39;-w&#39;</span><span class="p">,</span>  <span class="c1"># suppress numpy compilation warnings</span>
+            <span class="p">],</span>
+            <span class="n">extra_link_args</span><span class="o">=</span><span class="p">[</span><span class="s1">&#39;-fopenmp&#39;</span><span class="p">],</span>
+            <span class="n">language</span><span class="o">=</span><span class="s1">&#39;c&#39;</span><span class="p">)</span>
+
+    <span class="k">def</span> <span class="nf">build</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="n">dist</span> <span class="o">=</span> <span class="n">Distribution</span><span class="p">({</span>
+            <span class="s2">&quot;script_name&quot;</span><span class="p">:</span> <span class="kc">None</span><span class="p">,</span>
+            <span class="s2">&quot;script_args&quot;</span><span class="p">:</span> <span class="p">[</span><span class="s2">&quot;build_ext&quot;</span><span class="p">]</span>
+        <span class="p">})</span>
+        <span class="n">dist</span><span class="o">.</span><span class="n">ext_modules</span> <span class="o">=</span> <span class="n">cythonize</span><span class="p">([</span><span class="bp">self</span><span class="o">.</span><span class="n">extension</span><span class="p">])</span>
+        <span class="n">dist</span><span class="o">.</span><span class="n">include_dirs</span> <span class="o">=</span> <span class="p">[]</span>
+        <span class="n">dist</span><span class="o">.</span><span class="n">cmdclass</span> <span class="o">=</span> <span class="p">{</span><span class="s1">&#39;build_ext&#39;</span><span class="p">:</span> <span class="n">custom_build_ext</span><span class="p">}</span>
+        <span class="n">build</span> <span class="o">=</span> <span class="n">dist</span><span class="o">.</span><span class="n">get_command_obj</span><span class="p">(</span><span class="s1">&#39;build&#39;</span><span class="p">)</span>
+        <span class="c1"># following the convention of cython&#39;s pyxbuild and naming</span>
+        <span class="c1"># base directory &quot;_pyxbld&quot;</span>
+        <span class="n">build</span><span class="o">.</span><span class="n">build_base</span> <span class="o">=</span> <span class="n">join</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">CYMJ_DIR_PATH</span><span class="p">,</span> <span class="s1">&#39;generated&#39;</span><span class="p">,</span>
+                                <span class="s1">&#39;_pyxbld_</span><span class="si">%s</span><span class="s1">&#39;</span> <span class="o">%</span> <span class="bp">self</span><span class="o">.</span><span class="vm">__class__</span><span class="o">.</span><span class="vm">__name__</span><span class="p">)</span>
+        <span class="n">dist</span><span class="o">.</span><span class="n">parse_command_line</span><span class="p">()</span>
+        <span class="n">obj_build_ext</span> <span class="o">=</span> <span class="n">dist</span><span class="o">.</span><span class="n">get_command_obj</span><span class="p">(</span><span class="s2">&quot;build_ext&quot;</span><span class="p">)</span>
+        <span class="n">dist</span><span class="o">.</span><span class="n">run_commands</span><span class="p">()</span>
+        <span class="n">so_file_path</span><span class="p">,</span> <span class="o">=</span> <span class="n">obj_build_ext</span><span class="o">.</span><span class="n">get_outputs</span><span class="p">()</span>
+        <span class="k">return</span> <span class="n">so_file_path</span>
+
+
+<span class="k">class</span> <span class="nc">WindowsExtensionBuilder</span><span class="p">(</span><span class="n">MujocoExtensionBuilder</span><span class="p">):</span>
+
+    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">mjpro_path</span><span class="p">):</span>
+        <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="n">mjpro_path</span><span class="p">)</span>
+        <span class="n">os</span><span class="o">.</span><span class="n">environ</span><span class="p">[</span><span class="s2">&quot;PATH&quot;</span><span class="p">]</span> <span class="o">+=</span> <span class="s2">&quot;;&quot;</span> <span class="o">+</span> <span class="n">join</span><span class="p">(</span><span class="n">mjpro_path</span><span class="p">,</span> <span class="s2">&quot;bin&quot;</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">extension</span><span class="o">.</span><span class="n">sources</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">CYMJ_DIR_PATH</span> <span class="o">+</span> <span class="s2">&quot;/gl/dummyshim.c&quot;</span><span class="p">)</span>
+
+
+<span class="k">class</span> <span class="nc">LinuxCPUExtensionBuilder</span><span class="p">(</span><span class="n">MujocoExtensionBuilder</span><span class="p">):</span>
+
+    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">mjpro_path</span><span class="p">):</span>
+        <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="n">mjpro_path</span><span class="p">)</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">extension</span><span class="o">.</span><span class="n">sources</span><span class="o">.</span><span class="n">append</span><span class="p">(</span>
+            <span class="n">join</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">CYMJ_DIR_PATH</span><span class="p">,</span> <span class="s2">&quot;gl&quot;</span><span class="p">,</span> <span class="s2">&quot;osmesashim.c&quot;</span><span class="p">))</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">extension</span><span class="o">.</span><span class="n">libraries</span><span class="o">.</span><span class="n">extend</span><span class="p">([</span><span class="s1">&#39;glewosmesa&#39;</span><span class="p">,</span> <span class="s1">&#39;OSMesa&#39;</span><span class="p">])</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">extension</span><span class="o">.</span><span class="n">runtime_library_dirs</span> <span class="o">=</span> <span class="p">[</span><span class="n">join</span><span class="p">(</span><span class="n">mjpro_path</span><span class="p">,</span> <span class="s1">&#39;bin&#39;</span><span class="p">)]</span>
+
+
+<span class="k">class</span> <span class="nc">LinuxGPUExtensionBuilder</span><span class="p">(</span><span class="n">MujocoExtensionBuilder</span><span class="p">):</span>
+
+    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">mjpro_path</span><span class="p">):</span>
+        <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="n">mjpro_path</span><span class="p">)</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">extension</span><span class="o">.</span><span class="n">sources</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">CYMJ_DIR_PATH</span> <span class="o">+</span> <span class="s2">&quot;/gl/eglshim.c&quot;</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">extension</span><span class="o">.</span><span class="n">include_dirs</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">CYMJ_DIR_PATH</span> <span class="o">+</span> <span class="s1">&#39;/vendor/egl&#39;</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">extension</span><span class="o">.</span><span class="n">libraries</span><span class="o">.</span><span class="n">extend</span><span class="p">([</span><span class="s1">&#39;glewegl&#39;</span><span class="p">])</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">extension</span><span class="o">.</span><span class="n">runtime_library_dirs</span> <span class="o">=</span> <span class="p">[</span><span class="n">join</span><span class="p">(</span><span class="n">mjpro_path</span><span class="p">,</span> <span class="s1">&#39;bin&#39;</span><span class="p">)]</span>
+
+    <span class="k">def</span> <span class="nf">build</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="n">so_file_path</span> <span class="o">=</span> <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="n">build</span><span class="p">()</span>
+        <span class="n">nvidia_lib_dir</span> <span class="o">=</span> <span class="s1">&#39;/usr/local/nvidia/lib64/&#39;</span>
+        <span class="n">fix_shared_library</span><span class="p">(</span><span class="n">so_file_path</span><span class="p">,</span> <span class="s1">&#39;libOpenGL.so&#39;</span><span class="p">,</span>
+                           <span class="n">join</span><span class="p">(</span><span class="n">nvidia_lib_dir</span><span class="p">,</span> <span class="s1">&#39;libOpenGL.so.0&#39;</span><span class="p">))</span>
+        <span class="n">fix_shared_library</span><span class="p">(</span><span class="n">so_file_path</span><span class="p">,</span> <span class="s1">&#39;libEGL.so&#39;</span><span class="p">,</span>
+                           <span class="n">join</span><span class="p">(</span><span class="n">nvidia_lib_dir</span><span class="p">,</span> <span class="s1">&#39;libEGL.so.1&#39;</span><span class="p">))</span>
+        <span class="k">return</span> <span class="n">so_file_path</span>
+
+
+<span class="k">class</span> <span class="nc">MacExtensionBuilder</span><span class="p">(</span><span class="n">MujocoExtensionBuilder</span><span class="p">):</span>
+
+    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">mjpro_path</span><span class="p">):</span>
+        <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="n">mjpro_path</span><span class="p">)</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">extension</span><span class="o">.</span><span class="n">sources</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">CYMJ_DIR_PATH</span> <span class="o">+</span> <span class="s2">&quot;/gl/dummyshim.c&quot;</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">extension</span><span class="o">.</span><span class="n">libraries</span><span class="o">.</span><span class="n">extend</span><span class="p">([</span><span class="s1">&#39;glfw.3&#39;</span><span class="p">])</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">extension</span><span class="o">.</span><span class="n">define_macros</span> <span class="o">=</span> <span class="p">[(</span><span class="s1">&#39;ONMAC&#39;</span><span class="p">,</span> <span class="kc">None</span><span class="p">)]</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">extension</span><span class="o">.</span><span class="n">runtime_library_dirs</span> <span class="o">=</span> <span class="p">[</span><span class="n">join</span><span class="p">(</span><span class="n">mjpro_path</span><span class="p">,</span> <span class="s1">&#39;bin&#39;</span><span class="p">)]</span>
+
+    <span class="k">def</span> <span class="nf">build</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="c1"># Prefer GCC 6 for now since GCC 7 may behave differently.</span>
+        <span class="n">c_compilers</span> <span class="o">=</span> <span class="p">[</span><span class="s1">&#39;/usr/local/bin/gcc-6&#39;</span><span class="p">,</span> <span class="s1">&#39;/usr/local/bin/gcc-7&#39;</span><span class="p">]</span>
+        <span class="n">available_c_compiler</span> <span class="o">=</span> <span class="kc">None</span>
+        <span class="k">for</span> <span class="n">c_compiler</span> <span class="ow">in</span> <span class="n">c_compilers</span><span class="p">:</span>
+            <span class="k">if</span> <span class="n">distutils</span><span class="o">.</span><span class="n">spawn</span><span class="o">.</span><span class="n">find_executable</span><span class="p">(</span><span class="n">c_compiler</span><span class="p">)</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+                <span class="n">available_c_compiler</span> <span class="o">=</span> <span class="n">c_compiler</span>
+                <span class="k">break</span>
+        <span class="k">if</span> <span class="n">available_c_compiler</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">RuntimeError</span><span class="p">(</span>
+                <span class="s1">&#39;Could not find GCC 6 or GCC 7 executable.</span><span class="se">\n\n</span><span class="s1">&#39;</span>
+                <span class="s1">&#39;HINT: On OS X, install GCC 6 with &#39;</span>
+                <span class="s1">&#39;`brew install gcc --without-multilib`.&#39;</span><span class="p">)</span>
+        <span class="n">os</span><span class="o">.</span><span class="n">environ</span><span class="p">[</span><span class="s1">&#39;CC&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">available_c_compiler</span>
+
+        <span class="n">so_file_path</span> <span class="o">=</span> <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="n">build</span><span class="p">()</span>
+        <span class="k">del</span> <span class="n">os</span><span class="o">.</span><span class="n">environ</span><span class="p">[</span><span class="s1">&#39;CC&#39;</span><span class="p">]</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">manually_link_libraries</span><span class="p">(</span><span class="n">so_file_path</span><span class="p">)</span>
+
+    <span class="k">def</span> <span class="nf">manually_link_libraries</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">raw_cext_dll_path</span><span class="p">):</span>
+        <span class="n">root</span><span class="p">,</span> <span class="n">ext</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">splitext</span><span class="p">(</span><span class="n">raw_cext_dll_path</span><span class="p">)</span>
+        <span class="n">final_cext_dll_path</span> <span class="o">=</span> <span class="n">root</span> <span class="o">+</span> <span class="s1">&#39;_final&#39;</span> <span class="o">+</span> <span class="n">ext</span>
+
+        <span class="c1"># If someone else already built the final DLL, don&#39;t bother</span>
+        <span class="c1"># recreating it here, even though this should still be idempotent.</span>
+        <span class="k">if</span> <span class="p">(</span><span class="n">exists</span><span class="p">(</span><span class="n">final_cext_dll_path</span><span class="p">)</span> <span class="ow">and</span>
+                <span class="n">getmtime</span><span class="p">(</span><span class="n">final_cext_dll_path</span><span class="p">)</span> <span class="o">&gt;=</span> <span class="n">getmtime</span><span class="p">(</span><span class="n">raw_cext_dll_path</span><span class="p">)):</span>
+            <span class="k">return</span> <span class="n">final_cext_dll_path</span>
+
+        <span class="n">tmp_final_cext_dll_path</span> <span class="o">=</span> <span class="n">final_cext_dll_path</span> <span class="o">+</span> <span class="s1">&#39;~&#39;</span>
+        <span class="n">shutil</span><span class="o">.</span><span class="n">copyfile</span><span class="p">(</span><span class="n">raw_cext_dll_path</span><span class="p">,</span> <span class="n">tmp_final_cext_dll_path</span><span class="p">)</span>
+
+        <span class="n">mj_bin_path</span> <span class="o">=</span> <span class="n">join</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">mjpro_path</span><span class="p">,</span> <span class="s1">&#39;bin&#39;</span><span class="p">)</span>
+
+        <span class="c1"># Fix the rpath of the generated library -- i lost the Stackoverflow</span>
+        <span class="c1"># reference here</span>
+        <span class="n">from_mujoco_path</span> <span class="o">=</span> <span class="s1">&#39;@executable_path/libmujoco150.dylib&#39;</span>
+        <span class="n">to_mujoco_path</span> <span class="o">=</span> <span class="s1">&#39;</span><span class="si">%s</span><span class="s1">/libmujoco150.dylib&#39;</span> <span class="o">%</span> <span class="n">mj_bin_path</span>
+        <span class="n">subprocess</span><span class="o">.</span><span class="n">check_call</span><span class="p">([</span><span class="s1">&#39;install_name_tool&#39;</span><span class="p">,</span>
+                               <span class="s1">&#39;-change&#39;</span><span class="p">,</span>
+                               <span class="n">from_mujoco_path</span><span class="p">,</span>
+                               <span class="n">to_mujoco_path</span><span class="p">,</span>
+                               <span class="n">tmp_final_cext_dll_path</span><span class="p">])</span>
+
+        <span class="n">from_glfw_path</span> <span class="o">=</span> <span class="s1">&#39;libglfw.3.dylib&#39;</span>
+        <span class="n">to_glfw_path</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">mj_bin_path</span><span class="p">,</span> <span class="s1">&#39;libglfw.3.dylib&#39;</span><span class="p">)</span>
+        <span class="n">subprocess</span><span class="o">.</span><span class="n">check_call</span><span class="p">([</span><span class="s1">&#39;install_name_tool&#39;</span><span class="p">,</span>
+                               <span class="s1">&#39;-change&#39;</span><span class="p">,</span>
+                               <span class="n">from_glfw_path</span><span class="p">,</span>
+                               <span class="n">to_glfw_path</span><span class="p">,</span>
+                               <span class="n">tmp_final_cext_dll_path</span><span class="p">])</span>
+
+        <span class="n">os</span><span class="o">.</span><span class="n">rename</span><span class="p">(</span><span class="n">tmp_final_cext_dll_path</span><span class="p">,</span> <span class="n">final_cext_dll_path</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">final_cext_dll_path</span>
+
+
+<span class="k">class</span> <span class="nc">MujocoException</span><span class="p">(</span><span class="ne">Exception</span><span class="p">):</span>
+    <span class="k">pass</span>
+
+
+<span class="k">def</span> <span class="nf">user_warning_raise_exception</span><span class="p">(</span><span class="n">warn_bytes</span><span class="p">):</span>
+    <span class="sd">&#39;&#39;&#39;</span>
+<span class="sd">    User-defined warning callback, which is called by mujoco on warnings.</span>
+<span class="sd">    Here we have two primary jobs:</span>
+<span class="sd">        - Detect known warnings and suggest fixes (with code)</span>
+<span class="sd">        - Decide whether to raise an Exception and raise if needed</span>
+<span class="sd">    More cases should be added as we find new failures.</span>
+<span class="sd">    &#39;&#39;&#39;</span>
+    <span class="c1"># TODO: look through test output to see MuJoCo warnings to catch</span>
+    <span class="c1"># and recommend. Also fix those tests</span>
+    <span class="n">warn</span> <span class="o">=</span> <span class="n">warn_bytes</span><span class="o">.</span><span class="n">decode</span><span class="p">()</span>  <span class="c1"># Convert bytes to string</span>
+    <span class="k">if</span> <span class="s1">&#39;Pre-allocated constraint buffer is full&#39;</span> <span class="ow">in</span> <span class="n">warn</span><span class="p">:</span>
+        <span class="k">raise</span> <span class="n">MujocoException</span><span class="p">(</span><span class="n">warn</span> <span class="o">+</span> <span class="s1">&#39;Increase njmax in mujoco XML&#39;</span><span class="p">)</span>
+    <span class="k">if</span> <span class="s1">&#39;Pre-allocated contact buffer is full&#39;</span> <span class="ow">in</span> <span class="n">warn</span><span class="p">:</span>
+        <span class="k">raise</span> <span class="n">MujocoException</span><span class="p">(</span><span class="n">warn</span> <span class="o">+</span> <span class="s1">&#39;Increase njconmax in mujoco XML&#39;</span><span class="p">)</span>
+    <span class="k">raise</span> <span class="n">MujocoException</span><span class="p">(</span><span class="s1">&#39;Got MuJoCo Warning: </span><span class="si">{}</span><span class="s1">&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">warn</span><span class="p">))</span>
+
+
+<span class="k">def</span> <span class="nf">user_warning_ignore_exception</span><span class="p">(</span><span class="n">warn_bytes</span><span class="p">):</span>
+    <span class="k">pass</span>
+
+
+<div class="viewcode-block" id="ignore_mujoco_warnings"><a class="viewcode-back" href="../../reference.html#mujoco_py.ignore_mujoco_warnings">[docs]</a><span class="k">class</span> <span class="nc">ignore_mujoco_warnings</span><span class="p">:</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Class to turn off mujoco warning exceptions within a scope. Useful for</span>
+<span class="sd">    large, vectorized rollouts.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="k">def</span> <span class="nf">__enter__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">prev_user_warning</span> <span class="o">=</span> <span class="n">cymj</span><span class="o">.</span><span class="n">get_warning_callback</span><span class="p">()</span>
+        <span class="n">cymj</span><span class="o">.</span><span class="n">set_warning_callback</span><span class="p">(</span><span class="n">user_warning_ignore_exception</span><span class="p">)</span>
+        <span class="k">return</span> <span class="bp">self</span>
+
+    <span class="k">def</span> <span class="nf">__exit__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="nb">type</span><span class="p">,</span> <span class="n">value</span><span class="p">,</span> <span class="n">traceback</span><span class="p">):</span>
+        <span class="n">cymj</span><span class="o">.</span><span class="n">set_warning_callback</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">prev_user_warning</span><span class="p">)</span></div>
+
+
+<span class="n">mjpro_path</span><span class="p">,</span> <span class="n">key_path</span> <span class="o">=</span> <span class="n">discover_mujoco</span><span class="p">()</span>
+<span class="n">cymj</span> <span class="o">=</span> <span class="n">load_cython_ext</span><span class="p">(</span><span class="n">mjpro_path</span><span class="p">)</span>
+
+
+<span class="c1"># Trick to expose all mj* functions from mujoco in mujoco_py.*</span>
+<span class="k">class</span> <span class="nc">dict2</span><span class="p">(</span><span class="nb">object</span><span class="p">):</span>
+    <span class="k">pass</span>
+
+
+<span class="n">functions</span> <span class="o">=</span> <span class="n">dict2</span><span class="p">()</span>
+<span class="k">for</span> <span class="n">func_name</span> <span class="ow">in</span> <span class="nb">dir</span><span class="p">(</span><span class="n">cymj</span><span class="p">):</span>
+    <span class="k">if</span> <span class="n">func_name</span><span class="o">.</span><span class="n">startswith</span><span class="p">(</span><span class="s2">&quot;_mj&quot;</span><span class="p">):</span>
+        <span class="nb">setattr</span><span class="p">(</span><span class="n">functions</span><span class="p">,</span> <span class="n">func_name</span><span class="p">[</span><span class="mi">1</span><span class="p">:],</span> <span class="nb">getattr</span><span class="p">(</span><span class="n">cymj</span><span class="p">,</span> <span class="n">func_name</span><span class="p">))</span>
+
+<span class="n">functions</span><span class="o">.</span><span class="n">mj_activate</span><span class="p">(</span><span class="n">key_path</span><span class="p">)</span>
+
+<span class="c1"># Set user-defined callbacks that raise assertion with message</span>
+<span class="n">cymj</span><span class="o">.</span><span class="n">set_warning_callback</span><span class="p">(</span><span class="n">user_warning_raise_exception</span><span class="p">)</span>
+</pre></div>
+
+           </div>
+           <div class="articleComments">
+            
+           </div>
+          </div>
+          <footer>
+  
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>
+        &copy; Copyright 2017, OpenAI.
+
+    </p>
+  </div>
+  Built with <a href="http://sphinx-doc.org/">Sphinx</a> using a <a href="https://github.com/snide/sphinx_rtd_theme">theme</a> provided by <a href="https://readthedocs.org">Read the Docs</a>. 
+
+</footer>
+
+        </div>
+      </div>
+
+    </section>
+
+  </div>
+  
+
+
+  
+
+    <script type="text/javascript">
+        var DOCUMENTATION_OPTIONS = {
+            URL_ROOT:'../../',
+            VERSION:'1.50.0.14',
+            COLLAPSE_INDEX:false,
+            FILE_SUFFIX:'.html',
+            HAS_SOURCE:  true,
+            SOURCELINK_SUFFIX: '.txt'
+        };
+    </script>
+      <script type="text/javascript" src="../../_static/jquery.js"></script>
+      <script type="text/javascript" src="../../_static/underscore.js"></script>
+      <script type="text/javascript" src="../../_static/doctools.js"></script>
+
+  
+
+  
+  
+    <script type="text/javascript" src="../../_static/js/theme.js"></script>
+  
+
+  
+  
+  <script type="text/javascript">
+      jQuery(function () {
+          SphinxRtdTheme.StickyNav.enable();
+      });
+  </script>
+   
+
+</body>
+</html>

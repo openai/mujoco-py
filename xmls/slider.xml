@@ -1,0 +1,62 @@
+<!-- Author: vikash@openai.com-->
+<mujoco model='slider-v1.5'>
+    <compiler inertiafromgeom='true' angle='radian'/>
+
+    <default>
+        <joint limited='true' damping='0.01' armature='0' frictionloss='0.1' />
+        <geom contype='1' conaffinity='1' condim='3' rgba='0.8 0.6 .4 1'
+        	margin="0.001" solref=".02 1" solimp=".8 .8 .01" material="geom" density="50"/>
+        <motor ctrlrange='-1 1'  ctrllimited='true'/>
+    </default>
+
+    <option timestep='0.002' iterations="50" solver="PGS">
+        <flag energy="enable"/>
+    </option>
+
+    <visual>
+        <map fogstart="3" fogend="5" force="0.1" znear="0.1"/>
+        <quality shadowsize="2048"/>
+        <global offwidth="800" offheight="800"/>
+    </visual>
+
+    <asset>
+		<texture type="skybox" builtin="gradient" width="128" height="128" rgb1=".4 .6 .8" 
+            rgb2="0 0 0"/>  
+        <texture name="texgeom" type="cube" builtin="flat" mark="cross" width="127" height="1278" markrgb="1 1 1" random="0.01"/>  
+        <texture name="texplane" type="2d" builtin="checker" rgb1=".2 .3 .4" rgb2=".1 0.15 0.2" 
+            width="512" height="512"/>  
+
+        <material name='MatPlane' reflectance='0.5' texture="texplane" texrepeat="1 1" texuniform="true"/>
+        <material name='geom' texture="texgeom" texuniform="true"/>
+    </asset>
+
+	
+	
+    <worldbody>     
+        <light directional='true' diffuse='.8 .8 .8' specular='0.3 0.3 0.3' pos='0 -.15 1.0' dir='0 -.15 -1'/>
+		<geom name='floor' pos='4 0 0' size='7 2 .125' conaffinity='0' contype='0' type='plane' material="MatPlane" condim='3'/>
+		<geom name="track_boss" type="capsule" pos='0 0 .15' conaffinity='0' contype='0' size=".055 1" euler='0 1.57 0'/>		
+		<geom name="track_worker" type="capsule" pos='4 0 .15' conaffinity='0' contype='0' size=".05 5" euler='0 1.57 0' rgba='.3 .8 .7 1'/>		
+		<geom name="target" type="box" pos='6 0 .15' conaffinity='0' contype='0' size=".16 .16 .16" rgba='0 1 0 .4'/>		
+		
+		
+		<body name='boss' pos='-.5 0 .15'>
+			<geom name='ball' type='sphere' size='.15'/>
+			<joint name='ballx' type='slide' axis='1 0 0' range='-.5 1.5'/>
+		</body>
+		
+		<body name='worker' pos='0 0 .15'>
+			<geom type='box' size='.15 .15 .15' rgba='.3 .8 .7 1'/>
+			<joint name='workerx' type='slide' axis='1 0 0' limited='true' range='-1 9' frictionloss="2"/>
+		</body>  
+	</worldbody>
+
+    <actuator>
+		<motor name='bossx' 	gear='50' joint='ballx'/>
+    </actuator>
+	
+	<sensor>
+		<jointpos name="ballx"	joint="ballx"/>
+	</sensor>
+
+</mujoco>
