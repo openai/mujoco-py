@@ -1,4 +1,4 @@
-# mujoco-py [![Documentation](https://img.shields.io/badge/docs-latest-brightgreen.svg?style=flat)](https://openai.github.io/pymj/build/html/index.html) [![Build Status](https://travis-ci.com/openai/pymj.svg?token=aA2GupFxnzsRTN56psRJ&branch=master)](https://travis-ci.com/openai/pymj) [![Build status](https://ci.appveyor.com/api/projects/status/dsg86qpalv9bi568?svg=true)](https://ci.appveyor.com/project/wojzaremba/pymj)
+# mujoco-py [![Documentation](https://img.shields.io/badge/docs-latest-brightgreen.svg?style=flat)](https://openai.github.io/mujoco-py/build/html/index.html) [![Build Status](https://travis-ci.org/openai/mujoco-py.svg?branch=master)](https://travis-ci.org/openai/mujoco-py)
 
 [MuJoCo](http://mujoco.org/) is a physics engine for detailed, efficient rigid body simulations with contacts. `mujoco-py` allows using MuJoCo from Python.
 
@@ -41,7 +41,7 @@ print(sim.data.qpos)
 #   -2.39251380e-08  -4.46750545e-07   1.78771599e-09  -1.04232280e-08]
 ```
 
-See the [full documentation](https://openai.github.io/pymj/build/html/index.html) for advanced usage.
+See the [full documentation](https://openai.github.io/mujoco-py/build/html/index.html) for advanced usage.
 
 ## Usage Examples
 
@@ -55,7 +55,7 @@ A number of examples demonstrating some advanced features of `mujoco-py` can be 
 - [`simpool.py`](./examples/simpool.py): shows how `MjSimPool` can be used to run a number of simulations in parallel
 - [`tosser.py`](./examples/tosser.py): shows a simple actuated object sorting robot application
 
-See the [full documentation](https://openai.github.io/pymj/build/html/index.html) for advanced usage.
+See the [full documentation](https://openai.github.io/mujoco-py/build/html/index.html) for advanced usage.
 
 ## Development
 

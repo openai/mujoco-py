@@ -8,7 +8,7 @@ mujoco-py Documentation
 
 `MuJoCo <http://mujoco.org/>`_ is a physics engine for detailed, efficient rigid body simulations with contacts. ``mujoco-py`` allows using MuJoCo from Python.
 
-See the `README <https://github.com/openai/mujoco-py#mujoco-py-->`_ for installation instructions and example usage.
+See the `README <https://github.com/openai/mujoco-py/blob/master/README.md>`_ for installation instructions and example usage.
 
 ``mujoco-py`` allows access to MuJoCo on a number of different levels of abstraction:
 
