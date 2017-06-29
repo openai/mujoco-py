@@ -27,7 +27,7 @@ import OpenGL.GL as gl
 from mujoco_py import functions
 from mujoco_py.builder import mjpro_path
 from mujoco_py.cymj import (MjRenderContext, MjSim, load_model_from_xml,
-                            mujoco_pyrRect, mujoco_pyvCamera)
+                            PyMjrRect, PyMjvCamera)
 from mujoco_py.generated.const import (CAT_ALL, FB_OFFSCREEN, FONT_BIG,
                                        GRID_BOTTOMLEFT, STEREO_SIDEBYSIDE)
 
@@ -164,9 +164,9 @@ if __name__ == '__main__':
     FPS = 90.0
     lasttm = glfw.get_time()
     frametime = sim.data.time
-    viewFull = mujoco_pyrRect()
+    viewFull = PyMjrRect()
     viewFull.width, viewFull.height = 2 * hmd.width, hmd.height
-    nullCam = mujoco_pyvCamera()
+    nullCam = PyMjvCamera()
 
     while not glfw.window_should_close(window):
         if sim.data.time - frametime > 1 / FPS or sim.data.time < frametime:
