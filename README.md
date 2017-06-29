@@ -20,11 +20,13 @@ Upgrade note: Since version 1.50.1.0, only Python 3 is supported. Python 2 users
    at `~/.mujoco/mjkey.txt`.
 
 ### Install and use `mujoco-py`
-To include `mujoco-py` in another package, add it to your requirements like so:
+To include `mujoco-py` in your own package, add it to your requirements like so:
 ```
 mujoco-py<1.50.2,>=1.50.1
 ```
-To play with it interactively, follow these steps:
+If you encounter errors during installation, please refer to [the `Dockerfile`](Dockerfile) for the canonical list of system dependencies on Linux.
+
+To play with `mujoco-py` interactively, follow these steps:
 ```
 $ pip install -U 'mujoco-py<1.50.2,>=1.50.1'
 $ python
