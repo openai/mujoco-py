@@ -26,7 +26,7 @@ mujoco-py<1.50.2,>=1.50.1
 ```
 To play with it interactively, follow these steps:
 ```
-$ pip install -U 'mujoco-py<1.50.2,>=1.50.1'
+$ pip3 install -U 'mujoco-py<1.50.2,>=1.50.1'
 $ python
 import mujoco_py
 from os.path import dirname
