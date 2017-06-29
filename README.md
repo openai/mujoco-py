@@ -2,9 +2,17 @@
 
 [MuJoCo](http://mujoco.org/) is a physics engine for detailed, efficient rigid body simulations with contacts. `mujoco-py` allows using MuJoCo from Python 3.
 
-Upgrade note: Since version 1.50.1.0, only Python 3 is supported. Python 2 users can stay on the [`0.5` branch](https://github.com/openai/mujoco-py/tree/0.5). The latest release there is [`0.5.7`](https://github.com/openai/mujoco-py/releases/tag/0.5.7) which can be installed with `pip install mujoco-py==0.5.7`.
-
 ## Synopsis
+
+### Requirements
+
+The following platforms are currently supported:
+
+- Linux with Python 3.5.2. See [the `Dockerfile`](Dockerfile) for the canonical list of system dependencies. Support for Python 3.6 [is planned](https://github.com/openai/mujoco-py/issues/52).
+- OS X with Python 3.5.2. Support for Python 3.6 [is planned](https://github.com/openai/mujoco-py/issues/52).
+- Windows (experimental) with Python 3.5.2. See [the Appveyor file](https://github.com/openai/mujoco-py/blob/master/.appveyor.yml#L16-L32) for the canonical list of dependencies.
+
+Python 2 has been desupported since [1.50.1.0](https://github.com/openai/mujoco-py/releases/tag/1.50.1.0). Python 2 users can stay on the [`0.5` branch](https://github.com/openai/mujoco-py/tree/0.5). The latest release there is [`0.5.7`](https://github.com/openai/mujoco-py/releases/tag/0.5.7) which can be installed with `pip install mujoco-py==0.5.7`.
 
 ### Install MuJoCo
 
@@ -24,8 +32,6 @@ To include `mujoco-py` in your own package, add it to your requirements like so:
 ```
 mujoco-py<1.50.2,>=1.50.1
 ```
-If you encounter errors during installation, please refer to [the `Dockerfile`](Dockerfile) for the canonical list of system dependencies on Linux.
-
 To play with `mujoco-py` interactively, follow these steps:
 ```
 $ pip install -U 'mujoco-py<1.50.2,>=1.50.1'
