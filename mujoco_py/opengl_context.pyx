@@ -121,10 +121,8 @@ class GlfwContext(OpenGLContext):
 
 class OffscreenOpenGLContext():
 
-    def __init__(self):
-        # TODO: support GPU rendering on mac
-        # TODO: allow user to pick GPU expilictly from code
-        device_id = int(os.getenv('CUDA_VISIBLE_DEVICES', '0').split(',')[0])
+    def __init__(self, device_id):
+        self.device_id = device_id
         res = initOpenGL(device_id)
         if res != 1:
             raise RuntimeError("Failed to initialize OpenGL")
@@ -134,10 +132,9 @@ class OffscreenOpenGLContext():
         closeOpenGL()
 
     def make_context_current(self):
-        # TODO: maybe expose this explicitly?
-        pass
+        makeOpenGLContextCurrent(self.device_id)
 
     def set_buffer_size(self, int width, int height):
-        res = setOpenGLBufferSize(width, height)
+        res = setOpenGLBufferSize(self.device_id, width, height)
         if res != 1:
             raise RuntimeError("Failed to set buffer size")

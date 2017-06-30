@@ -28,7 +28,8 @@ cdef extern from "gl/glshim.h":
 
     cdef int initOpenGL(int device_id)
     cdef void closeOpenGL()
-    cdef int setOpenGLBufferSize(int width, int height)
+    cdef int makeOpenGLContextCurrent(int device_id)
+    cdef int setOpenGLBufferSize(int device_id, int width, int height)
 
 # TODO: make this function or class so these comments turn into doc strings:
 

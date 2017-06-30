@@ -3,6 +3,7 @@
 
 int initOpenGL(int device_id);
 void closeOpenGL();
-int setOpenGLBufferSize(int width, int height);
+int makeOpenGLContextCurrent(int device_id);
+int setOpenGLBufferSize(int device_id, int width, int height);
 
 #endif

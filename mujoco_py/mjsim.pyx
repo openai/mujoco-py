@@ -3,27 +3,9 @@ from mujoco_py.utils import remove_empty_lines
 
 
 cdef class MjSim(object):
-    """MjSim represents a running simulation including its state.
-
-    Similar to Gym's ``MujocoEnv``, it internally wraps a :class:`.PyMjModel`
-    and a :class:`.PyMjData`.
-
-    Parameters
-    ----------
-    model : :class:`.PyMjModel`
-        The model to simulate.
-    data : :class:`.PyMjData`
-        Optional container for the simulation state. Will be created if ``None``.
-    nsubsteps : int
-        Optional number of MuJoCo steps to run for every call to :meth:`.step`.
-        Buffers will be swapped only once per step.
-    udd_callback : fn(:class:`.MjSim`) -> dict
-        Optional callback for user-defined dynamics. At every call to
-        :meth:`.step`, it receives an MjSim object ``sim`` containing the
-        current user-defined dynamics state in ``sim.udd_state``, and returns the
-        next ``udd_state`` after applying the user-defined dynamics. This is
-        useful e.g. for reward functions that operate over functions of historical
-        state.
+    """
+    Wrapper around PyMjModel and PyMjData with extra functionality for
+    advancing the simulation dynamics and keeping a buffer between steps.
     """
     # MjRenderContext for rendering camera views.
     cdef readonly list render_contexts
@@ -33,9 +15,6 @@ cdef class MjSim(object):
     # MuJoCo model
     cdef readonly PyMjModel model
     # MuJoCo data
-    """
-    DATAZ
-    """
     cdef readonly PyMjData data
     # Number of substeps when calling .step
     cdef readonly int nsubsteps
@@ -48,6 +27,18 @@ cdef class MjSim(object):
 
     def __cinit__(self, PyMjModel model, PyMjData data=None, int nsubsteps=1,
                   udd_callback=None):
+        """
+        Args:
+            - model (PyMjModel): model to simulate.
+            - data (PyMjData): stores the simulation data. Will be created
+                if not provided.
+            - nsubsteps (int): number of substeps to run on `.step`. Buffers
+                will be swapped only once per step.
+            - udd_callback: callback for the user-defined dynamics. It
+                takes an MjSim object as the current state and returns the
+                next udd_state after applying dynamics. Useful for reward
+                functions that operate over functions of historical state.
+        """
         self.nsubsteps = nsubsteps
         self.model = model
         if data is None:
@@ -78,17 +69,17 @@ cdef class MjSim(object):
 
     def forward(self):
         """
-        Computes the forward kinematics. Calls ``mj_forward`` internally.
+        Calls `mj_forward`.
         """
         with wrap_mujoco_warning():
             mj_forward(self.model.ptr, self.data.ptr)
 
     def step(self):
         """
-        Advances the simulation by calling ``mj_step``.
+        Calls `mj_step`, with `nsubsteps` as specified on `MjSim` instance creation.
 
-        If ``qpos`` or ``qvel`` have been modified directly, the user is required to call
-        :meth:`.forward` before :meth:`.step` if their ``udd_callback`` requires access to MuJoCo state
+        If qpos or qvel have been modified directly, the user is required to call
+        forward before step if their udd_callback requires access to Mujoco state
         set during the forward dynamics.
         """
         self.step_udd()
@@ -98,7 +89,7 @@ cdef class MjSim(object):
                 mj_step(self.model.ptr, self.data.ptr)
 
     def render(self, width=None, height=None, *, camera_name=None, depth=False,
-               mode='offscreen'):
+               mode='offscreen', device_id=-1):
         """
         Renders view from a camera and returns image as an `numpy.ndarray`.
 
@@ -121,7 +112,8 @@ cdef class MjSim(object):
 
         if mode == 'offscreen':
             if self._render_context_offscreen is None:
-                render_context = MjRenderContextOffscreen(self)
+                render_context = MjRenderContextOffscreen(
+                    self, device_id=device_id)
             else:
                 render_context = self._render_context_offscreen
 
