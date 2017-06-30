@@ -53,7 +53,6 @@ The easy solution is to `import mujoco_py` _before_ `import glfw`.
     builder = Builder(mjpro_path)
     cext_so_path = builder.get_so_file_path()
     if not exists(cext_so_path):
-        print("building")
         cext_so_path = builder.build()
     mod = imp.load_dynamic("cymj", cext_so_path)
     return mod

@@ -3,9 +3,25 @@ from mujoco_py.utils import remove_empty_lines
 
 
 cdef class MjSim(object):
-    """
-    Wrapper around PyMjModel and PyMjData with extra functionality for
-    advancing the simulation dynamics and keeping a buffer between steps.
+    """MjSim represents a running simulation including its state.
+    Similar to Gym's ``MujocoEnv``, it internally wraps a :class:`.PyMjModel`
+    and a :class:`.PyMjData`.
+    Parameters
+    ----------
+    model : :class:`.PyMjModel`
+        The model to simulate.
+    data : :class:`.PyMjData`
+        Optional container for the simulation state. Will be created if ``None``.
+    nsubsteps : int
+        Optional number of MuJoCo steps to run for every call to :meth:`.step`.
+        Buffers will be swapped only once per step.
+    udd_callback : fn(:class:`.MjSim`) -> dict
+        Optional callback for user-defined dynamics. At every call to
+        :meth:`.step`, it receives an MjSim object ``sim`` containing the
+        current user-defined dynamics state in ``sim.udd_state``, and returns the
+        next ``udd_state`` after applying the user-defined dynamics. This is
+        useful e.g. for reward functions that operate over functions of historical
+        state.
     """
     # MjRenderContext for rendering camera views.
     cdef readonly list render_contexts
@@ -15,6 +31,9 @@ cdef class MjSim(object):
     # MuJoCo model
     cdef readonly PyMjModel model
     # MuJoCo data
+    """
+    DATAZ
+    """
     cdef readonly PyMjData data
     # Number of substeps when calling .step
     cdef readonly int nsubsteps
@@ -27,18 +46,6 @@ cdef class MjSim(object):
 
     def __cinit__(self, PyMjModel model, PyMjData data=None, int nsubsteps=1,
                   udd_callback=None):
-        """
-        Args:
-            - model (PyMjModel): model to simulate.
-            - data (PyMjData): stores the simulation data. Will be created
-                if not provided.
-            - nsubsteps (int): number of substeps to run on `.step`. Buffers
-                will be swapped only once per step.
-            - udd_callback: callback for the user-defined dynamics. It
-                takes an MjSim object as the current state and returns the
-                next udd_state after applying dynamics. Useful for reward
-                functions that operate over functions of historical state.
-        """
         self.nsubsteps = nsubsteps
         self.model = model
         if data is None:
@@ -69,17 +76,16 @@ cdef class MjSim(object):
 
     def forward(self):
         """
-        Calls `mj_forward`.
+        Computes the forward kinematics. Calls ``mj_forward`` internally.
         """
         with wrap_mujoco_warning():
             mj_forward(self.model.ptr, self.data.ptr)
 
     def step(self):
         """
-        Calls `mj_step`, with `nsubsteps` as specified on `MjSim` instance creation.
-
-        If qpos or qvel have been modified directly, the user is required to call
-        forward before step if their udd_callback requires access to Mujoco state
+        Advances the simulation by calling ``mj_step``.
+        If ``qpos`` or ``qvel`` have been modified directly, the user is required to call
+        :meth:`.forward` before :meth:`.step` if their ``udd_callback`` requires access to MuJoCo state
         set during the forward dynamics.
         """
         self.step_udd()
@@ -99,6 +105,8 @@ cdef class MjSim(object):
         - camera_name (str): name of camera in model. If None, the free
             camera will be used.
         - depth (bool): if True, also return depth buffer
+        - device (int): device to use for rendering (only for GPU-backed
+            rendering).
 
         Returns:
         - rgb (uint8 array): image buffer from camera
