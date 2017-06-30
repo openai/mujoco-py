@@ -4,8 +4,10 @@ from mujoco_py.utils import remove_empty_lines
 
 cdef class MjSim(object):
     """MjSim represents a running simulation including its state.
+
     Similar to Gym's ``MujocoEnv``, it internally wraps a :class:`.PyMjModel`
     and a :class:`.PyMjData`.
+
     Parameters
     ----------
     model : :class:`.PyMjModel`
@@ -84,6 +86,7 @@ cdef class MjSim(object):
     def step(self):
         """
         Advances the simulation by calling ``mj_step``.
+
         If ``qpos`` or ``qvel`` have been modified directly, the user is required to call
         :meth:`.forward` before :meth:`.step` if their ``udd_callback`` requires access to MuJoCo state
         set during the forward dynamics.
