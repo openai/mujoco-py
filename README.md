@@ -27,7 +27,7 @@ mujoco-py<1.50.2,>=1.50.1
 To play with it interactively, follow these steps:
 ```
 $ pip3 install -U 'mujoco-py<1.50.2,>=1.50.1'
-$ python
+$ python3
 import mujoco_py
 from os.path import dirname
 model = mujoco_py.load_model_from_path(dirname(dirname(mujoco_py.__file__))  +"/xmls/claw.xml")
