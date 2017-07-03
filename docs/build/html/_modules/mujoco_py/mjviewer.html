@@ -8,7 +8,7 @@
   
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   
-  <title>mujoco_py.mjviewer &mdash; mujoco-py 1.50.0.14 documentation</title>
+  <title>mujoco_py.mjviewer &mdash; mujoco-py 1.50.1.0 documentation</title>
   
 
   
@@ -35,7 +35,7 @@
         <link rel="index" title="Index"
               href="../../genindex.html"/>
         <link rel="search" title="Search" href="../../search.html"/>
-    <link rel="top" title="mujoco-py 1.50.0.14 documentation" href="../../index.html"/>
+    <link rel="top" title="mujoco-py 1.50.1.0 documentation" href="../../index.html"/>
         <link rel="up" title="Module code" href="../index.html"/> 
 
   
@@ -65,7 +65,7 @@
             
             
               <div class="version">
-                1.50.0.14
+                1.50.1.0
               </div>
             
           
@@ -198,9 +198,10 @@
         <span class="n">glfw</span><span class="o">.</span><span class="n">set_scroll_callback</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">window</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">_scroll_callback</span><span class="p">)</span>
         <span class="n">glfw</span><span class="o">.</span><span class="n">set_key_callback</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">window</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">key_callback</span><span class="p">)</span>
 
-    <span class="k">def</span> <span class="nf">render</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+<div class="viewcode-block" id="MjViewerBasic.render"><a class="viewcode-back" href="../../reference.html#mujoco_py.MjViewerBasic.render">[docs]</a>    <span class="k">def</span> <span class="nf">render</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
         <span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">        Render the current simulation state to the screen or off-screen buffer.</span>
+<span class="sd">        Call this in your main loop.</span>
 <span class="sd">        &quot;&quot;&quot;</span>
         <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">window</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
             <span class="k">return</span>
@@ -210,7 +211,7 @@
         <span class="k">with</span> <span class="bp">self</span><span class="o">.</span><span class="n">_gui_lock</span><span class="p">:</span>
             <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="n">render</span><span class="p">()</span>
 
-        <span class="n">glfw</span><span class="o">.</span><span class="n">poll_events</span><span class="p">()</span>
+        <span class="n">glfw</span><span class="o">.</span><span class="n">poll_events</span><span class="p">()</span></div>
 
     <span class="k">def</span> <span class="nf">key_callback</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">window</span><span class="p">,</span> <span class="n">key</span><span class="p">,</span> <span class="n">scancode</span><span class="p">,</span> <span class="n">action</span><span class="p">,</span> <span class="n">mods</span><span class="p">):</span>
         <span class="k">if</span> <span class="n">action</span> <span class="o">==</span> <span class="n">glfw</span><span class="o">.</span><span class="n">RELEASE</span> <span class="ow">and</span> <span class="n">key</span> <span class="o">==</span> <span class="n">glfw</span><span class="o">.</span><span class="n">KEY_ESCAPE</span><span class="p">:</span>
@@ -316,7 +317,12 @@
         <span class="bp">self</span><span class="o">.</span><span class="n">_hide_overlay</span> <span class="o">=</span> <span class="kc">False</span>  <span class="c1"># hide the entire overlay.</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">_user_overlay</span> <span class="o">=</span> <span class="p">{}</span>
 
-    <span class="k">def</span> <span class="nf">render</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+<div class="viewcode-block" id="MjViewer.render"><a class="viewcode-back" href="../../reference.html#mujoco_py.MjViewer.render">[docs]</a>    <span class="k">def</span> <span class="nf">render</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Render the current simulation state to the screen or off-screen buffer.</span>
+<span class="sd">        Call this in your main loop.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+
         <span class="k">def</span> <span class="nf">render_inner_loop</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
             <span class="n">render_start</span> <span class="o">=</span> <span class="n">time</span><span class="o">.</span><span class="n">time</span><span class="p">()</span>
 
@@ -354,7 +360,7 @@
                 <span class="bp">self</span><span class="o">.</span><span class="n">_loop_count</span> <span class="o">-=</span> <span class="mi">1</span>
         <span class="c1"># Markers and overlay are regenerated in every pass.</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">_markers</span><span class="p">[:]</span> <span class="o">=</span> <span class="p">[]</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">_overlay</span><span class="o">.</span><span class="n">clear</span><span class="p">()</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_overlay</span><span class="o">.</span><span class="n">clear</span><span class="p">()</span></div>
 
     <span class="k">def</span> <span class="nf">_read_pixels_as_in_window</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
         <span class="c1"># Reads pixels with markers and overlay from the same camera as screen.</span>
@@ -549,7 +555,7 @@
     <script type="text/javascript">
         var DOCUMENTATION_OPTIONS = {
             URL_ROOT:'../../',
-            VERSION:'1.50.0.14',
+            VERSION:'1.50.1.0',
             COLLAPSE_INDEX:false,
             FILE_SUFFIX:'.html',
             HAS_SOURCE:  true,
