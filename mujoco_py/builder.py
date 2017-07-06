@@ -8,6 +8,7 @@ from distutils.core import Extension
 from distutils.dist import Distribution
 from distutils.sysconfig import customize_compiler
 from os.path import abspath, dirname, exists, join, getmtime
+from shutil import move
 
 import numpy as np
 from Cython.Build import cythonize
@@ -50,8 +51,9 @@ The easy solution is to `import mujoco_py` _before_ `import glfw`.
         raise RuntimeError("Unsupported platform %s" % sys.platform)
 
     builder = Builder(mjpro_path)
-
-    cext_so_path = builder.build()
+    cext_so_path = builder.get_so_file_path()
+    if not exists(cext_so_path):
+        cext_so_path = builder.build()
     mod = imp.load_dynamic("cymj", cext_so_path)
     return mod
 
@@ -114,6 +116,12 @@ class MujocoExtensionBuilder():
             language='c')
 
     def build(self):
+        built_so_file_path = self._build_impl()
+        new_so_file_path = self.get_so_file_path()
+        move(built_so_file_path, new_so_file_path)
+        return new_so_file_path
+
+    def _build_impl(self):
         dist = Distribution({
             "script_name": None,
             "script_args": ["build_ext"]
@@ -129,8 +137,13 @@ class MujocoExtensionBuilder():
         dist.parse_command_line()
         obj_build_ext = dist.get_command_obj("build_ext")
         dist.run_commands()
-        so_file_path, = obj_build_ext.get_outputs()
-        return so_file_path
+        built_so_file_path, = obj_build_ext.get_outputs()
+        return built_so_file_path
+
+    def get_so_file_path(self):
+        dir_path = abspath(dirname(__file__))
+        return join(dir_path, "generated", "cymj_%s.so" % (
+            self.__class__.__name__.lower()))
 
 
 class WindowsExtensionBuilder(MujocoExtensionBuilder):
@@ -162,8 +175,8 @@ class LinuxGPUExtensionBuilder(MujocoExtensionBuilder):
         self.extension.libraries.extend(['glewegl'])
         self.extension.runtime_library_dirs = [join(mjpro_path, 'bin')]
 
-    def build(self):
-        so_file_path = super().build()
+    def _build_impl(self):
+        so_file_path = super()._build_impl()
         nvidia_lib_dir = '/usr/local/nvidia/lib64/'
         fix_shared_library(so_file_path, 'libOpenGL.so',
                            join(nvidia_lib_dir, 'libOpenGL.so.0'))
@@ -182,7 +195,7 @@ class MacExtensionBuilder(MujocoExtensionBuilder):
         self.extension.define_macros = [('ONMAC', None)]
         self.extension.runtime_library_dirs = [join(mjpro_path, 'bin')]
 
-    def build(self):
+    def _build_impl(self):
         # Prefer GCC 6 for now since GCC 7 may behave differently.
         c_compilers = ['/usr/local/bin/gcc-6', '/usr/local/bin/gcc-7']
         available_c_compiler = None
@@ -197,7 +210,7 @@ class MacExtensionBuilder(MujocoExtensionBuilder):
                 '`brew install gcc --without-multilib`.')
         os.environ['CC'] = available_c_compiler
 
-        so_file_path = super().build()
+        so_file_path = super()._build_impl()
         del os.environ['CC']
         return self.manually_link_libraries(so_file_path)
 

@@ -98,7 +98,7 @@ cdef class MjSim(object):
                 mj_step(self.model.ptr, self.data.ptr)
 
     def render(self, width=None, height=None, *, camera_name=None, depth=False,
-               mode='offscreen'):
+               mode='offscreen', device_id=-1):
         """
         Renders view from a camera and returns image as an `numpy.ndarray`.
 
@@ -108,6 +108,8 @@ cdef class MjSim(object):
         - camera_name (str): name of camera in model. If None, the free
             camera will be used.
         - depth (bool): if True, also return depth buffer
+        - device (int): device to use for rendering (only for GPU-backed
+            rendering).
 
         Returns:
         - rgb (uint8 array): image buffer from camera
@@ -121,7 +123,8 @@ cdef class MjSim(object):
 
         if mode == 'offscreen':
             if self._render_context_offscreen is None:
-                render_context = MjRenderContextOffscreen(self)
+                render_context = MjRenderContextOffscreen(
+                    self, device_id=device_id)
             else:
                 render_context = self._render_context_offscreen
 

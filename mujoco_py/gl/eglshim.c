@@ -6,10 +6,18 @@
 
 #define MAX_DEVICES 8
 
-int is_initialized = 0;
+int is_device_initialized[MAX_DEVICES] = {0};
+EGLDisplay eglDisplays[MAX_DEVICES];
+EGLContext eglContexts[MAX_DEVICES];
 
 int initOpenGL(int device_id)
 {
+    if (device_id < 0 || device_id > MAX_DEVICES) {
+        printf("Device id outside of range.\n");
+        return -1;
+    }
+    int is_initialized = is_device_initialized[device_id];
+
     if (is_initialized)
         return 1;
 
@@ -94,34 +102,59 @@ int initOpenGL(int device_id)
         return -8;
     }
 
-    is_initialized = 1;
+    is_device_initialized[device_id] = 1;
+    eglDisplays[device_id] = eglDpy;
+    eglContexts[device_id] = eglCtx;
     return 1;
 }
 
-int setOpenGLBufferSize(int width, int height) {
+int makeOpenGLContextCurrent(device_id) {
+    if (device_id < 0 || device_id > MAX_DEVICES) {
+        printf("Device id outside of range.\n");
+        return -1;
+    }
+    if (!is_device_initialized[device_id])
+        return -2;
+
+    if( eglMakeCurrent(eglDisplays[device_id],
+                       EGL_NO_SURFACE,
+                       EGL_NO_SURFACE,
+                       eglContexts[device_id]) != EGL_TRUE ) {
+        eglDestroyContext(eglDisplays[device_id],
+                          eglContexts[device_id]);
+        printf("Could not make EGL context current\n");
+        return -3;
+    } else {
+        return 1;
+    }
+}
+
+int setOpenGLBufferSize(int device_id, int width, int height) {
     // Noop since we don't need to change buffer here.
     return 1;
 }
 
 void closeOpenGL()
 {
-    if (!is_initialized)
-        return;
+    for (int device_id=0; device_id<MAX_DEVICES; device_id++) {
+        if (!is_device_initialized[device_id])
+            continue;
 
-    EGLDisplay eglDpy = eglGetCurrentDisplay();
-    if( eglDpy==EGL_NO_DISPLAY )
-        return;
+        EGLDisplay eglDpy = eglDisplays[device_id];
+        if( eglDpy==EGL_NO_DISPLAY )
+            continue;
 
-    // get current context
-    EGLContext eglCtx = eglGetCurrentContext();
+        // get current context
+        EGLContext eglCtx = eglContexts[device_id];
 
-    // release context
-    eglMakeCurrent(eglDpy, EGL_NO_SURFACE, EGL_NO_SURFACE, EGL_NO_CONTEXT);
+        // release context
+        eglMakeCurrent(eglDpy, EGL_NO_SURFACE, EGL_NO_SURFACE, EGL_NO_CONTEXT);
 
-    // destroy context if valid
-    if( eglCtx!=EGL_NO_CONTEXT )
-        eglDestroyContext(eglDpy, eglCtx);
+        // destroy context if valid
+        if( eglCtx!=EGL_NO_CONTEXT )
+            eglDestroyContext(eglDpy, eglCtx);
 
-    // terminate display
-    eglTerminate(eglDpy);
+        // terminate display
+        eglTerminate(eglDpy);
+    }
 }

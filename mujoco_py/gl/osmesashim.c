@@ -32,7 +32,17 @@ int initOpenGL(int device_id) {
     return 1;
 }
 
-int setOpenGLBufferSize(int width, int height) {
+int makeOpenGLContextCurrent(int device_id) {
+    if (is_initialized) {
+        if( !OSMesaMakeCurrent(ctx, buffer, GL_UNSIGNED_BYTE, BUFFER_WIDTH, BUFFER_HEIGHT) ) {
+            printf("OSMesa make current failed\n");
+            return -1;
+        }
+    }
+    return 1;
+}
+
+int setOpenGLBufferSize(int device_id, int width, int height) {
     if (width > BUFFER_WIDTH || height > BUFFER_HEIGHT) {
         printf("Buffer size too big\n");
         return -1;
