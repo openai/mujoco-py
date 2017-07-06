@@ -20,9 +20,9 @@ Python 2 has been desupported since [1.50.1.0](https://github.com/openai/mujoco-
    or free license if you are a student.
    The license key will arrive in an email with your username and password.
 2. Download the MuJoCo version 1.50 binaries for
-   [Linux](https://www.roboti.us/active/mjpro150_linux.zip),
-   [OSX](https://www.roboti.us/active/mjpro150_osx.zip), or
-   [Windows](https://www.roboti.us/active/mjpro150_windows.zip).
+   [Linux](https://www.roboti.us/download/mjpro150_linux.zip),
+   [OSX](https://www.roboti.us/download/mjpro150_osx.zip), or
+   [Windows](https://www.roboti.us/download/mjpro150_windows.zip).
 3. Unzip the downloaded `mjpro150` directory into `~/.mujoco/mjpro150`,
    and place your license key (the `mjkey.txt` file from your email)
    at `~/.mujoco/mjkey.txt`.
@@ -34,8 +34,8 @@ mujoco-py<1.50.2,>=1.50.1
 ```
 To play with `mujoco-py` interactively, follow these steps:
 ```
-$ pip install -U 'mujoco-py<1.50.2,>=1.50.1'
-$ python
+$ pip3 install -U 'mujoco-py<1.50.2,>=1.50.1'
+$ python3
 import mujoco_py
 from os.path import dirname
 model = mujoco_py.load_model_from_path(dirname(dirname(mujoco_py.__file__))  +"/xmls/claw.xml")

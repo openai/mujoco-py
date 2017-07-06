@@ -43,6 +43,7 @@ class MjViewerBasic(cymj.MjRenderContextWindow):
     def render(self):
         """
         Render the current simulation state to the screen or off-screen buffer.
+        Call this in your main loop.
         """
         if self.window is None:
             return
@@ -159,6 +160,11 @@ class MjViewer(MjViewerBasic):
         self._user_overlay = {}
 
     def render(self):
+        """
+        Render the current simulation state to the screen or off-screen buffer.
+        Call this in your main loop.
+        """
+
         def render_inner_loop(self):
             render_start = time.time()
 

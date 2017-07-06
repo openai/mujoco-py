@@ -309,5 +309,7 @@ MjViewer: 3D rendering
 -----------------------------
 
 .. autoclass:: mujoco_py.MjViewerBasic
+  :members: render
 
 .. autoclass:: mujoco_py.MjViewer
+  :members: render
