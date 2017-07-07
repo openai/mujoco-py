@@ -41,7 +41,7 @@ The easy solution is to `import mujoco_py` _before_ `import glfw`.
     if sys.platform == 'darwin':
         Builder = MacExtensionBuilder
     elif sys.platform == 'linux':
-        if exists('/usr/local/nvidia/lib64'):
+        if exists('/usr/local/nvidia/lib64') and os.getenv('MUJOCO_PY_FORCE_CPU') is None:
             Builder = LinuxGPUExtensionBuilder
         else:
             Builder = LinuxCPUExtensionBuilder
