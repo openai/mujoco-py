@@ -1,5 +1,5 @@
 include requirements.txt
 include requirements.dev.txt
-recursive-include mujoco_py *.h *.py *.pyx *.pxd *.pxi *.xml *.c *.so
+recursive-include mujoco_py *.h *.py *.pyx *.pxd *.pxi *.xml *.c
 include mujoco_py/gl/*.c
 include setup.py
