@@ -280,6 +280,8 @@ class MjViewer(MjViewerBasic):
                          (1 / self._time_per_render, extra))
         self.add_overlay(const.GRID_BOTTOMLEFT, "Solver iterations", str(
             self.sim.data.solver_iter + 1))
+        self.add_overlay(const.GRID_BOTTOMRIGHT, "step", 
+                str(int(self.sim.data.time / self.sim.model.opt.timestep)))
 
     def key_callback(self, window, key, scancode, action, mods):
         if action != glfw.RELEASE:
