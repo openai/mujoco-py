@@ -1,4 +1,4 @@
-generated_cymj*
+mujoco_py/generated/cymj*
 _pyxbld*
 dist
 cache
