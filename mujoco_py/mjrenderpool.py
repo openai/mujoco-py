@@ -1,10 +1,8 @@
 import ctypes
-from multiprocessing import Array, get_logger, Pool, Value
+from multiprocessing import Array, Pool, Value
 import numpy as np
 
 from mujoco_py import MjSim, load_model_from_mjb
-
-logger = get_logger()
 
 
 class RenderPoolStorage:
@@ -20,17 +18,16 @@ class RenderPool:
 
     DEFAULT_MAX_IMAGE_SIZE = 512 * 512
 
-    def __init__(self, model, device_ids=1,
-                 max_image_size=None, n_workers=None):
+    def __init__(self, model, device_ids=1, n_workers=None,
+                 max_batch_size=None, max_image_size=None):
         if isinstance(device_ids, int):
             device_ids = list(range(device_ids))
         else:
             assert isinstance(device_ids, list), (
                 "device_ids must be list of integer")
 
-        if n_workers is None:
-            n_workers = len(device_ids)
-        self._n_workers = n_workers
+        n_workers = n_workers or 1
+        self._max_batch_size = max_batch_size or len(device_ids)
 
         if max_image_size is None:
             max_image_size = RenderPool.DEFAULT_MAX_IMAGE_SIZE
@@ -38,7 +35,7 @@ class RenderPool:
             assert isinstance(max_image_size, int)
         self._max_image_size = max_image_size
 
-        array_size = self._max_image_size * n_workers
+        array_size = self._max_image_size * self._max_batch_size
 
         self._shared_rgbs = Array(ctypes.c_uint, array_size * 3)
         self._shared_depths = Array(ctypes.c_float, array_size)
@@ -49,7 +46,7 @@ class RenderPool:
         worker_id = Value(ctypes.c_int)
         worker_id.value = 0
         self.pool = Pool(
-            processes=n_workers,
+            processes=len(device_ids) * n_workers,
             initializer=RenderPool._worker_init,
             initargs=(
                 model.get_mjb(),
@@ -72,6 +69,7 @@ class RenderPool:
         s.shared_depths_array = np.frombuffer(shared_depths.get_obj())
 
         s.sim = MjSim(load_model_from_mjb(mjb_bytes))
+        s.sim.render(100, 100, device_id=s.device_id)
 
         global _render_pool_storage
         _render_pool_storage = s
@@ -101,22 +99,30 @@ class RenderPool:
                depth=False):
         if (width * height) > self._max_image_size:
             raise ValueError(
-                "Requested image larger than maxiumum image size. Create "
+                "Requested image larger than maximum image size. Create "
                 "a new RenderPool with a larger maximum image size.")
         if states is None:
-            states = [None] * self._n_workers
+            batch_size = self._max_batch_size
+            states = [None] * batch_size
+        else:
+            batch_size = len(states)
+
+        if batch_size > self._max_batch_size:
+            raise ValueError(
+                "Requested batch size larger than max batch size. Create "
+                "a new RenderPool with a larger max batch size.")
 
         self.pool.starmap(
             RenderPool._worker_render,
             [(i, state, width, height, camera_name)
              for i, state in enumerate(states)])
 
-        rgbs = self._shared_rgbs_array[:width * height * 3 * self._n_workers]
-        rgbs = rgbs.reshape(self._n_workers, height, width, 3)
+        rgbs = self._shared_rgbs_array[:width * height * 3 * batch_size]
+        rgbs = rgbs.reshape(batch_size, height, width, 3)
 
         if depth:
-            depths = self._shared_depths_array[:width * height * self._n_workers]
-            depths = depths.reshape(self._n_workers, height, width)
+            depths = self._shared_depths_array[:width * height * batch_size]
+            depths = depths.reshape(batch_size, height, width)
             return rgbs, depths
         else:
             return rgbs
