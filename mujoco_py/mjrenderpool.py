@@ -4,6 +4,8 @@ from multiprocessing import (
     Value, Array, Pool, get_logger)
 import numpy as np
 
+from mujoco_py import MjSim, load_model_from_mjb
+
 logger = get_logger()
 
 
@@ -12,7 +14,8 @@ class RenderPoolStorage:
     __slots__ = ['shared_rgbs_array',
                  'shared_depths_array',
                  'device_id',
-                 'worker_id']
+                 'worker_id',
+                 'sim']
 
 
 class RenderPool:
@@ -51,13 +54,15 @@ class RenderPool:
             processes=n_workers,
             initializer=RenderPool._worker_init,
             initargs=(
+                model.get_mjb(),
                 worker_id,
                 device_ids,
                 self._shared_rgbs,
                 self._shared_depths))
 
     @staticmethod
-    def _worker_init(worker_id, device_ids, shared_rgbs, shared_depths):
+    def _worker_init(mjb_bytes, worker_id, device_ids,
+                     shared_rgbs, shared_depths):
         logger.info("worker/_worker_init: start")
         s = RenderPoolStorage()
 
@@ -69,6 +74,8 @@ class RenderPool:
         s.shared_rgbs_array = np.frombuffer(shared_rgbs.get_obj())
         s.shared_depths_array = np.frombuffer(shared_depths.get_obj())
 
+        s.sim = MjSim(load_model_from_mjb(mjb_bytes))
+
         logger.info("worker/_worker_init: device_id=%d", s.device_id)
         logger.info("worker/_worker_init: worker_id=%d", s.worker_id)
 
@@ -77,23 +84,19 @@ class RenderPool:
         logger.info("worker/_worker_init: end")
 
     @staticmethod
-    def _worker_render(args):
-        width, height, camera_name, depth = args
-
+    def _worker_render(worker_id, state, width, height, camera_name, depth):
         s = _render_pool_storage
-        logger.info("worker(%d)/_worker_render: %d %d %s %s",
-                    s.worker_id,
-                    width, height, camera_name, depth)
-        logger.info("worker(%d)/_worker_render: device_id=%d",
-                    s.worker_id, s.device_id)
 
         rgb_block = width * height * 3
-        rgb_offset = rgb_block * s.worker_id
+        rgb_offset = rgb_block * worker_id
         rgb = s.shared_rgbs_array[rgb_offset:rgb_offset + rgb_block]
         rgb = rgb.reshape(height, width, 3)
-        rgb[..., 0] = s.worker_id * 3
-        rgb[..., 1] = s.worker_id * 3 + 1
-        rgb[..., 2] = s.worker_id * 3 + 2
+
+        if state is not None:
+            s.sim.set_state(state)
+            s.sim.forward()
+
+        rgb[:] = s.sim.render(width, height, camera_name=camera_name)
 
     def render(self, width, height, states=None, camera_name=None,
                depth=False):
@@ -101,10 +104,13 @@ class RenderPool:
             raise ValueError(
                 "Requested image larger than maxiumum image size. Create "
                 "a new RenderPool with a larger maximum image size.")
+        if states is None:
+            states = [None] * self._n_workers
 
-        self.pool.map(
+        self.pool.starmap(
             RenderPool._worker_render,
-            [(width, height, camera_name, depth)] * self._n_workers)
+            [(i, state, width, height, camera_name, depth)
+             for i, state in enumerate(states)])
 
         rgbs = self._shared_rgbs_array[:width * height * 3 * self._n_workers]
         rgbs = rgbs.reshape(self._n_workers, height, width, 3)
