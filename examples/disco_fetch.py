@@ -6,7 +6,7 @@ from mujoco_py import load_model_from_path, MjSim, MjViewer
 from mujoco_py.modder import TextureModder
 import os
 
-model = load_model_from_path("xmls/fetch/main.xml")
+model = load_model_from_path("../xmls/fetch/main.xml")
 sim = MjSim(model)
 
 viewer = MjViewer(sim)
