@@ -25,7 +25,7 @@ def main(n_workers=4, img_width=100, n_frames=1):
         sim.forward()
         states.append(sim.get_state())
 
-    p = RenderPool(sim.model, n_workers=n_workers)
+    p = RenderPool(sim.model, n_workers=n_workers, device_ids=8)
 
     rgbs = p.render(img_width, img_width, states=states).copy()
 

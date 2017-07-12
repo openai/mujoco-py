@@ -1,7 +1,5 @@
 import ctypes
-from multiprocessing import (
-    Process, set_start_method, freeze_support, Condition,
-    Value, Array, Pool, get_logger)
+from multiprocessing import Array, get_logger, Pool, Value
 import numpy as np
 
 from mujoco_py import MjSim, load_model_from_mjb
@@ -63,40 +61,41 @@ class RenderPool:
     @staticmethod
     def _worker_init(mjb_bytes, worker_id, device_ids,
                      shared_rgbs, shared_depths):
-        logger.info("worker/_worker_init: start")
         s = RenderPoolStorage()
 
         with worker_id.get_lock():
-            s.worker_id = worker_id.value
+            proc_worker_id = worker_id.value
             worker_id.value += 1
-        s.device_id = device_ids[s.worker_id % len(device_ids)]
+        s.device_id = device_ids[proc_worker_id % len(device_ids)]
 
         s.shared_rgbs_array = np.frombuffer(shared_rgbs.get_obj())
         s.shared_depths_array = np.frombuffer(shared_depths.get_obj())
 
         s.sim = MjSim(load_model_from_mjb(mjb_bytes))
 
-        logger.info("worker/_worker_init: device_id=%d", s.device_id)
-        logger.info("worker/_worker_init: worker_id=%d", s.worker_id)
-
         global _render_pool_storage
         _render_pool_storage = s
-        logger.info("worker/_worker_init: end")
 
     @staticmethod
-    def _worker_render(worker_id, state, width, height, camera_name, depth):
+    def _worker_render(worker_id, state, width, height, camera_name):
         s = _render_pool_storage
+
+        if state is not None:
+            s.sim.set_state(state)
+            s.sim.forward()
 
         rgb_block = width * height * 3
         rgb_offset = rgb_block * worker_id
         rgb = s.shared_rgbs_array[rgb_offset:rgb_offset + rgb_block]
         rgb = rgb.reshape(height, width, 3)
 
-        if state is not None:
-            s.sim.set_state(state)
-            s.sim.forward()
+        depth_block = width * height
+        depth_offset = depth_block * worker_id
+        depth = s.shared_depths_array[depth_offset:depth_offset + depth_block]
+        depth = depth.reshape(height, width)
 
-        rgb[:] = s.sim.render(width, height, camera_name=camera_name)
+        rgb[:], depth[:] = s.sim.render(
+            width, height, camera_name=camera_name, depth=True)
 
     def render(self, width, height, states=None, camera_name=None,
                depth=False):
@@ -109,12 +108,18 @@ class RenderPool:
 
         self.pool.starmap(
             RenderPool._worker_render,
-            [(i, state, width, height, camera_name, depth)
+            [(i, state, width, height, camera_name)
              for i, state in enumerate(states)])
 
         rgbs = self._shared_rgbs_array[:width * height * 3 * self._n_workers]
         rgbs = rgbs.reshape(self._n_workers, height, width, 3)
-        return rgbs
+
+        if depth:
+            depths = self._shared_depths_array[:width * height * self._n_workers]
+            depths = depths.reshape(self._n_workers, height, width)
+            return rgbs, depths
+        else:
+            return rgbs
 
     def close(self):
         self.pool.close()
