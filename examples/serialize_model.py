@@ -8,7 +8,7 @@ import mujoco_py
 
 # The binary MJB format is preferable, since it includes assets like
 # textures and meshes.
-model = mujoco_py.load_model_from_path("xmls/claw.xml")
+model = mujoco_py.load_model_from_path("../xmls/claw.xml")
 mjb_bytestring = model.get_mjb()
 model_from_binary = mujoco_py.load_model_from_mjb(mjb_bytestring)
 assert model.nbody == model_from_binary.nbody
