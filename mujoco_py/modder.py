@@ -417,10 +417,10 @@ class TextureModder(BaseModder):
             self._skybox_checker_mat = None
 
     def _make_checker_matrices(self, h, w):
-        re = np.r_[(w // 2) * [0, 1]]
-        ro = np.r_[(w // 2) * [1, 0]]
-        cbd1 = np.expand_dims(np.row_stack((h // 2) * [re, ro]), -1)
-        cbd2 = np.expand_dims(np.row_stack((h // 2) * [ro, re]), -1)
+        re = np.r_[((w + 1) // 2) * [0, 1]]
+        ro = np.r_[((w + 1) // 2) * [1, 0]]
+        cbd1 = np.expand_dims(np.row_stack(((h + 1) // 2) * [re, ro]), -1)[:h, :w]
+        cbd2 = np.expand_dims(np.row_stack(((h + 1) // 2) * [ro, re]), -1)[:h, :w]
         return cbd1, cbd2
 
 
