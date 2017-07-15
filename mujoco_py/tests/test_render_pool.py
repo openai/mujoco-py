@@ -12,7 +12,7 @@ from mujoco_py.mjrenderpool import RenderPool
 logging.basicConfig(stream=sys.stdout, level=logging.INFO)
 
 
-def main(batch_size=4, img_width=100, n_frames=1, n_workers=1):
+def main(batch_size=4, img_width=255, n_frames=1, n_workers=1, modder=False):
     logger = logging.getLogger(__name__)
     logger.setLevel(logging.INFO)
 

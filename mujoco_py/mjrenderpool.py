@@ -1,25 +1,58 @@
 import ctypes
+import inspect
+
 from multiprocessing import Array, Pool, Value
+
 import numpy as np
 
 from mujoco_py import MjSim, load_model_from_mjb
 
 
 class RenderPoolStorage:
+    """
+    Helper object used for storing global data for worker processes.
+    """
 
     __slots__ = ['shared_rgbs_array',
                  'shared_depths_array',
                  'device_id',
                  'worker_id',
-                 'sim']
+                 'sim',
+                 'modder']
 
 
-class RenderPool:
+class MjRenderPool:
+    """
+    Utilizes a process pool to render a MuJoCo simulation across
+    multiple GPU devices. This can scale the throughput linearly
+    with the number of available GPUs. Throughput can also be
+    slightly increased by using more than one worker per GPU.
+    """
 
-    DEFAULT_MAX_IMAGE_SIZE = 512 * 512
+    DEFAULT_MAX_IMAGE_SIZE = 512 * 512  # in pixels
 
     def __init__(self, model, device_ids=1, n_workers=None,
-                 max_batch_size=None, max_image_size=None):
+                 max_batch_size=None, max_image_size=DEFAULT_MAX_IMAGE_SIZE,
+                 modder=None):
+        """
+        Args:
+        - model (PyMjModel): MuJoCo model to use for rendering
+        - device_ids (int/list): list of device ids to use for rendering.
+            One or more workers will be assigned to each device, depending
+            on how many workers are requested.
+        - n_workers (int): number of parallel processes in the pool. Defaults
+            to the number of device ids.
+        - max_batch_size (int): maximum number of states that can be rendered
+            in batch using .render(). Defaults to the number of workers.
+        - max_image_size (int): maximum number pixels in images requested
+            by .render()
+        - modder (Modder): modder to use for domain randomization.
+        """
+        self._closed, self.pool = False, None
+
+        if not (modder is None or inspect.isclass(modder)):
+            raise ValueError("modder must be a class")
+
         if isinstance(device_ids, int):
             device_ids = list(range(device_ids))
         else:
@@ -28,36 +61,43 @@ class RenderPool:
 
         n_workers = n_workers or 1
         self._max_batch_size = max_batch_size or len(device_ids)
-
-        if max_image_size is None:
-            max_image_size = RenderPool.DEFAULT_MAX_IMAGE_SIZE
-        else:
-            assert isinstance(max_image_size, int)
         self._max_image_size = max_image_size
 
         array_size = self._max_image_size * self._max_batch_size
 
-        self._shared_rgbs = Array(ctypes.c_uint, array_size * 3)
+        self._shared_rgbs = Array(ctypes.c_uint8, array_size * 3)
         self._shared_depths = Array(ctypes.c_float, array_size)
 
-        self._shared_rgbs_array = np.frombuffer(self._shared_rgbs.get_obj())
-        self._shared_depths_array = np.frombuffer(self._shared_depths.get_obj())
+        self._shared_rgbs_array = np.frombuffer(
+            self._shared_rgbs.get_obj(), dtype=ctypes.c_uint8)
+        assert self._shared_rgbs_array.size == (array_size * 3), (
+            "Array size is %d, expected %d" % (
+                self._shared_rgbs_array.size, array_size * 3))
+        self._shared_depths_array = np.frombuffer(
+            self._shared_depths.get_obj(), dtype=ctypes.c_float)
+        assert self._shared_depths_array.size == array_size, (
+            "Array size is %d, expected %d" % (
+                self._shared_depths_array.size, array_size))
 
         worker_id = Value(ctypes.c_int)
         worker_id.value = 0
         self.pool = Pool(
             processes=len(device_ids) * n_workers,
-            initializer=RenderPool._worker_init,
+            initializer=MjRenderPool._worker_init,
             initargs=(
                 model.get_mjb(),
                 worker_id,
                 device_ids,
                 self._shared_rgbs,
-                self._shared_depths))
+                self._shared_depths,
+                modder))
 
     @staticmethod
     def _worker_init(mjb_bytes, worker_id, device_ids,
-                     shared_rgbs, shared_depths):
+                     shared_rgbs, shared_depths, modder):
+        """
+        Initializes the global state for the workers.
+        """
         s = RenderPoolStorage()
 
         with worker_id.get_lock():
@@ -65,21 +105,40 @@ class RenderPool:
             worker_id.value += 1
         s.device_id = device_ids[proc_worker_id % len(device_ids)]
 
-        s.shared_rgbs_array = np.frombuffer(shared_rgbs.get_obj())
-        s.shared_depths_array = np.frombuffer(shared_depths.get_obj())
+        s.shared_rgbs_array = np.frombuffer(
+            shared_rgbs.get_obj(), dtype=ctypes.c_uint8)
+        s.shared_depths_array = np.frombuffer(
+            shared_depths.get_obj(), dtype=ctypes.c_float)
 
         s.sim = MjSim(load_model_from_mjb(mjb_bytes))
+
+        # TODO: better initial rendering size
         s.sim.render(100, 100, device_id=s.device_id)
+
+        if modder is not None:
+            s.modder = modder(s.sim)
+        else:
+            s.modder = None
 
         global _render_pool_storage
         _render_pool_storage = s
 
     @staticmethod
-    def _worker_render(worker_id, state, width, height, camera_name):
+    def _worker_render(worker_id, state, width, height,
+                       camera_name, randomize):
+        """
+        Main target function for the workers.
+        """
         s = _render_pool_storage
 
+        forward = False
         if state is not None:
             s.sim.set_state(state)
+            forward = True
+        if randomize and s.modder is not None:
+            s.modder.rand_all()
+            forward = True
+        if forward:
             s.sim.forward()
 
         rgb_block = width * height * 3
@@ -96,7 +155,29 @@ class RenderPool:
             width, height, camera_name=camera_name, depth=True)
 
     def render(self, width, height, states=None, camera_name=None,
-               depth=False):
+               depth=False, randomize=False):
+        """
+        Renders the simulations in batch. If no states are provided,
+        the max_batch_size will be used.
+
+        Args:
+        - width (int): width of image to render.
+        - height (int): height of image to render.
+        - states (list): list of MjSimStates; updates the states before
+            rendering. Batch size will be number of states supplied.
+        - camera_name (str): name of camera to render from.
+        - depth (bool): if True, also return depth.
+        - randomize (bool): calls modder.rand_all() before rendering.
+
+        Returns:
+        - rgbs: NxHxWx3 numpy array of N images in batch of width W
+            and height H.
+        - depth: NxHxW numpy array of N images in batch of width W
+            and height H. Only returned if depth=True.
+        """
+        if self._closed:
+            raise RuntimeError("The pool has been closed.")
+
         if (width * height) > self._max_image_size:
             raise ValueError(
                 "Requested image larger than maximum image size. Create "
@@ -113,8 +194,8 @@ class RenderPool:
                 "a new RenderPool with a larger max batch size.")
 
         self.pool.starmap(
-            RenderPool._worker_render,
-            [(i, state, width, height, camera_name)
+            MjRenderPool._worker_render,
+            [(i, state, width, height, camera_name, randomize)
              for i, state in enumerate(states)])
 
         rgbs = self._shared_rgbs_array[:width * height * 3 * batch_size]
@@ -128,5 +209,14 @@ class RenderPool:
             return rgbs
 
     def close(self):
-        self.pool.close()
-        self.pool.join()
+        """
+        Closes the pool and terminates child processes.
+        """
+        if not self._closed:
+            if self.pool is not None:
+                self.pool.close()
+                self.pool.join()
+            self._closed = True
+
+    def __del__(self):
+        self.close()

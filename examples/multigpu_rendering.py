@@ -2,14 +2,11 @@
 This is an example for rendering on multiple GPUs in parallel,
 using the multiprocessing module.
 """
-import ctypes
-from multiprocessing import (
-    Process, set_start_method, freeze_support, Condition,
-    Value, Array)
+from multiprocessing import set_start_method
 from time import perf_counter
-import numpy as np
 from mujoco_py import load_model_from_path, MjSim
-
+from mujoco_py.mjrenderpool import RenderProcess
+import tensorflow as tf
 
 #
 # Experiment parameters
@@ -23,96 +20,6 @@ N_FRAMES = 2000
 # Number of sims to run in parallel (assumes one per GPU),
 # so N_SIMS=2 assumes there are 2 GPUs available.
 N_SIMS = 2
-
-
-class RenderProcess:
-    """
-    Wraps a multiprocessing.Process for rendering. Assumes there
-    is one MjSim per process.
-    """
-
-    def __init__(self, device_id, setup_sim, update_sim, output_var_shape):
-        """
-        Args:
-        - device_id (int): GPU device to use for rendering (0-indexed)
-        - setup_sim (callback): callback that is given a device_id and
-            returns a MjSim. It is responsible for making MjSim render
-            to given device.
-        - update_sim (callback): callback given a sim and device_id, and
-            should return a numpy array of shape `output_var_shape`.
-        - output_var_shape (tuple): shape of the synchronized output
-            array from `update_sim`.
-        """
-        self.device_id = device_id
-        self.setup_sim = setup_sim
-        self.update_sim = update_sim
-
-        # Create a synchronized output variable (numpy array)
-        self._shared_output_var = Array(
-            ctypes.c_double, int(np.prod(output_var_shape)))
-        self._output_var = np.frombuffer(
-            self._shared_output_var.get_obj())
-
-        # Number of variables used to communicate with process
-        self._cv = Condition()
-        self._ready = Value('b', 0)
-        self._start = Value('b', 0)
-        self._terminate = Value('b', 0)
-
-        # Start the actual process
-        self._process = Process(target=self._run)
-        self._process.start()
-
-    def wait(self):
-        """ Wait for process to be ready for another update call. """
-        with self._cv:
-            if self._start.value:
-                self._cv.wait()
-            if self._ready.value:
-                return
-            self._cv.wait()
-
-    def read(self, copy=False):
-        """ Reads the output variable. Returns a copy if copy=True. """
-        if copy:
-            with self._shared_output_var.get_lock():
-                return np.copy(self._output_var)
-        else:
-            return self._output_var
-
-    def update(self):
-        """ Calls update_sim asynchronously. """
-        with self._cv:
-            self._start.value = 1
-            self._cv.notify()
-
-    def stop(self):
-        """ Tells process to stop and waits for it to terminate. """
-        with self._cv:
-            self._terminate.value = 1
-            self._cv.notify()
-        self._process.join()
-
-    def _run(self):
-        sim = self.setup_sim(self.device_id)
-
-        while True:
-            with self._cv:
-                self._ready.value = 1
-                self._cv.notify_all()
-
-            with self._cv:
-                if not self._start.value and not self._terminate.value:
-                    self._cv.wait()
-                if self._terminate.value:
-                    break
-                assert self._start.value
-                self._start.value = 0
-
-            # Run the update and assign output variable
-            with self._shared_output_var.get_lock():
-                self._output_var[:] = self.update_sim(
-                    sim, self.device_id).ravel()
 
 
 def setup_sim(device_id):
@@ -168,6 +75,7 @@ def main():
     print("main(): finished", flush=True)
 
 
+print("XXX about to call main()", flush=True)
 if __name__ == "__main__":
-    set_start_method('spawn')
+    set_start_method('fork')
     main()
