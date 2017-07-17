@@ -40,6 +40,7 @@ BASIC_MODEL_XML = """
 """
 
 
+@requires_rendering
 def test_spawn():
     # pytest and nose both use 'fork' by default, so we
     # expect a runtime error
