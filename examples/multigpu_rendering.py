@@ -13,12 +13,12 @@ def main():
     IMAGE_WIDTH = 255
     IMAGE_HEIGHT = 255
     # Number of frames to render per sim
-    N_FRAMES = 2000
+    N_FRAMES = 100
     # Number of sims to run in parallel (assumes one per GPU),
     # so N_SIMS=2 assumes there are 2 GPUs available.
     N_SIMS = 2
 
-    pool = MjRenderPool(load_model_from_path("xmls/tosser.xml"), device_ids=2)
+    pool = MjRenderPool(load_model_from_path("xmls/tosser.xml"), device_ids=N_SIMS)
 
     print("main(): start benchmarking", flush=True)
     start_t = perf_counter()
