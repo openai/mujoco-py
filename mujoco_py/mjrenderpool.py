@@ -1,7 +1,7 @@
 import ctypes
 import inspect
 
-from multiprocessing import Array, Pool, Value
+from multiprocessing import Array, get_start_method, Pool, Value
 
 import numpy as np
 
@@ -16,7 +16,6 @@ class RenderPoolStorage:
     __slots__ = ['shared_rgbs_array',
                  'shared_depths_array',
                  'device_id',
-                 'worker_id',
                  'sim',
                  'modder']
 
@@ -60,7 +59,7 @@ class MjRenderPool:
                 "device_ids must be list of integer")
 
         n_workers = n_workers or 1
-        self._max_batch_size = max_batch_size or len(device_ids)
+        self._max_batch_size = max_batch_size or (len(device_ids) * n_workers)
         self._max_image_size = max_image_size
 
         array_size = self._max_image_size * self._max_batch_size
@@ -81,6 +80,16 @@ class MjRenderPool:
 
         worker_id = Value(ctypes.c_int)
         worker_id.value = 0
+
+        if get_start_method() != "spawn":
+            raise RuntimeError(
+                "Start method must be set to 'spawn' for the "
+                "render pool to work. That is, you must add the "
+                "following to your main script:\n"
+                "  import multiprocessing as mp\n"
+                "  if __name__ == '__main__':\n"
+                "    mp.set_start_method('spawn')\n")
+
         self.pool = Pool(
             processes=len(device_ids) * n_workers,
             initializer=MjRenderPool._worker_init,
@@ -111,9 +120,6 @@ class MjRenderPool:
             shared_depths.get_obj(), dtype=ctypes.c_float)
 
         s.sim = MjSim(load_model_from_mjb(mjb_bytes))
-
-        # TODO: better initial rendering size
-        s.sim.render(100, 100, device_id=s.device_id)
 
         if modder is not None:
             s.modder = modder(s.sim)
@@ -152,7 +158,8 @@ class MjRenderPool:
         depth = depth.reshape(height, width)
 
         rgb[:], depth[:] = s.sim.render(
-            width, height, camera_name=camera_name, depth=True)
+            width, height, camera_name=camera_name, depth=True,
+            device_id=s.device_id)
 
     def render(self, width, height, states=None, camera_name=None,
                depth=False, randomize=False):
