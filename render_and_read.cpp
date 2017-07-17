@@ -175,7 +175,8 @@ int main(int argc, const char** argv)
     int H = viewport.height;
 
     // allocate rgb and depth buffers
-    unsigned char* rgb = (unsigned char*)malloc(3*W*H);
+//    unsigned char* rgb = (unsigned char*)malloc(3*W*H);
+    unsigned char* rgb = 0;
     float* depth = (float*)malloc(sizeof(float)*W*H);
     if( !rgb || !depth )
         mju_error("Could not allocate buffers");
@@ -184,28 +185,44 @@ int main(int argc, const char** argv)
     FILE* fp = fopen(argv[2], "wb");
     if( !fp )
         mju_error("Could not open rgbfile for writing");
+//
+//    // update abstract scene
+//    mjv_updateScene(m, d, &opt, NULL, &cam, mjCAT_ALL, &scn);
+//
+//    // render scene in offscreen buffer
+//    mjr_render(viewport, &scn, &con);
 
-    // update abstract scene
-    mjv_updateScene(m, d, &opt, NULL, &cam, mjCAT_ALL, &scn);
+//    glBindFramebufferEXT(GL_FRAMEBUFFER_EXT, con.offFBO);
 
-    // render scene in offscreen buffer
-    mjr_render(viewport, &scn, &con);
+//    GLuint pixel_buffer = 0;
+//    glGenBuffers(1, &pixel_buffer);
+//    glBindBuffer(GL_PIXEL_PACK_BUFFER, pixel_buffer);
+//    glBufferData(GL_PIXEL_PACK_BUFFER, 3*W*H, 0, GL_STREAM_READ);
 
-    // read rgb and depth buffers
-    mjr_readPixels(rgb, depth, viewport, &con);
+//    glReadPixels(0, 0, W, H,
+//                 GL_RGB, GL_UNSIGNED_BYTE, NULL);
+//
+//    rgb = (unsigned char *) glMapBuffer(GL_PIXEL_PACK_BUFFER, GL_READ_ONLY);
+//
+//    glUnmapBuffer(GL_PIXEL_PACK_BUFFER);
+//    glBindBuffer(GL_PIXEL_PACK_BUFFER, 0);
+//    glDeleteBuffers(1, &pixel_buffer);
 
-    // insert subsampled depth image in lower-left corner of rgb image
-    const int NS = 3;           // depth image sub-sampling
-    for( int r=0; r<H; r+=NS )
-        for( int c=0; c<W; c+=NS )
-        {
-            int adr = (r/NS)*W + c/NS;
-            rgb[3*adr] = rgb[3*adr+1] = rgb[3*adr+2] =
-                (unsigned char)((1.0f-depth[r*W+c])*255.0f);
-        }
-
-    // write rgb image to file
-    fwrite(rgb, 3, W*H, fp);
+//    // read rgb and depth buffers
+//    mjr_readPixels(rgb, depth, viewport, &con);
+//
+//    // insert subsampled depth image in lower-left corner of rgb image
+//    const int NS = 3;           // depth image sub-sampling
+//    for( int r=0; r<H; r+=NS )
+//        for( int c=0; c<W; c+=NS )
+//        {
+//            int adr = (r/NS)*W + c/NS;
+//            rgb[3*adr] = rgb[3*adr+1] = rgb[3*adr+2] =
+//                (unsigned char)((1.0f-depth[r*W+c])*255.0f);
+//        }
+//
+//    // write rgb image to file
+//    fwrite(rgb, 3, W*H, fp);
 
     // close file, free buffers
     fclose(fp);
