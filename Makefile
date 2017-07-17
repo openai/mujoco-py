@@ -1,6 +1,8 @@
 .PHONY: all clean build test mount_shell shell upload check-env
 
 MUJOCO_LICENSE_PATH ?= ~/.mujoco/mjkey.txt
+MJDIR = /root/.mujoco/mjpro150
+COMMON = -O2 -I$(MJDIR)/include -L$(MJDIR)/bin -std=c++11 -mavx
 
 all: test
 
@@ -31,6 +33,9 @@ mount_shell:
 
 shell:
 	docker run --rm -it mujoco_py /bin/bash
+
+render:
+	g++ $(COMMON) -DMJ_EGL render_and_read.cpp -lmujoco150 -l:libOpenGL.so.0 -l:libEGL.so.1 -lglewegl -o render_and_read -Imujoco_py/gl -L/usr/local/nvidia/lib64
 
 upload:
 	rm -rf dist
