@@ -122,7 +122,8 @@ class MjRenderPool:
         s.sim = MjSim(load_model_from_mjb(mjb_bytes))
 
         if modder is not None:
-            s.modder = modder(s.sim)
+            s.modder = modder(s.sim, random_state=proc_worker_id)
+            s.modder.whiten_materials()
         else:
             s.modder = None
 
@@ -142,7 +143,7 @@ class MjRenderPool:
             s.sim.set_state(state)
             forward = True
         if randomize and s.modder is not None:
-            s.modder.rand_all()
+            s.modder.randomize()
             forward = True
         if forward:
             s.sim.forward()
@@ -162,7 +163,7 @@ class MjRenderPool:
             device_id=s.device_id)
 
     def render(self, width, height, states=None, camera_name=None,
-               depth=False, randomize=False):
+               depth=False, randomize=False, copy=True):
         """
         Renders the simulations in batch. If no states are provided,
         the max_batch_size will be used.
@@ -175,6 +176,7 @@ class MjRenderPool:
         - camera_name (str): name of camera to render from.
         - depth (bool): if True, also return depth.
         - randomize (bool): calls modder.rand_all() before rendering.
+        - copy (bool): return a copy rather than a reference
 
         Returns:
         - rgbs: NxHxWx3 numpy array of N images in batch of width W
@@ -206,11 +208,11 @@ class MjRenderPool:
              for i, state in enumerate(states)])
 
         rgbs = self._shared_rgbs_array[:width * height * 3 * batch_size]
-        rgbs = rgbs.reshape(batch_size, height, width, 3)
+        rgbs = rgbs.reshape(batch_size, height, width, 3).copy()
 
         if depth:
             depths = self._shared_depths_array[:width * height * batch_size]
-            depths = depths.reshape(batch_size, height, width)
+            depths = depths.reshape(batch_size, height, width).copy()
             return rgbs, depths
         else:
             return rgbs
