@@ -5,8 +5,6 @@ from multiprocessing import Array, get_start_method, Pool, Value
 
 import numpy as np
 
-from mujoco_py import MjSim, load_model_from_mjb
-
 
 class RenderPoolStorage:
     """
@@ -119,6 +117,8 @@ class MjRenderPool:
         s.shared_depths_array = np.frombuffer(
             shared_depths.get_obj(), dtype=ctypes.c_float)
 
+        # avoid a circular import
+        from mujoco_py import MjSim, load_model_from_mjb
         s.sim = MjSim(load_model_from_mjb(mjb_bytes))
 
         if modder is not None:

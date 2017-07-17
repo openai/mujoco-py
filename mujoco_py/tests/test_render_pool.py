@@ -4,8 +4,7 @@ import sys
 
 import pytest
 
-from mujoco_py import MjSim, load_model_from_xml
-from mujoco_py.mjrenderpool import MjRenderPool
+from mujoco_py import MjSim, MjRenderPool, load_model_from_xml
 from mujoco_py.tests.utils import requires_rendering
 
 
@@ -38,6 +37,14 @@ def test_spawn():
     model = load_model_from_xml(BASIC_MODEL_XML)
     with pytest.raises(RuntimeError):
         MjRenderPool(model, n_workers=3)
+
+
+@requires_rendering
+def test_multiprocessing():
+    # pytest doesn't work well with multiprocessing, so just
+    # run the multiprocessing tests manually by running this
+    # script as a subprocess
+    subprocess.check_call([sys.executable, __file__])
 
 
 def mp_test_create_destroy():
@@ -79,14 +86,6 @@ def mp_test_states():
     states = list(reversed(states))
     images = pool.render(100, 100, states=states)
     assert images.shape == (3, 100, 100, 3)
-
-
-@requires_rendering
-def test_multiprocessing():
-    # pytest doesn't work well with multiprocessing, so just
-    # run the multiprocessing tests manually by running this
-    # script as a subprocess
-    subprocess.check_call([sys.executable, __file__])
 
 
 if __name__ == '__main__':
