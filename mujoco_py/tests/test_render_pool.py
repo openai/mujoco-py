@@ -1,6 +1,8 @@
 import multiprocessing as mp
+import os
 import subprocess
 import sys
+from os.path import abspath, dirname, join
 
 import numpy as np
 import pytest
@@ -54,7 +56,10 @@ def test_multiprocessing():
     # pytest doesn't work well with multiprocessing, so just
     # run the multiprocessing tests manually by running this
     # script as a subprocess
-    subprocess.check_call([sys.executable, __file__])
+    env = os.environ
+    env['MUJOCO_PY_TEST_ASSET_DIR_PATH'] = abspath(
+        join(dirname(__file__), '..', 'test_imgs'))
+    subprocess.check_call([sys.executable, __file__], env=env, shell=True)
 
 
 def mp_test_create_destroy():
@@ -127,6 +132,7 @@ def mp_test_modder():
     else:
         images_same = False
     assert not images_same
+
 
 def mp_test_states():
     sim = MjSim(load_model_from_xml(BASIC_MODEL_XML))

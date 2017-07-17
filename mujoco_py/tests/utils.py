@@ -7,7 +7,10 @@ from os.path import splitext
 import imagehash
 import pytest
 
-TEST_ASSET_DIR_PATH = abspath(join(dirname(__file__), '..', 'test_imgs'))
+if os.getenv('MUJOCO_PY_TEST_ASSET_DIR_PATH'):
+    TEST_ASSET_DIR_PATH = os.getenv('MUJOCO_PY_TEST_ASSET_DIR_PATH')
+else:
+    TEST_ASSET_DIR_PATH = abspath(join(dirname(__file__), '..', 'test_imgs'))
 
 
 def save_test_image(filename, array):
