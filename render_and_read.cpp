@@ -4,6 +4,8 @@
 //  Copyright (C) 2017 Roboti LLC  //
 //---------------------------------//
 
+// to view:
+// python -c "from PIL import Image; f=open('output.raw', 'rb'); d=f.read(); Image.frombytes(mode='RGB', size=(800, 800), data=d).save('output.png')"; open output.png
 
 #include "mujoco.h"
 #include "stdio.h"
@@ -152,23 +154,14 @@ void closeOpenGL(void)
 int main(int argc, const char** argv)
 {
     // check command-line arguments
-    if( argc!=5 )
+    if( argc!=3 )
     {
-        printf(" USAGE:  record modelfile duration fps rgbfile\n");
+        printf(" USAGE:  render_and_read modelfile rgbfile\n");
         return 0;
     }
 
-    // parse numeric arguments
-    double duration = 10, fps = 30;
-    sscanf(argv[2], "%lf", &duration);
-    sscanf(argv[3], "%lf", &fps);
-
     // initialize OpenGL and MuJoCo
     initOpenGL();
-    char *exts = (char *) glGetString(GL_EXTENSIONS);
-    printf("%s\n", exts);
-
-
     initMuJoCo(argv[1]);
 
     // set rendering to offscreen buffer
@@ -188,64 +181,31 @@ int main(int argc, const char** argv)
         mju_error("Could not allocate buffers");
 
     // create output rgb file
-    FILE* fp = fopen(argv[4], "wb");
+    FILE* fp = fopen(argv[2], "wb");
     if( !fp )
         mju_error("Could not open rgbfile for writing");
 
-    // main loop
-    double frametime = 0;
-    int framecount = 0;
-    while( d->time<duration )
-    {
-        // render new frame if it is time (or first frame)
-        if( (d->time-frametime)>1/fps || frametime==0 )
+    // update abstract scene
+    mjv_updateScene(m, d, &opt, NULL, &cam, mjCAT_ALL, &scn);
+
+    // render scene in offscreen buffer
+    mjr_render(viewport, &scn, &con);
+
+    // read rgb and depth buffers
+    mjr_readPixels(rgb, depth, viewport, &con);
+
+    // insert subsampled depth image in lower-left corner of rgb image
+    const int NS = 3;           // depth image sub-sampling
+    for( int r=0; r<H; r+=NS )
+        for( int c=0; c<W; c+=NS )
         {
-            // update abstract scene
-            mjv_updateScene(m, d, &opt, NULL, &cam, mjCAT_ALL, &scn);
-
-            // render scene in offscreen buffer
-            mjr_render(viewport, &scn, &con);
-
-            // add time stamp in upper-left corner
-            char stamp[50];
-            sprintf(stamp, "Time = %.3f", d->time);
-            mjr_overlay(mjFONT_NORMAL, mjGRID_TOPLEFT, viewport, stamp, NULL, &con);
-
-            // read rgb and depth buffers
-            mjr_readPixels(rgb, depth, viewport, &con);
-
-
-
-            // insert subsampled depth image in lower-left corner of rgb image
-            const int NS = 3;           // depth image sub-sampling
-            for( int r=0; r<H; r+=NS )
-                for( int c=0; c<W; c+=NS )
-                {
-                    int adr = (r/NS)*W + c/NS;
-                    rgb[3*adr] = rgb[3*adr+1] = rgb[3*adr+2] =
-                        (unsigned char)((1.0f-depth[r*W+c])*255.0f);
-                }
-
-            // write rgb image to file
-            fwrite(rgb, 3, W*H, fp);
-
-            // print every 10 frames: '.' if ok, 'x' if OpenGL error
-            if( ((framecount++)%10)==0 )
-            {
-                if( mjr_getError() )
-                    printf("x");
-                else
-                    printf(".");
-            }
-
-            // save simulation time
-            frametime = d->time;
+            int adr = (r/NS)*W + c/NS;
+            rgb[3*adr] = rgb[3*adr+1] = rgb[3*adr+2] =
+                (unsigned char)((1.0f-depth[r*W+c])*255.0f);
         }
 
-        // advance simulation
-        mj_step(m, d);
-    }
-    printf("\n");
+    // write rgb image to file
+    fwrite(rgb, 3, W*H, fp);
 
     // close file, free buffers
     fclose(fp);
@@ -256,5 +216,5 @@ int main(int argc, const char** argv)
     closeMuJoCo();
     closeOpenGL();
 
-    return 1;
+    return 0;
 }

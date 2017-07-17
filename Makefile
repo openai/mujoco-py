@@ -35,7 +35,9 @@ shell:
 	docker run --rm -it mujoco_py /bin/bash
 
 render:
+	rm -f output.raw
 	g++ $(COMMON) -DMJ_EGL render_and_read.cpp -lmujoco150 -l:libOpenGL.so.0 -l:libEGL.so.1 -lglewegl -o render_and_read -Imujoco_py/gl -L/usr/local/nvidia/lib64
+	./render_and_read xmls/tosser.xml output.raw
 
 upload:
 	rm -rf dist
