@@ -237,6 +237,10 @@ int main(int argc, const char** argv)
     mjrRect viewport =  mjr_maxViewport(&con);
     int W = viewport.width;
     int H = viewport.height;
+    printf("Viewport: %d %d %d %d %d %d",
+        viewport.left, viewport.bottom, viewport.width, viewport.height,
+        viewport.width, viewport.height
+        );
 
     // create output rgb file
     FILE* fp = fopen(argv[2], "wb");
@@ -257,13 +261,14 @@ int main(int argc, const char** argv)
 
     GLuint pixel_buffer = 0;
     glGenBuffers(1, &pixel_buffer);
+    glBindBuffer(GL_PIXEL_PACK_BUFFER_ARB, pixel_buffer);
+    glBufferData(GL_PIXEL_PACK_BUFFER_ARB, 3*W*H, 0, GL_STREAM_READ);
 
     if (con.offSamples == 0) {
         glBindFramebuffer(GL_READ_FRAMEBUFFER, con.offFBO);
         glReadBuffer(GL_COLOR_ATTACHMENT0);
 
         glBindBuffer(GL_PIXEL_PACK_BUFFER_ARB, pixel_buffer);
-        glBufferData(GL_PIXEL_PACK_BUFFER_ARB, 3*W*H, 0, GL_STREAM_READ);
         glReadPixels(viewport.left, viewport.bottom, viewport.width, viewport.height,
                      GL_RGB, GL_UNSIGNED_BYTE, 0);
     } else {
@@ -284,7 +289,6 @@ int main(int argc, const char** argv)
         glReadBuffer(GL_COLOR_ATTACHMENT0);
 
         glBindBuffer(GL_PIXEL_PACK_BUFFER_ARB, pixel_buffer);
-        glBufferData(GL_PIXEL_PACK_BUFFER_ARB, 3*W*H, 0, GL_STREAM_READ);
         glReadPixels(viewport.left, viewport.bottom, viewport.width, viewport.height,
                      GL_RGB, GL_UNSIGNED_BYTE, 0);
     }

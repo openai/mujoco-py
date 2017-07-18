@@ -208,11 +208,15 @@ class MjRenderPool:
              for i, state in enumerate(states)])
 
         rgbs = self._shared_rgbs_array[:width * height * 3 * batch_size]
-        rgbs = rgbs.reshape(batch_size, height, width, 3).copy()
+        rgbs = rgbs.reshape(batch_size, height, width, 3)
+        if copy:
+            rgbs = rgbs.copy()
 
         if depth:
             depths = self._shared_depths_array[:width * height * batch_size]
             depths = depths.reshape(batch_size, height, width).copy()
+            if copy:
+                depths = depths.copy()
             return rgbs, depths
         else:
             return rgbs

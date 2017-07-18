@@ -103,6 +103,13 @@ cdef class MjRenderContext(object):
             self.cam.lookat[i] = sim.model.stat.center[i]
         self.cam.distance = sim.model.stat.extent
 
+    def update_offscreen_size(self, width, height):
+        if width != self._con.offWidth or height != self._con.offHeight:
+            self._model_ptr.vis.global_.offwidth = width
+            self._model_ptr.vis.global_.offheight = height
+            mjr_freeContext(&self._con)
+            self._set_mujoco_buffers()
+
     def render(self, width, height, camera_id=None):
         cdef mjrRect rect
         rect.left = 0
@@ -112,10 +119,9 @@ cdef class MjRenderContext(object):
 
         # Sometimes buffers are too small.
         if width > self._con.offWidth or height > self._con.offHeight:
-            self._model_ptr.vis.global_.offwidth = max(width, self._model_ptr.vis.global_.offwidth)
-            self._model_ptr.vis.global_.offheight = max(height, self._model_ptr.vis.global_.offheight)
-            mjr_freeContext(&self._con)
-            self._set_mujoco_buffers()
+            new_width = max(width, self._model_ptr.vis.global_.offwidth)
+            new_height = max(height, self._model_ptr.vis.global_.offheight)
+            self.render(new_width, new_height)
 
         if camera_id is not None:
             if camera_id == -1:

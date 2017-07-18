@@ -1,7 +1,14 @@
 #define EGL_EGLEXT_PROTOTYPES
 #include "egl.h"
 #include "eglext.h"
+#include <GL/glew.h>
+#include <GL/gl.h>
+#include <GL/glu.h>
+#include <GL/glext.h>
+
 #include "mujoco.h"
+#include "mjrender.h"
+
 #include "glshim.h"
 
 #define MAX_DEVICES 8
@@ -158,3 +165,63 @@ void closeOpenGL()
         eglTerminate(eglDpy);
     }
 }
+
+unsigned int createPBO(int width, int height, int batchSize)
+{
+    GLuint pixelBuffer = 0;
+    glGenBuffers(1, &pixelBuffer);
+    glBindBuffer(GL_PIXEL_PACK_BUFFER_ARB, pixelBuffer);
+    glBufferData(GL_PIXEL_PACK_BUFFER_ARB, batchSize * width * height * 3, 0, GL_STREAM_READ);
+    glBindBuffer(GL_PIXEL_PACK_BUFFER_ARB, 0);
+    return (unsigned int) pixelBuffer;
+}
+
+void freePBO(unsigned int pixelBuffer)
+{
+    glBindBuffer(GL_PIXEL_PACK_BUFFER_ARB, 0);
+    glDeleteBuffers(1, &pixelBuffer);
+}
+
+void readPBO(unsigned char *buffer, unsigned int pbo,
+             int width, int height, int batchSize)
+{
+    glBindBuffer(GL_PIXEL_PACK_BUFFER_ARB, pbo);
+
+    GLubyte* src = (GLubyte*)glMapBufferARB(GL_PIXEL_PACK_BUFFER_ARB, GL_READ_ONLY_ARB);
+    memcpy(buffer, src, batchSize * width * height * 3);
+
+    glUnmapBuffer(GL_PIXEL_PACK_BUFFER_ARB);
+    glBindBuffer(GL_PIXEL_PACK_BUFFER_ARB, 0);
+}
+
+void copyFBOToPBO(mjrContext* con, unsigned int pbo,
+                  mjrRect viewport, int bufferOffset)
+{
+    if (con->offSamples == 0) {
+        glBindFramebuffer(GL_READ_FRAMEBUFFER, con->offFBO);
+    } else {
+        glBindFramebuffer(GL_READ_FRAMEBUFFER, con->offFBO);
+        glReadBuffer(GL_COLOR_ATTACHMENT0);
+        glBindFramebuffer(GL_DRAW_FRAMEBUFFER, con->offFBO_r);
+        glDrawBuffer(GL_COLOR_ATTACHMENT0);
+
+        glBlitFramebuffer(viewport.left, viewport.bottom,
+                          viewport.left + viewport.width,
+                          viewport.bottom + viewport.height,
+                          viewport.left,
+                          viewport.bottom,
+                          viewport.left + viewport.width,
+                          viewport.bottom + viewport.height,
+                          GL_COLOR_BUFFER_BIT, GL_NEAREST);
+
+        glBindFramebuffer(GL_READ_FRAMEBUFFER, con->offFBO_r);
+    }
+
+    glReadBuffer(GL_COLOR_ATTACHMENT0);
+    glBindBuffer(GL_PIXEL_PACK_BUFFER_ARB, pbo);
+    glReadPixels(viewport.left, viewport.bottom, viewport.width, viewport.height,
+                 GL_RGB, GL_UNSIGNED_BYTE,
+                 bufferOffset * viewport.width * viewport.height * 3);
+    glBindBuffer(GL_PIXEL_PACK_BUFFER_ARB, 0);
+}
+

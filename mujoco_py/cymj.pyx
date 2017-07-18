@@ -23,6 +23,7 @@ include "mjsim.pyx"
 include "mjsimpool.pyx"
 include "mjsimstate.pyx"
 include "mjrendercontext.pyx"
+include "mjbatchrenderer.pyx"
 
 cdef extern from "gl/glshim.h":
 
@@ -30,6 +31,13 @@ cdef extern from "gl/glshim.h":
     cdef void closeOpenGL()
     cdef int makeOpenGLContextCurrent(int device_id)
     cdef int setOpenGLBufferSize(int device_id, int width, int height)
+
+    cdef unsigned int createPBO(int width, int height, int batchSize)
+    cdef void freePBO(unsigned int pixelBuffer)
+    cdef void copyFBOToPBO(mjrContext* con, unsigned int pbo,
+                           mjrRect viewport, int bufferOffset)
+    cdef void readPBO(unsigned char *buffer, unsigned int pbo,
+                      int width, int height, int batchSize)
 
 # TODO: make this function or class so these comments turn into doc strings:
 
