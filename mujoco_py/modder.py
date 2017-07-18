@@ -13,6 +13,9 @@ class BaseModder():
         self.sim = sim
         if random_state is None:
             self.random_state = np.random.RandomState()
+        elif isinstance(random_state, int):
+            # random_state assumed to be an int
+            self.random_state = np.random.RandomState(random_state)
         else:
             self.random_state = random_state
 
@@ -307,6 +310,10 @@ class TextureModder(BaseModder):
 
         self.upload_texture(name)
         return bitmap
+
+    def randomize(self):
+        for name in self.sim.model.geom_names:
+            self.rand_all(name)
 
     def rand_all(self, name):
         choices = [
