@@ -13,9 +13,12 @@
 #include "string.h"
 
 
+#define EGL_EGLEXT_PROTOTYPES
 #include "egl.h"
+#include "eglext.h"
 #include <GL/glew.h>
 #include <GL/gl.h>
+#include <GL/glu.h>
 #include <GL/glext.h>
 
 //-------------------------------- global data ------------------------------------------
@@ -79,10 +82,24 @@ void closeMuJoCo(void)
 
 
 // create OpenGL context/window
-void initOpenGL(void)
+#define MAX_DEVICES 8
+int is_device_initialized[MAX_DEVICES] = {0};
+EGLDisplay eglDisplays[MAX_DEVICES];
+EGLContext eglContexts[MAX_DEVICES];
+
+int initOpenGL(int device_id)
 {
+    if (device_id < 0 || device_id > MAX_DEVICES) {
+        printf("Device id outside of range.\n");
+        return -1;
+    }
+    int is_initialized = is_device_initialized[device_id];
+
+    if (is_initialized)
+        return 1;
+
     // desired config
-    const EGLint configAttribs[] ={
+    const EGLint configAttribs[] = {
         EGL_RED_SIZE,           8,
         EGL_GREEN_SIZE,         8,
         EGL_BLUE_SIZE,          8,
@@ -95,57 +112,104 @@ void initOpenGL(void)
         EGL_NONE
     };
 
+    EGLDeviceEXT eglDevs[MAX_DEVICES];
+    EGLint numDevices;
+
+    PFNEGLQUERYDEVICESEXTPROC eglQueryDevicesEXT =
+        (PFNEGLQUERYDEVICESEXTPROC)
+        eglGetProcAddress("eglQueryDevicesEXT");
+
+    eglQueryDevicesEXT(MAX_DEVICES, eglDevs, &numDevices);
+    printf("Found %d GPUs for rendering. Using device %d.\n", numDevices, device_id);
+    if (device_id >= numDevices) {
+        printf("Device id outside of range of available devices.\n");
+        return -1;
+    }
+
+    PFNEGLGETPLATFORMDISPLAYEXTPROC eglGetPlatformDisplayEXT =
+    (PFNEGLGETPLATFORMDISPLAYEXTPROC)
+    eglGetProcAddress("eglGetPlatformDisplayEXT");
+    if (eglGetPlatformDisplayEXT == NULL) {
+        printf("Failed to get eglGetPlatformDisplayEXT\n");
+        return -2;
+    }
+
+    EGLDisplay eglDpy = eglGetPlatformDisplayEXT(
+        EGL_PLATFORM_DEVICE_EXT, eglDevs[device_id], 0);
+
     // get default display
-    EGLDisplay eglDpy = eglGetDisplay(EGL_DEFAULT_DISPLAY);
-    if( eglDpy==EGL_NO_DISPLAY )
-        mju_error_i("Could not get EGL display, error 0x%x\n", eglGetError());
+    // EGLDisplay eglDpy = eglGetDisplay(EGL_DEFAULT_DISPLAY);
+    if (eglDpy == EGL_NO_DISPLAY) {
+        printf("Could not get EGL display\n");
+        return -3;
+    }
 
     // initialize
     EGLint major, minor;
-    if( eglInitialize(eglDpy, &major, &minor)!=EGL_TRUE )
-        mju_error_i("Could not initialize EGL, error 0x%x\n", eglGetError());
+    if (eglInitialize(eglDpy, &major, &minor) != EGL_TRUE) {
+        printf("Could not initialize EGL\n");
+        return -4;
+    }
 
     // choose config
     EGLint numConfigs;
     EGLConfig eglCfg;
-    if( eglChooseConfig(eglDpy, configAttribs, &eglCfg, 1, &numConfigs)!=EGL_TRUE )
-        mju_error_i("Could not choose EGL config, error 0x%x\n", eglGetError());
+    if (eglChooseConfig(eglDpy, configAttribs, &eglCfg, 1, &numConfigs)!=EGL_TRUE ) {
+        printf("Could not choose EGL config\n");
+        return -5;
+    }
 
     // bind OpenGL API
-    if( eglBindAPI(EGL_OPENGL_API)!=EGL_TRUE )
-        mju_error_i("Could not bind EGL OpenGL API, error 0x%x\n", eglGetError());
+    if( eglBindAPI(EGL_OPENGL_API)!=EGL_TRUE ) {
+        printf("Could not bind EGL OpenGL API\n");
+        return -6;
+    }
 
     // create context
     EGLContext eglCtx = eglCreateContext(eglDpy, eglCfg, EGL_NO_CONTEXT, NULL);
-    if( eglCtx==EGL_NO_CONTEXT )
-        mju_error_i("Could not create EGL context, error 0x%x\n", eglGetError());
+    if( eglCtx==EGL_NO_CONTEXT ) {
+        printf("Could not create EGL context\n");
+        return -7;
+    }
 
     // make context current, no surface (let OpenGL handle FBO)
-    if( eglMakeCurrent(eglDpy, EGL_NO_SURFACE, EGL_NO_SURFACE, eglCtx)!=EGL_TRUE )
-        mju_error_i("Could not make EGL context current, error 0x%x\n", eglGetError());
+    if( eglMakeCurrent(eglDpy, EGL_NO_SURFACE, EGL_NO_SURFACE, eglCtx)!=EGL_TRUE ) {
+        eglDestroyContext(eglDpy, eglCtx);
+        printf("Could not make EGL context current\n");
+        return -8;
+    }
+
+    is_device_initialized[device_id] = 1;
+    eglDisplays[device_id] = eglDpy;
+    eglContexts[device_id] = eglCtx;
+    return 1;
 }
 
 
 // close OpenGL context/window
-void closeOpenGL(void)
+void closeOpenGL()
 {
-    // get current display
-    EGLDisplay eglDpy = eglGetCurrentDisplay();
-    if( eglDpy==EGL_NO_DISPLAY )
-        return;
+    for (int device_id=0; device_id<MAX_DEVICES; device_id++) {
+        if (!is_device_initialized[device_id])
+            continue;
 
-    // get current context
-    EGLContext eglCtx = eglGetCurrentContext();
+        EGLDisplay eglDpy = eglDisplays[device_id];
+        if( eglDpy==EGL_NO_DISPLAY )
+            continue;
 
-    // release context
-    eglMakeCurrent(eglDpy, EGL_NO_SURFACE, EGL_NO_SURFACE, EGL_NO_CONTEXT);
+        // get current context
+        EGLContext eglCtx = eglContexts[device_id];
 
-    // destroy context if valid
-    if( eglCtx!=EGL_NO_CONTEXT )
-        eglDestroyContext(eglDpy, eglCtx);
+        // release context
+        eglMakeCurrent(eglDpy, EGL_NO_SURFACE, EGL_NO_SURFACE, EGL_NO_CONTEXT);
 
-    // terminate display
-    eglTerminate(eglDpy);
+        // destroy context if valid
+        if( eglCtx!=EGL_NO_CONTEXT )
+            eglDestroyContext(eglDpy, eglCtx);
+
+        // terminate display
+        eglTerminate(eglDpy);
+    }
 }
 
 
@@ -161,7 +225,7 @@ int main(int argc, const char** argv)
     }
 
     // initialize OpenGL and MuJoCo
-    initOpenGL();
+    initOpenGL(1);
     initMuJoCo(argv[1]);
 
     // set rendering to offscreen buffer
@@ -174,60 +238,75 @@ int main(int argc, const char** argv)
     int W = viewport.width;
     int H = viewport.height;
 
-    // allocate rgb and depth buffers
-//    unsigned char* rgb = (unsigned char*)malloc(3*W*H);
-    unsigned char* rgb = 0;
-    float* depth = (float*)malloc(sizeof(float)*W*H);
-    if( !rgb || !depth )
-        mju_error("Could not allocate buffers");
-
     // create output rgb file
     FILE* fp = fopen(argv[2], "wb");
     if( !fp )
         mju_error("Could not open rgbfile for writing");
-//
-//    // update abstract scene
-//    mjv_updateScene(m, d, &opt, NULL, &cam, mjCAT_ALL, &scn);
-//
-//    // render scene in offscreen buffer
-//    mjr_render(viewport, &scn, &con);
 
-//    glBindFramebufferEXT(GL_FRAMEBUFFER_EXT, con.offFBO);
+    // update abstract scene
+    mjv_updateScene(m, d, &opt, NULL, &cam, mjCAT_ALL, &scn);
+
+    // render scene in offscreen buffer
+    mjr_render(viewport, &scn, &con);
+
+    printf("Reading from framebuffer: %d\n", con.offFBO);
+    printf("Number of samples: %d\n", con.offSamples);
+
+    if (glCheckFramebufferStatus(GL_FRAMEBUFFER) != GL_FRAMEBUFFER_COMPLETE)
+        printf("ERROR: Framebuffer incomplete\n");
+
+    GLubyte* src = (GLubyte*)malloc(3*W*H);
+    if (con.offSamples == 0) {
+        glBindFramebuffer(GL_READ_FRAMEBUFFER, con.offFBO);
+        glReadBuffer(GL_COLOR_ATTACHMENT0);
+        glReadPixels(viewport.left, viewport.bottom, viewport.width, viewport.height,
+                     GL_RGB, GL_UNSIGNED_BYTE, src);
+    } else {
+        glBindFramebuffer(GL_READ_FRAMEBUFFER, con.offFBO);
+        glReadBuffer(GL_COLOR_ATTACHMENT0);
+        glBindFramebuffer(GL_DRAW_FRAMEBUFFER, con.offFBO_r);
+        glDrawBuffer(GL_COLOR_ATTACHMENT0);
+
+        // resolve-blit
+        glBlitFramebuffer(viewport.left, viewport.bottom,
+                          viewport.left+viewport.width, viewport.bottom+viewport.height,
+                          viewport.left, viewport.bottom,
+                          viewport.left+viewport.width, viewport.bottom+viewport.height,
+                          GL_COLOR_BUFFER_BIT, GL_NEAREST);
+
+        // read from resolved
+        glBindFramebuffer(GL_READ_FRAMEBUFFER, con.offFBO_r);
+        glReadBuffer(GL_COLOR_ATTACHMENT0);
+        glReadPixels(viewport.left, viewport.bottom, viewport.width, viewport.height,
+                     GL_RGB, GL_UNSIGNED_BYTE, src);
+    }
+
+    fwrite(src, 3, W*H, fp);
+    int sum = 0;
+    for (int i=0; i<(W*H*3); i++)
+        sum += (int) src[i];
+    printf("Sum of pixels: %d\n", sum);
+
+    free(src);
 
 //    GLuint pixel_buffer = 0;
 //    glGenBuffers(1, &pixel_buffer);
-//    glBindBuffer(GL_PIXEL_PACK_BUFFER, pixel_buffer);
-//    glBufferData(GL_PIXEL_PACK_BUFFER, 3*W*H, 0, GL_STREAM_READ);
+//    glBindBuffer(GL_PIXEL_PACK_BUFFER_ARB, pixel_buffer);
+//    glBufferData(GL_PIXEL_PACK_BUFFER_ARB, 3*W*H, 0, GL_STREAM_READ);
+//    glReadPixels(0, 0, W, H, GL_RGB, GL_UNSIGNED_BYTE, 0);
 
-//    glReadPixels(0, 0, W, H,
-//                 GL_RGB, GL_UNSIGNED_BYTE, NULL);
-//
-//    rgb = (unsigned char *) glMapBuffer(GL_PIXEL_PACK_BUFFER, GL_READ_ONLY);
+//    GLubyte* rgb = (GLubyte*)glMapBufferARB(GL_PIXEL_PACK_BUFFER_ARB, GL_READ_ONLY_ARB);
+//    unsigned char *rgb = (unsigned char *) glMapBuffer(GL_PIXEL_PACK_BUFFER, GL_READ_ONLY);
 //
 //    glUnmapBuffer(GL_PIXEL_PACK_BUFFER);
 //    glBindBuffer(GL_PIXEL_PACK_BUFFER, 0);
 //    glDeleteBuffers(1, &pixel_buffer);
 
-//    // read rgb and depth buffers
-//    mjr_readPixels(rgb, depth, viewport, &con);
-//
-//    // insert subsampled depth image in lower-left corner of rgb image
-//    const int NS = 3;           // depth image sub-sampling
-//    for( int r=0; r<H; r+=NS )
-//        for( int c=0; c<W; c+=NS )
-//        {
-//            int adr = (r/NS)*W + c/NS;
-//            rgb[3*adr] = rgb[3*adr+1] = rgb[3*adr+2] =
-//                (unsigned char)((1.0f-depth[r*W+c])*255.0f);
-//        }
-//
-//    // write rgb image to file
-//    fwrite(rgb, 3, W*H, fp);
+    // write rgb image to file
+    printf("Done!\n");
 
     // close file, free buffers
     fclose(fp);
-    free(rgb);
-    free(depth);
 
     // close MuJoCo and OpenGL
     closeMuJoCo();
