@@ -255,12 +255,17 @@ int main(int argc, const char** argv)
     if (glCheckFramebufferStatus(GL_FRAMEBUFFER) != GL_FRAMEBUFFER_COMPLETE)
         printf("ERROR: Framebuffer incomplete\n");
 
-    GLubyte* src = (GLubyte*)malloc(3*W*H);
+    GLuint pixel_buffer = 0;
+    glGenBuffers(1, &pixel_buffer);
+
     if (con.offSamples == 0) {
         glBindFramebuffer(GL_READ_FRAMEBUFFER, con.offFBO);
         glReadBuffer(GL_COLOR_ATTACHMENT0);
+
+        glBindBuffer(GL_PIXEL_PACK_BUFFER_ARB, pixel_buffer);
+        glBufferData(GL_PIXEL_PACK_BUFFER_ARB, 3*W*H, 0, GL_STREAM_READ);
         glReadPixels(viewport.left, viewport.bottom, viewport.width, viewport.height,
-                     GL_RGB, GL_UNSIGNED_BYTE, src);
+                     GL_RGB, GL_UNSIGNED_BYTE, 0);
     } else {
         glBindFramebuffer(GL_READ_FRAMEBUFFER, con.offFBO);
         glReadBuffer(GL_COLOR_ATTACHMENT0);
@@ -277,9 +282,15 @@ int main(int argc, const char** argv)
         // read from resolved
         glBindFramebuffer(GL_READ_FRAMEBUFFER, con.offFBO_r);
         glReadBuffer(GL_COLOR_ATTACHMENT0);
+
+        glBindBuffer(GL_PIXEL_PACK_BUFFER_ARB, pixel_buffer);
+        glBufferData(GL_PIXEL_PACK_BUFFER_ARB, 3*W*H, 0, GL_STREAM_READ);
         glReadPixels(viewport.left, viewport.bottom, viewport.width, viewport.height,
-                     GL_RGB, GL_UNSIGNED_BYTE, src);
+                     GL_RGB, GL_UNSIGNED_BYTE, 0);
     }
+
+    printf("Reading from the PBO: %d\n", pixel_buffer);
+    GLubyte* src = (GLubyte*)glMapBufferARB(GL_PIXEL_PACK_BUFFER_ARB, GL_READ_ONLY_ARB);
 
     fwrite(src, 3, W*H, fp);
     int sum = 0;
@@ -287,20 +298,9 @@ int main(int argc, const char** argv)
         sum += (int) src[i];
     printf("Sum of pixels: %d\n", sum);
 
-    free(src);
-
-//    GLuint pixel_buffer = 0;
-//    glGenBuffers(1, &pixel_buffer);
-//    glBindBuffer(GL_PIXEL_PACK_BUFFER_ARB, pixel_buffer);
-//    glBufferData(GL_PIXEL_PACK_BUFFER_ARB, 3*W*H, 0, GL_STREAM_READ);
-//    glReadPixels(0, 0, W, H, GL_RGB, GL_UNSIGNED_BYTE, 0);
-
-//    GLubyte* rgb = (GLubyte*)glMapBufferARB(GL_PIXEL_PACK_BUFFER_ARB, GL_READ_ONLY_ARB);
-//    unsigned char *rgb = (unsigned char *) glMapBuffer(GL_PIXEL_PACK_BUFFER, GL_READ_ONLY);
-//
-//    glUnmapBuffer(GL_PIXEL_PACK_BUFFER);
-//    glBindBuffer(GL_PIXEL_PACK_BUFFER, 0);
-//    glDeleteBuffers(1, &pixel_buffer);
+    glUnmapBuffer(GL_PIXEL_PACK_BUFFER);
+    glBindBuffer(GL_PIXEL_PACK_BUFFER, 0);
+    glDeleteBuffers(1, &pixel_buffer);
 
     // write rgb image to file
     printf("Done!\n");
