@@ -83,7 +83,9 @@ class MjRenderPool:
             raise RuntimeError(
                 "Start method must be set to 'spawn' for the "
                 "render pool to work. That is, you must add the "
-                "following to your main script:\n"
+                "following to the _TOP_ of your main script, "
+                "before any other imports (since they might be "
+                "setting it otherwise):\n"
                 "  import multiprocessing as mp\n"
                 "  if __name__ == '__main__':\n"
                 "    mp.set_start_method('spawn')\n")
