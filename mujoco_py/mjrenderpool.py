@@ -125,7 +125,7 @@ class MjRenderPool:
         # attach a render context to the sim (needs to happen before
         # modder is called, since it might need to upload textures
         # to the GPU).
-        MjRenderContext(device_id=s.device_id)
+        MjRenderContext(s.sim, device_id=s.device_id)
 
         if modder is not None:
             s.modder = modder(s.sim, random_state=proc_worker_id)
