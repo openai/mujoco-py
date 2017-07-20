@@ -22,7 +22,8 @@ Python 2 has been desupported since [1.50.1.0](https://github.com/openai/mujoco-
 2. Download the MuJoCo version 1.50 binaries for
    [Linux](https://www.roboti.us/download/mjpro150_linux.zip),
    [OSX](https://www.roboti.us/download/mjpro150_osx.zip), or
-   [Windows](https://www.roboti.us/download/mjpro150_windows.zip).
+   [Windows-32 bit](https://www.roboti.us/download/mjpro150_win32.zip)
+   [Windows-64 bit](https://www.roboti.us/download/mjpro150_win64.zip).
 3. Unzip the downloaded `mjpro150` directory into `~/.mujoco/mjpro150`,
    and place your license key (the `mjkey.txt` file from your email)
    at `~/.mujoco/mjkey.txt`.
