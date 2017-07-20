@@ -4,8 +4,9 @@ from mujoco_py.builder import cymj
 from mujoco_py.generated import const
 import time
 import copy
-from multiprocessing import Process
+from multiprocessing import Process, Queue
 from mujoco_py.utils import rec_copy, rec_assign
+import numpy as np
 import imageio
 
 
@@ -137,7 +138,7 @@ class MjViewer(MjViewerBasic):
 
         # Vars for recording video
         self._record_video = False
-        self._video_frames = []
+        self._video_queue = Queue()
         self._video_idx = 0
         self._video_path = "/tmp/video_%07d.mp4"
 
@@ -177,7 +178,7 @@ class MjViewer(MjViewerBasic):
             super().render()
             if self._record_video:
                 frame = self._read_pixels_as_in_window()
-                self._video_frames.append(frame)
+                self._video_queue.put(frame)
             else:
                 self._time_per_render = 0.9 * self._time_per_render + \
                     0.1 * (time.time() - render_start)
@@ -208,8 +209,13 @@ class MjViewer(MjViewerBasic):
         # Reads pixels with markers and overlay from the same camera as screen.
         resolution = glfw.get_framebuffer_size(
             self.sim._render_context_window.window)
+
+        resolution = np.array(resolution)
+        resolution = resolution * min(1000 / np.min(resolution), 1)
+        resolution = resolution.astype(np.int32)
+        resolution -= resolution % 16
         if self.sim._render_context_offscreen is None:
-            self.sim.render(*resolution)
+            self.sim.render(resolution[0], resolution[1])
         offscreen_ctx = self.sim._render_context_offscreen
         window_ctx = self.sim._render_context_window
         # Save markers and overlay from offscreen.
@@ -303,14 +309,14 @@ class MjViewer(MjViewerBasic):
         elif key == glfw.KEY_V or \
                 (key == glfw.KEY_ESCAPE and self._record_video):  # Records video. Trigers with V or if in progress by ESC.
             self._record_video = not self._record_video
-            if not self._record_video and len(self._video_frames) > 0:
-                # This include captures console, if in the top declaration.
-                frames = [f for f in self._video_frames]
+            if self._record_video:
                 fps = (1 / self._time_per_render)
-                process = Process(target=save_video,
-                                  args=(frames, self._video_path % self._video_idx, fps))
-                process.start()
-                self._video_frames = []
+                self._video_process = Process(target=save_video,
+                                  args=(self._video_queue, self._video_path % self._video_idx, fps))
+                self._video_process.start()
+            if not self._record_video:
+                self._video_queue.put(None)
+                self._video_process.join()
                 self._video_idx += 1
         elif key == glfw.KEY_T:  # capture screenshot
             img = self._read_pixels_as_in_window()
@@ -358,8 +364,11 @@ class MjViewer(MjViewerBasic):
 # less slowed down.
 
 
-def save_video(frames, filename, fps):
+def save_video(queue, filename, fps):
     writer = imageio.get_writer(filename, fps=fps)
-    for f in frames:
-        writer.append_data(f)
+    while True:
+        frame = queue.get()
+        if frame is None:
+            break
+        writer.append_data(frame)
     writer.close()
