@@ -6,10 +6,10 @@ import numpy as np
 BASIC_MODEL_XML = """
 <mujoco>
     <asset>
-        <texture name="t1" width="32" height="32" type="2d" builtin="flat" />
-        <texture name="t2" width="32" height="32" type="2d" builtin="flat" />
-        <texture name="t3" width="32" height="32" type="2d" builtin="flat" />
-        <texture name="t4" width="32" height="32" type="2d" builtin="flat" />
+        <texture name="t1" width="33" height="36" type="2d" builtin="flat" />
+        <texture name="t2" width="34" height="39" type="2d" builtin="flat" />
+        <texture name="t3" width="31" height="37" type="2d" builtin="flat" />
+        <texture name="t4" width="38" height="34" type="2d" builtin="flat" />
         <material name="m1" texture="t1" />
         <material name="m2" texture="t2" />
         <material name="m3" texture="t3" />
@@ -37,7 +37,7 @@ def test_textures():
     sim = MjSim(model)
     sim.forward()
 
-    compare_imgs(sim.render(200, 200, camera_name="topcam"),
+    compare_imgs(sim.render(201, 205, camera_name="topcam"),
                  'test_textures.premod.png')
 
     random_state = np.random.RandomState(0)
@@ -49,28 +49,28 @@ def test_textures():
     modder.set_rgb('g2', (0, 255, 0))
     modder.set_rgb('g3', (0, 0, 255))
     modder.set_rgb('g4', (255, 0, 255))
-    compare_imgs(sim.render(200, 200, camera_name="topcam"),
+    compare_imgs(sim.render(201, 205, camera_name="topcam"),
                  'test_textures.rgb.png')
 
     modder.set_checker('g1', (255, 0, 0), (0, 255, 0))
     modder.set_gradient('g2', (0, 255, 0), (0, 0, 255), vertical=True)
     modder.set_gradient('g3', (255, 255, 0), (0, 0, 255), vertical=False)
     modder.set_noise('g4', (0, 0, 255), (255, 0, 0), 0.1)
-    compare_imgs(sim.render(200, 200, camera_name="topcam"),
+    compare_imgs(sim.render(201, 205, camera_name="topcam"),
                  'test_textures.variety.png')
 
     modder.rand_checker('g1')
     modder.rand_gradient('g2')
     modder.rand_noise('g3')
     modder.rand_rgb('g4')
-    compare_imgs(sim.render(200, 200, camera_name="topcam"),
+    compare_imgs(sim.render(201, 205, camera_name="topcam"),
                  'test_textures.rand_specific.png')
 
     modder.rand_all('g1')
     modder.rand_all('g2')
     modder.rand_all('g3')
     modder.rand_all('g4')
-    compare_imgs(sim.render(200, 200, camera_name="topcam"),
+    compare_imgs(sim.render(201, 205, camera_name="topcam"),
                  'test_textures.rand_all.png')
 
     modder.rand_checker('g1')
@@ -82,7 +82,7 @@ def test_textures():
     mat_modder.rand_texrepeat('g2')
     mat_modder.rand_texrepeat('g3')
     mat_modder.rand_texrepeat('g4')
-    compare_imgs(sim.render(200, 200, camera_name="topcam"),
+    compare_imgs(sim.render(201, 205, camera_name="topcam"),
                  'test_textures.rand_texrepeat.png')
 
 @requires_rendering
@@ -91,7 +91,7 @@ def test_materials():
     sim = MjSim(model)
     sim.forward()
 
-    compare_imgs(sim.render(200, 200, camera_name="topcam"),
+    compare_imgs(sim.render(201, 205, camera_name="topcam"),
                  'test_materials.premod.png')
 
     random_state = np.random.RandomState(0)
@@ -100,11 +100,11 @@ def test_materials():
     modder.set_specularity('g1', 1.0)
     modder.set_reflectance('g2', 1.0)
     modder.set_shininess('g3', 1.0)
-    compare_imgs(sim.render(200, 200, camera_name="topcam"),
+    compare_imgs(sim.render(201, 205, camera_name="topcam"),
                  'test_materials.props.png')
 
     modder.rand_all('g4')
-    compare_imgs(sim.render(200, 200, camera_name="topcam"),
+    compare_imgs(sim.render(201, 205, camera_name="topcam"),
                  'test_materials.rand_all.png')
 
 @requires_rendering
@@ -134,7 +134,7 @@ def test_multiple_sims():
         for j in range(2):
             modder.rand_checker('g1')
             compare_imgs(
-                sim.render(200, 200, camera_name="topcam"),
+                sim.render(201, 205, camera_name="topcam"),
                 'test_multiple_sims.loop%d_%d.png' % (i, j))
 
 
@@ -169,5 +169,5 @@ def test_resetting():
         modder = TextureModder(sim, random_state=random_state)
         for j in range(2):
             modder.rand_checker('g1')
-            compare_imgs(sim.render(200, 200, camera_name="topcam"),
+            compare_imgs(sim.render(201, 205, camera_name="topcam"),
                          'test_resetting.loop%d_%d.png' % (i, j))

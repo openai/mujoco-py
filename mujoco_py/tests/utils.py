@@ -7,14 +7,17 @@ from os.path import splitext
 import imagehash
 import pytest
 
-TEST_ASSET_DIR_PATH = abspath(join(dirname(__file__), '..', 'test_imgs'))
+if os.getenv('MUJOCO_PY_TEST_ASSET_DIR_PATH'):
+    TEST_ASSET_DIR_PATH = os.getenv('MUJOCO_PY_TEST_ASSET_DIR_PATH')
+else:
+    TEST_ASSET_DIR_PATH = abspath(join(dirname(__file__), '..', 'test_imgs'))
 
 
 def save_test_image(filename, array):
     Image.fromarray(array).save(filename)
 
 
-def compare_imgs(img, truth_filename):
+def compare_imgs(img, truth_filename, do_assert=True):
     """
     PROTIP: run the following to re-generate the test images:
 
@@ -30,6 +33,7 @@ def compare_imgs(img, truth_filename):
             backup_path = "%s_old%s" % (pre_path, ext)
             move(truth_filename, backup_path)
         save_test_image(truth_filename, img)
+        return 0
     true_img = np.asarray(Image.open(truth_filename))
     assert img.shape == true_img.shape
     hash0 = imagehash.dhash(Image.fromarray(img))
@@ -43,7 +47,9 @@ def compare_imgs(img, truth_filename):
         save_test_image("/tmp/img.png", img)
         save_test_image("/tmp/true_img.png", true_img)
         save_test_image("/tmp/diff_img.png", img - true_img)
-    assert diff <= 1
+    if do_assert:
+        assert diff <= 1
+    return diff
 
 
 # Skips test when RENDERING_OFF.

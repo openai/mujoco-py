@@ -27,7 +27,7 @@ test: build
 	docker run --rm -i mujoco_py pytest
 
 mount_shell:
-	docker run --rm -it -v `pwd`:/dev mujoco_py /bin/bash -c "pip uninstall -y mujoco_py; rm -rf /mujoco_py; (cd /dev; /bin/bash)"
+	docker run --rm -it -v `pwd`:/code mujoco_py /bin/bash -c "pip3 uninstall -y mujoco_py; rm -rf /mujoco_py; (cd /code; /bin/bash)"
 
 shell:
 	docker run --rm -it mujoco_py /bin/bash

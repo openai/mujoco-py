@@ -13,6 +13,9 @@ class BaseModder():
         self.sim = sim
         if random_state is None:
             self.random_state = np.random.RandomState()
+        elif isinstance(random_state, int):
+            # random_state assumed to be an int
+            self.random_state = np.random.RandomState(random_state)
         else:
             self.random_state = random_state
 
@@ -308,6 +311,10 @@ class TextureModder(BaseModder):
         self.upload_texture(name)
         return bitmap
 
+    def randomize(self):
+        for name in self.sim.model.geom_names:
+            self.rand_all(name)
+
     def rand_all(self, name):
         choices = [
             self.rand_checker,
@@ -417,10 +424,10 @@ class TextureModder(BaseModder):
             self._skybox_checker_mat = None
 
     def _make_checker_matrices(self, h, w):
-        re = np.r_[(w // 2) * [0, 1]]
-        ro = np.r_[(w // 2) * [1, 0]]
-        cbd1 = np.expand_dims(np.row_stack((h // 2) * [re, ro]), -1)
-        cbd2 = np.expand_dims(np.row_stack((h // 2) * [ro, re]), -1)
+        re = np.r_[((w + 1) // 2) * [0, 1]]
+        ro = np.r_[((w + 1) // 2) * [1, 0]]
+        cbd1 = np.expand_dims(np.row_stack(((h + 1) // 2) * [re, ro]), -1)[:h, :w]
+        cbd2 = np.expand_dims(np.row_stack(((h + 1) // 2) * [ro, re]), -1)[:h, :w]
         return cbd1, cbd2
 
 

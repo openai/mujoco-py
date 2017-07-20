@@ -1,5 +1,6 @@
 from mujoco_py.builder import cymj, ignore_mujoco_warnings, functions, MujocoException
 from mujoco_py.generated import const
+from mujoco_py.mjrenderpool import MjRenderPool
 from mujoco_py.mjviewer import MjViewer, MjViewerBasic
 from mujoco_py.version import __version__, get_version
 
@@ -18,7 +19,7 @@ MjRenderContextWindow = cymj.MjRenderContextWindow
 __all__ = ['MjSim', 'MjSimState', 'MjSimPool',
            'MjRenderContextOffscreen', 'MjRenderContextWindow',
            'MjRenderContext', 'MjViewer', 'MjViewerBasic',
-           'MujocoException',
+           'MujocoException', 'MjRenderPool',
            'load_model_from_path', 'load_model_from_xml',
            'load_model_from_mjb',
            'ignore_mujoco_warnings', 'const', "functions",
