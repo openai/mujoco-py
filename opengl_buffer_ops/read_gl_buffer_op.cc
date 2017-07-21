@@ -10,15 +10,26 @@
 #include <cudaGL.h>
 #include <stdio.h>
 
-extern "C" {
-  #include <EGL/egl.h>
-}
-
-
 using namespace tensorflow;
 
 using perftools::gputools::cuda::AsCUDAStreamValue;
 using shape_inference::InferenceContext;
+
+extern "C" {
+#include "khrplatform.h"
+#ifndef EGLAPI
+#define EGLAPI KHRONOS_APICALL
+#endif
+
+#ifndef EGLAPIENTRY
+#define EGLAPIENTRY  KHRONOS_APIENTRY
+#endif
+#define EGLAPIENTRYP EGLAPIENTRY*
+
+typedef void *EGLContext;
+EGLAPI EGLContext EGLAPIENTRY eglGetCurrentContext (void);
+#define EGL_NO_CONTEXT                    ((EGLContext)0)
+}
 
 
 REGISTER_OP("ReadGlBuffer")
@@ -100,11 +111,11 @@ class ReadGlBufferOp : public OpKernel {
     //     cuda_gl_resource_);
     // printf("cudaGraphicsResourceGetMappedPointer %d\n", err);
 
-    // if (eglGetCurrentContext() == EGL_NO_CONTEXT) {
-    //   printf("XXX eglGetCurrentContext EGL_NO_CONTEXT\n");
-    // } else {
-    //   printf("XXX eglGetCurrentContext found!\n");
-    // }
+    if (eglGetCurrentContext() == EGL_NO_CONTEXT) {
+      printf("XXX eglGetCurrentContext EGL_NO_CONTEXT\n");
+    } else {
+      printf("XXX eglGetCurrentContext found!\n");
+    }
 
     CUresult result;
     CUdevice device;
