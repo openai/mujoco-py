@@ -55,32 +55,68 @@ def main_cpu(batch_size=10):
 
 def main_gpu(batch_size=10):
     import numpy as np
-    import pycuda.autoinit
-    from pycuda.driver import from_device
-    from pycuda.gl import make_context, RegisteredBuffer
-
-    device = pycuda.autoinit.device
+    print("START")
 
     image_size = 255
     sim, renderer = get_renderer(batch_size, image_size)
     render_batch(sim, renderer, batch_size)
 
-    make_context(device)  # need to do after OpenGL context
+    import pycuda.autoinit
+    import pycuda.driver as drv
+    from pycuda.gl import make_context, RegisteredBuffer
+    device = pycuda.autoinit.device
+    buf_size = batch_size * image_size * image_size * 3
+    cuda_buf = drv.mem_alloc(buf_size)
+
+
+    # make_context(device)  # need to do after OpenGL context
 
     cuda_pbo = RegisteredBuffer(renderer.pbo)
     mapping = cuda_pbo.map()
-    buf_ptr, buf_size = mapping.device_ptr_and_size()
-    assert buf_size == (batch_size * image_size * image_size * 3)
-    images = from_device(buf_ptr,
-                         shape=(batch_size, image_size, image_size, 3),
-                         dtype=np.uint8)
+    buf_ptr, _ = mapping.device_ptr_and_size()
+
+    drv.memcpy_dtod(cuda_buf, buf_ptr, buf_size)
+
+    images = drv.from_device(buf_ptr,
+                             shape=(batch_size, image_size, image_size, 3),
+                             dtype=np.uint8)
 
     for i, image in enumerate(images):
         Image.fromarray(image).save('cuda_image_%02d.png' % i)
 
     mapping.unmap()
     cuda_pbo.unregister()
+    print("DONE!")
+
+
+def main_tf(batch_size=10):
+    import tensorflow as tf
+    from opengl_buffer_ops import read_gl_buffer
+
+    print("START")
+    image_size = 255
+
+    sim, renderer = get_renderer(batch_size, image_size)
+    render_batch(sim, renderer, batch_size)
+
+    conf = tf.ConfigProto(
+        intra_op_parallelism_threads=1,
+        inter_op_parallelism_threads=1)
+
+    sess = tf.Session(config=conf)
+    # tf_pbo_handle = tf.constant(renderer.pbo, dtype=tf.int32)
+    tf_pbo_handle = renderer.pbo
+    print("XXX renderer.pbo", renderer.pbo)
+    images_tensor = read_gl_buffer(
+        tf_pbo_handle, image_size, image_size, num_images=batch_size,
+        const_handle=True)
+    images = sess.run([images_tensor])
+
+    for i, image in enumerate(images):
+        Image.fromarray(image).save('cuda_image_%02d.png' % i)
+
+    print("DONE!")
 
 
 if __name__ == "__main__":
-    main_gpu()
+    main_tf()
