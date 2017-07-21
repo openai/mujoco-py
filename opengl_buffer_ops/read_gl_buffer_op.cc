@@ -7,7 +7,13 @@
 #include "tensorflow/stream_executor/cuda/cuda_stream.h"
 #include <cuda_runtime_api.h>
 #include <cuda_gl_interop.h>
+#include <cudaGL.h>
 #include <stdio.h>
+
+extern "C" {
+  #include <EGL/egl.h>
+}
+
 
 using namespace tensorflow;
 
@@ -64,55 +70,81 @@ class ReadGlBufferOp : public OpKernel {
         handle = (GLuint) handle_t->scalar<uint32>()();
     }
 
-    printf("XXX Create output\n");
-    Tensor* output_t = nullptr;
-    TensorShape output_shape({num_images_, height_, width_, 3});
-    OP_REQUIRES_OK(ctx, ctx->allocate_output(0, output_shape, &output_t));
-    uint8* output_ptr = output_t->flat<uint8>().data();
+    // printf("XXX Create output\n");
+    // Tensor* output_t = nullptr;
+    // TensorShape output_shape({num_images_, height_, width_, 3});
+    // OP_REQUIRES_OK(ctx, ctx->allocate_output(0, output_shape, &output_t));
+    // uint8* output_ptr = output_t->flat<uint8>().data();
 
     printf("XXX pre CUstream\n");
-    CUstream cu_stream = AsCUDAStreamValue(ctx->op_device_context()->stream());
-    int cuda_device;
-    printf("XXX call cudaGetDevice\n");
-    cudaGetDevice(&cuda_device);
-    printf("XXX call cudaGLSetGLDevice %d\n", cuda_device);
-    cudaGLSetGLDevice(cuda_device);
-    printf("XXX call cudaGraphicsGLRegisterBuffer\n");
-    cudaError_t err;
+    // CUstream cu_stream = AsCUDAStreamValue(ctx->op_device_context()->stream());
+    // int cuda_device;
+    // printf("XXX call cudaGetDevice\n");
+    // cudaGetDevice(&cuda_device);
+    // printf("XXX call cudaGLSetGLDevice %d\n", cuda_device);
+    // cudaGLSetGLDevice(cuda_device);
+    // printf("XXX call cudaGraphicsGLRegisterBuffer\n");
+    // cudaError_t err;
     // if (!is_init_) {
-        err = cudaGraphicsGLRegisterBuffer(
-            &cuda_gl_resource_,
-            handle,
-            cudaGraphicsRegisterFlagsReadOnly);
-        printf("cudaGraphicsGLRegisterBuffer %d\n", err);
-        err = cudaGraphicsMapResources(1, &cuda_gl_resource_, cu_stream);
-        printf("cudaGraphicsMapResources %d\n", err);
-        size_t buf_size;
-        err = cudaGraphicsResourceGetMappedPointer(
-            (void**) &buf_ptr_,
-            &buf_size,
-            cuda_gl_resource_);
-        printf("cudaGraphicsResourceGetMappedPointer %d\n", err);
+    // err = cudaGraphicsGLRegisterBuffer(
+    //     &cuda_gl_resource_,
+    //     handle,
+    //     cudaGraphicsRegisterFlagsReadOnly);
+    // printf("cudaGraphicsGLRegisterBuffer %d\n", err);
+    // err = cudaGraphicsMapResources(1, &cuda_gl_resource_, cu_stream);
+    // printf("cudaGraphicsMapResources %d\n", err);
+    // size_t buf_size;
+    // err = cudaGraphicsResourceGetMappedPointer(
+    //     (void**) &buf_ptr_,
+    //     &buf_size,
+    //     cuda_gl_resource_);
+    // printf("cudaGraphicsResourceGetMappedPointer %d\n", err);
 
-        OP_REQUIRES(
-            ctx,
-            buf_size_ == buf_size,
-            errors::Internal("buffer size mismatch ", buf_size, " ", buf_size_));
-        is_init_ = true;
+    // if (eglGetCurrentContext() == EGL_NO_CONTEXT) {
+    //   printf("XXX eglGetCurrentContext EGL_NO_CONTEXT\n");
+    // } else {
+    //   printf("XXX eglGetCurrentContext found!\n");
     // }
 
-    err = cudaMemcpyAsync(
-        output_ptr,
-        buf_ptr_,
-        buf_size_,
-        cudaMemcpyDeviceToDevice,
-        cu_stream);
-    printf("cudaMemcpyAsync %d\n", err);
+    CUresult result;
+    CUdevice device;
+    printf("XXX cuDeviceGet\n");
+    result = cuDeviceGet(&device, 0);
+    printf("XXX <cuDeviceGet %d\n", result);
 
-    err = cudaGraphicsUnmapResources(1, &cuda_gl_resource_, cu_stream);
-    printf("cudaGraphicsUnmapResources %d\n", err);
-    err = cudaGraphicsUnregisterResource(cuda_gl_resource_);
-    printf("cudaGraphicsUnregisterResource %d\n", err);
+    printf("XXX cuGLInit\n");
+    result = cuGLInit();
+    printf("XXX <cuGLInit %d\n", result);
+
+    CUcontext cu_ctx;
+    printf("XXX cuGLCtxCreate\n");
+    result = cuGLCtxCreate(&cu_ctx, CU_GL_MAP_RESOURCE_FLAGS_NONE, device);
+    printf("XXX <cuGLCtxCreate %d\n", result);
+
+    printf("XXX cuGraphicsGLRegisterBuffer\n");
+    result = cuGraphicsGLRegisterBuffer(
+      &cuda_gl_resource_, handle, CU_GRAPHICS_REGISTER_FLAGS_NONE);
+    printf("XXX <cuGraphicsGLRegisterBuffer %d\n", result);
+
+    // OP_REQUIRES(
+    //     ctx,
+    //     buf_size_ == buf_size,
+    //     errors::Internal("buffer size mismatch ", buf_size, " ", buf_size_));
+    is_init_ = true;
+    // }
+
+    // err = cudaMemcpyAsync(
+    //     output_ptr,
+    //     buf_ptr_,
+    //     buf_size_,
+    //     cudaMemcpyDeviceToDevice,
+    //     cu_stream);
+    // printf("cudaMemcpyAsync %d\n", err);
+
+    // err = cudaGraphicsUnmapResources(1, &cuda_gl_resource_, cu_stream);
+    // printf("cudaGraphicsUnmapResources %d\n", err);
+    // err = cudaGraphicsUnregisterResource(cuda_gl_resource_);
+    // printf("cudaGraphicsUnregisterResource %d\n", err);
   }
 
   int   width_;
@@ -121,7 +153,8 @@ class ReadGlBufferOp : public OpKernel {
   int   buf_size_;
   int  const_handle_;
   bool  is_init_;
-  cudaGraphicsResource_t cuda_gl_resource_;
+  // cudaGraphicsResource_t cuda_gl_resource_;
+  CUgraphicsResource cuda_gl_resource_;
   uint8 *buf_ptr_;
 };
 
