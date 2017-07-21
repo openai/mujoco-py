@@ -134,6 +134,11 @@ class OffscreenOpenGLContext():
     def make_context_current(self):
         makeOpenGLContextCurrent(self.device_id)
 
+    def get_context_pointer(self):
+        ptr = getCurrentOpenGLContext(self.device_id)
+        print("XXX get_context_pointer", ptr)
+        return ptr
+
     def set_buffer_size(self, int width, int height):
         res = setOpenGLBufferSize(self.device_id, width, height)
         if res != 1:

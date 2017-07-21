@@ -16,4 +16,6 @@ void copyFBOToPBO(mjrContext* con, unsigned int pbo,
 void readPBO(unsigned char *buffer, unsigned int pbo,
              int width, int height, int batchSize);
 
+long int getCurrentOpenGLContext(int device_id);
+
 #endif

@@ -38,6 +38,7 @@ cdef extern from "gl/glshim.h":
                            mjrRect viewport, int bufferOffset)
     cdef void readPBO(unsigned char *buffer, unsigned int pbo,
                       int width, int height, int batchSize)
+    cdef long int getCurrentOpenGLContext(int device_id)
 
 # TODO: make this function or class so these comments turn into doc strings:
 

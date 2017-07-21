@@ -118,5 +118,13 @@ def main_tf(batch_size=10):
     print("DONE!")
 
 
+def main_egl_context(batch_size=10):
+    image_size = 255
+    sim, renderer = get_renderer(batch_size, image_size)
+    context_pointer = renderer.render_context._opengl_context.get_context_pointer()
+    print("Python got pointer", context_pointer)
+
+
 if __name__ == "__main__":
-    main_tf()
+    # main_tf()
+    main_egl_context()

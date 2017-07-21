@@ -115,7 +115,7 @@ int initOpenGL(int device_id)
     return 1;
 }
 
-int makeOpenGLContextCurrent(device_id) {
+int makeOpenGLContextCurrent(int device_id) {
     if (device_id < 0 || device_id > MAX_DEVICES) {
         printf("Device id outside of range.\n");
         return -1;
@@ -134,6 +134,12 @@ int makeOpenGLContextCurrent(device_id) {
     } else {
         return 1;
     }
+}
+
+long int getCurrentOpenGLContext(int device_id) {
+    long int ptr = (long int) &eglContexts[device_id];
+    printf("XXX getCurrentOpenGLContext %ld\n", ptr);
+    return ptr;
 }
 
 int setOpenGLBufferSize(int device_id, int width, int height) {
