@@ -41,7 +41,7 @@ def main(save_images):
     batch_size = 100
     n_batches = 10
 
-    image_width = 225
+    image_width = 255
     image_height = 255
 
     print("Setting up MuJoCo model")
@@ -50,7 +50,8 @@ def main(save_images):
 
     print("Creating MjBatchRenderer")
     renderer = MjBatchRenderer(
-        sim, image_width, image_height, batch_size=batch_size, use_cuda=True)
+        sim, image_width, image_height, batch_size=batch_size,
+        use_cuda=True, depth=True)
 
     print("Collecting states to set later")
     states = []
@@ -64,7 +65,7 @@ def main(save_images):
         inter_op_parallelism_threads=1)
     with tf.Session(config=conf) as sess:
         images_tensor = read_cuda_buffer_uint8(
-            renderer._cuda_rgb_ptr, image_width, image_height,
+            renderer.cuda_rgb_buffer_pointer, image_width, image_height,
             num_images=batch_size)
 
         print("Running benchmark")

@@ -167,13 +167,21 @@ void closeOpenGL()
     }
 }
 
-unsigned int createPBO(int width, int height, int batchSize)
+unsigned int createPBO(int width, int height, int batchSize, int use_float)
 {
     GLuint pixelBuffer = 0;
     glGenBuffers(1, &pixelBuffer);
     glBindBuffer(GL_PIXEL_PACK_BUFFER_ARB, pixelBuffer);
-    glBufferData(GL_PIXEL_PACK_BUFFER_ARB, batchSize * width * height * 3, 0, GL_STREAM_READ);
+
+    GLsizeiptr buffer_size;
+    if (use_float) {
+        buffer_size = batchSize * width * height * sizeof(GLfloat);
+    } else {
+        buffer_size = batchSize * width * height * 3;
+    }
+    glBufferData(GL_PIXEL_PACK_BUFFER_ARB, buffer_size, 0, GL_STREAM_READ);
     glBindBuffer(GL_PIXEL_PACK_BUFFER_ARB, 0);
+
     return (unsigned int) pixelBuffer;
 }
 
@@ -183,19 +191,31 @@ void freePBO(unsigned int pixelBuffer)
     glDeleteBuffers(1, &pixelBuffer);
 }
 
-void readPBO(unsigned char *buffer, unsigned int pbo,
+void readPBO(unsigned char *buffer_rgb, float *buffer_depth,
+             unsigned int pbo_rgb, unsigned int pbo_depth,
              int width, int height, int batchSize)
 {
-    glBindBuffer(GL_PIXEL_PACK_BUFFER_ARB, pbo);
+    if (pbo_rgb > 0) {
+        glBindBuffer(GL_PIXEL_PACK_BUFFER_ARB, pbo_rgb);
 
-    GLubyte* src = (GLubyte*)glMapBufferARB(GL_PIXEL_PACK_BUFFER_ARB, GL_READ_ONLY_ARB);
-    memcpy(buffer, src, batchSize * width * height * 3);
+        GLubyte* src_rgb = (GLubyte*) glMapBufferARB(GL_PIXEL_PACK_BUFFER_ARB, GL_READ_ONLY_ARB);
+        memcpy(buffer_rgb, src_rgb, batchSize * width * height * 3);
 
-    glUnmapBuffer(GL_PIXEL_PACK_BUFFER_ARB);
+        glUnmapBuffer(GL_PIXEL_PACK_BUFFER_ARB);
+    }
+    if (pbo_depth > 0) {
+        glBindBuffer(GL_PIXEL_PACK_BUFFER_ARB, pbo_depth);
+
+        GLfloat* src_depth = (GLfloat*) glMapBufferARB(GL_PIXEL_PACK_BUFFER_ARB, GL_READ_ONLY_ARB);
+        memcpy(buffer_depth, src_depth, batchSize * width * height * sizeof(GLfloat));
+
+        glUnmapBuffer(GL_PIXEL_PACK_BUFFER_ARB);
+    }
     glBindBuffer(GL_PIXEL_PACK_BUFFER_ARB, 0);
 }
 
-void copyFBOToPBO(mjrContext* con, unsigned int pbo,
+void copyFBOToPBO(mjrContext* con,
+                  unsigned int pbo_rgb, unsigned int pbo_depth,
                   mjrRect viewport, int bufferOffset)
 {
     if (con->offSamples == 0) {
@@ -218,11 +238,20 @@ void copyFBOToPBO(mjrContext* con, unsigned int pbo,
         glBindFramebuffer(GL_READ_FRAMEBUFFER, con->offFBO_r);
     }
 
-    glReadBuffer(GL_COLOR_ATTACHMENT0);
-    glBindBuffer(GL_PIXEL_PACK_BUFFER_ARB, pbo);
-    glReadPixels(viewport.left, viewport.bottom, viewport.width, viewport.height,
-                 GL_RGB, GL_UNSIGNED_BYTE,
-                 bufferOffset * viewport.width * viewport.height * 3);
-    glBindBuffer(GL_PIXEL_PACK_BUFFER_ARB, 0);
+    if (pbo_rgb) {
+        glReadBuffer(GL_COLOR_ATTACHMENT0);
+        glBindBuffer(GL_PIXEL_PACK_BUFFER_ARB, pbo_rgb);
+        glReadPixels(viewport.left, viewport.bottom, viewport.width, viewport.height,
+                     GL_RGB, GL_UNSIGNED_BYTE,
+                     bufferOffset * viewport.width * viewport.height * 3);
+        glBindBuffer(GL_PIXEL_PACK_BUFFER_ARB, 0);
+    }
+    if (pbo_depth) {
+        glBindBuffer(GL_PIXEL_PACK_BUFFER_ARB, pbo_depth);
+        glReadPixels(viewport.left, viewport.bottom, viewport.width, viewport.height,
+                     GL_DEPTH_COMPONENT, GL_FLOAT,
+                     bufferOffset * viewport.width * viewport.height * 3);
+        glBindBuffer(GL_PIXEL_PACK_BUFFER_ARB, 0);
+    }
 }
 
