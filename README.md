@@ -85,8 +85,3 @@ make test
 - Jonathan Ho
 - Peter Welinder
 - Wojciech Zaremba
-
-
-BatchRenderer(sim, w, h, batch_size, device_id, depth):
-render(camera_name, idx)
-read()

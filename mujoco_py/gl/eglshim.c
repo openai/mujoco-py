@@ -17,9 +17,6 @@ int is_device_initialized[MAX_DEVICES] = {0};
 EGLDisplay eglDisplays[MAX_DEVICES];
 EGLContext eglContexts[MAX_DEVICES];
 
-#include <stdlib.h>
-EGLDisplay test_display = 0;
-
 int initOpenGL(int device_id)
 {
     if (device_id < 0 || device_id > MAX_DEVICES) {
@@ -116,10 +113,6 @@ int initOpenGL(int device_id)
     eglDisplays[device_id] = eglDpy;
     eglContexts[device_id] = eglCtx;
 
-    // test_display = malloc(sizeof(unsigned char));
-    // unsigned char *test_display_int = test_display;
-    // *test_display_int = 'a';
-    // printf('initOpenGL char %c', test_display_int);
     return 1;
 }
 
@@ -142,22 +135,6 @@ int makeOpenGLContextCurrent(int device_id) {
     } else {
         return 1;
     }
-}
-
-long int getCurrentOpenGLContext(int device_id) {
-    long int ptr = (long int) &eglContexts[device_id];
-    printf("XXX getCurrentOpenGLContext %ld\n", ptr);
-    return ptr;
-}
-
-long int getCurrentOpenGLDisplay(int device_id) {
-    // long int ptr = (long int) &eglDisplays[device_id];
-    // printf("XXX getCurrentOpenGLDisplay %ld\n", ptr);
-    // long int test_display_int_ptr = (long int) &test_display;
-    // unsigned char *test_display_int = (unsigned char*) test_display;
-    // printf("XXX test_display %ld %c\n", test_display_int_ptr, *test_display_int);
-    // return test_display_int_ptr;
-    return 1;
 }
 
 int setOpenGLBufferSize(int device_id, int width, int height) {
