@@ -26,10 +26,10 @@ def get_renderer(batch_size, image_size):
     return sim, renderer
 
 
-def render_batch(sim, renderer, batch_size):
+def render_batch(sim, renderer, batch_size, vel=1):
     print("rendering:")
     for pos in range(batch_size):
-        sim.data.qpos[:3] = pos * 0.03
+        sim.data.qpos[:3] = pos * 0.03 * vel
         sim.forward()
 
         t = perf_counter()
@@ -107,8 +107,14 @@ def main_tf(batch_size=10):
     # tf_pbo_handle = tf.constant(renderer.pbo, dtype=tf.int32)
     tf_pbo_handle = renderer.pbo
     print("XXX renderer.pbo", renderer.pbo)
+
+    context_pointer = renderer.render_context._opengl_context.get_context_pointer()
+    print("Python got context pointer", context_pointer)
+    display_pointer = renderer.render_context._opengl_context.get_display_pointer()
+    print("Python got display pointer", display_pointer)
+
     images_tensor = read_gl_buffer(
-        tf_pbo_handle, image_size, image_size, num_images=batch_size,
+        tf_pbo_handle, image_size, image_size, display_pointer, num_images=batch_size,
         const_handle=True)
     images = sess.run([images_tensor])
 
@@ -118,13 +124,63 @@ def main_tf(batch_size=10):
     print("DONE!")
 
 
+def main_tf_and_pycuda(batch_size=10):
+    image_size = 255
+    sim, renderer = get_renderer(batch_size, image_size)
+
+    import numpy as np
+    import pycuda.autoinit
+    import pycuda.driver as drv
+    from pycuda.gl import RegisteredBuffer
+    device = pycuda.autoinit.device
+    buf_size = batch_size * image_size * image_size * 3
+    cuda_buf = drv.mem_alloc(buf_size)
+
+    cuda_pbo = RegisteredBuffer(renderer.pbo)
+    mapping = cuda_pbo.map()
+    buf_ptr, _ = mapping.device_ptr_and_size()
+    print("Buffer pointer", buf_ptr)
+
+    import tensorflow as tf
+    from opengl_buffer_ops import read_gl_buffer
+    conf = tf.ConfigProto(
+        intra_op_parallelism_threads=1,
+        inter_op_parallelism_threads=1)
+    sess = tf.Session(config=conf)
+
+    for i in range(2):
+        t = perf_counter()
+        render_batch(sim, renderer, batch_size, vel=0.5 * (i + 1))
+        print(">>> render_batch %.1f us" % ((perf_counter() - t) * 1e6))
+        t = perf_counter()
+        drv.memcpy_dtod(cuda_buf, buf_ptr, buf_size)
+        print(">>> memcpy_dtod %.1f us" % ((perf_counter() - t) * 1e6))
+        t = perf_counter()
+
+        images_tensor = read_gl_buffer(
+            buf_ptr, image_size, image_size, num_images=batch_size, const_handle=True)
+        (tf_images,) = sess.run([images_tensor])
+        print("Image sum:", tf_images.ravel().sum())
+
+        for j, image in enumerate(tf_images):
+            Image.fromarray(image).save('cuda_image_%02d_%02d.png' % (j, i))
+
+    mapping.unmap()
+    cuda_pbo.unregister()
+
+    print("Done")
+
+
 def main_egl_context(batch_size=10):
     image_size = 255
     sim, renderer = get_renderer(batch_size, image_size)
     context_pointer = renderer.render_context._opengl_context.get_context_pointer()
-    print("Python got pointer", context_pointer)
+    print("Python got context pointer", context_pointer)
+    display_pointer = renderer.render_context._opengl_context.get_display_pointer()
+    print("Python got display pointer", display_pointer)
 
 
 if __name__ == "__main__":
     # main_tf()
-    main_egl_context()
+    # main_egl_context()
+    main_tf_and_pycuda()

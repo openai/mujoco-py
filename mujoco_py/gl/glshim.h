@@ -17,5 +17,6 @@ void readPBO(unsigned char *buffer, unsigned int pbo,
              int width, int height, int batchSize);
 
 long int getCurrentOpenGLContext(int device_id);
+long int getCurrentOpenGLDisplay(int device_id);
 
 #endif

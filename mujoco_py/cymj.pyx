@@ -39,6 +39,7 @@ cdef extern from "gl/glshim.h":
     cdef void readPBO(unsigned char *buffer, unsigned int pbo,
                       int width, int height, int batchSize)
     cdef long int getCurrentOpenGLContext(int device_id)
+    cdef long int getCurrentOpenGLDisplay(int device_id)
 
 # TODO: make this function or class so these comments turn into doc strings:
 

@@ -14,7 +14,7 @@ read_gl_buffer_op = _op_module.read_gl_buffer
 
 def read_gl_buffer(handle, width, height, num_images=1, const_handle=True):
     if const_handle:
-        dummy_handle = tf.constant(0, dtype=tf.int32)
+        dummy_handle = tf.constant(0, dtype=tf.int64)
         return read_gl_buffer_op(
             dummy_handle, width=width, height=height, num_images=num_images,
             const_handle=handle)
