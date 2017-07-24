@@ -80,7 +80,7 @@ class ReadGlBufferOp : public OpKernel {
     // egl_display_ = (EGLDisplay) egl_display_int_ptr;
   }
   void Compute(OpKernelContext* ctx) override {
-    printf("XXX Compute\n");
+//    printf("XXX Compute\n");
     int64 handle = const_handle_;
     if (handle == 0) {
         const Tensor* handle_t;
@@ -92,7 +92,7 @@ class ReadGlBufferOp : public OpKernel {
                 handle_t->shape().DebugString()));
         handle = (int64) handle_t->scalar<int64>()();
     }
-    printf("XXX handle is: %ld\n", handle);
+//    printf("XXX handle is: %ld\n", handle);
 
     // printf("XXX Create output\n");
     Tensor* output_t = nullptr;
@@ -100,7 +100,7 @@ class ReadGlBufferOp : public OpKernel {
     OP_REQUIRES_OK(ctx, ctx->allocate_output(0, output_shape, &output_t));
     uint8* output_ptr = output_t->flat<uint8>().data();
 
-    printf("XXX pre CUstream\n");
+//    printf("XXX pre CUstream\n");
     CUstream cu_stream = AsCUDAStreamValue(ctx->op_device_context()->stream());
     // int cuda_device;
     // printf("XXX call cudaGetDevice\n");
@@ -171,7 +171,7 @@ class ReadGlBufferOp : public OpKernel {
         buf_size_,
         cudaMemcpyDeviceToDevice,
         cu_stream);
-    printf("cudaMemcpyAsync %d\n", err);
+//    printf("cudaMemcpyAsync %d\n", err);
 
     // err = cudaGraphicsUnmapResources(1, &cuda_gl_resource_, cu_stream);
     // printf("cudaGraphicsUnmapResources %d\n", err);

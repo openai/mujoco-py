@@ -129,10 +129,14 @@ def main_tf_and_pycuda(batch_size=10):
     sim, renderer = get_renderer(batch_size, image_size)
 
     import numpy as np
-    import pycuda.autoinit
+    # import pycuda.autoinit
     import pycuda.driver as drv
+    # from pycuda.driver import Device
     from pycuda.gl import RegisteredBuffer
-    device = pycuda.autoinit.device
+    # device = pycuda.autoinit.device
+    drv.init()
+    device = drv.Device(1)
+    device.make_context()
     buf_size = batch_size * image_size * image_size * 3
     cuda_buf = drv.mem_alloc(buf_size)
 
@@ -171,6 +175,86 @@ def main_tf_and_pycuda(batch_size=10):
     print("Done")
 
 
+def main_tf_and_render_batch_cuda(batch_size=2):
+    import numpy as np
+    import tensorflow as tf
+    from opengl_buffer_ops import read_gl_buffer
+
+    image_width = 225
+    image_height = 255
+    n_batches = 100
+
+    model = load_model_from_xml(BASIC_MODEL_XML)
+    sim = MjSim(model)
+    renderer = MjBatchRenderer(
+        sim, image_width, image_height, batch_size=batch_size, use_cuda=True)
+
+    states = []
+    for i in range(batch_size * n_batches):
+        sim.data.qpos[:3] = 0.1 / (batch_size * n_batches) * i
+        sim.forward()
+        states.append(sim.get_state())
+
+    conf = tf.ConfigProto(
+        intra_op_parallelism_threads=1,
+        inter_op_parallelism_threads=1)
+    with tf.Session(config=conf) as sess:
+        images_tensor = read_gl_buffer(
+            renderer._cuda_rgb_ptr, image_width, image_height,
+            num_images=batch_size, const_handle=True)
+
+        t_set_state, t_forward, t_render, t_copy, t_run_session = [], [], [], [], []
+        images = []
+        for batch_i in range(n_batches):
+            for i in range(batch_size):
+                idx = batch_i * batch_size + i
+
+                _t = perf_counter()
+                sim.set_state(states[idx])
+                t_set_state.append(perf_counter() - _t)
+
+                _t = perf_counter()
+                sim.forward()
+                t_forward.append(perf_counter() - _t)
+
+                _t = perf_counter()
+                renderer.render()
+                t_render.append(perf_counter() - _t)
+
+            _t = perf_counter()
+            renderer.copy_gpu_buffers()
+            t_copy.append(perf_counter() - _t)
+
+            _t = perf_counter()
+            (tf_images,) = sess.run([images_tensor])
+            t_run_session.append(perf_counter() - _t)
+            assert tf_images.shape == (batch_size, image_height, image_width, 3)
+
+            for img in tf_images:
+                images.append(img)
+
+    def print_timing(var, var_name):
+        print("TIME %s: mean=%.0f p50=%.0f p99=%.0f (µs)" % (
+            var_name,
+            np.mean(var) * 1e6,
+            np.percentile(var, 50) * 1e6,
+            np.percentile(var, 99) * 1e6,
+        ))
+
+    print_timing(t_set_state, 'set_state')
+    print_timing(t_forward, 'forward')
+    print_timing(t_render, 'render')
+    print_timing(t_copy, 'copy')
+    print_timing(t_run_session, 'run_session')
+
+    # print("Writing images...")
+    # for j, image in enumerate(images):
+    #     Image.fromarray(image).save('cuda_image_%03d.png' % j)
+
+    from pycuda.driver import Context
+    Context.pop()
+    print("Done")
+
 def main_egl_context(batch_size=10):
     image_size = 255
     sim, renderer = get_renderer(batch_size, image_size)
@@ -183,4 +267,5 @@ def main_egl_context(batch_size=10):
 if __name__ == "__main__":
     # main_tf()
     # main_egl_context()
-    main_tf_and_pycuda()
+    # main_tf_and_pycuda()
+    main_tf_and_render_batch_cuda(batch_size=128)
