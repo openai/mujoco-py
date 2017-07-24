@@ -178,11 +178,11 @@ def main_tf_and_pycuda(batch_size=10):
 def main_tf_and_render_batch_cuda(batch_size=2):
     import numpy as np
     import tensorflow as tf
-    from opengl_buffer_ops import read_gl_buffer
+    from cuda_buffer_ops import read_cuda_buffer_uint8
 
     image_width = 225
     image_height = 255
-    n_batches = 100
+    n_batches = 3
 
     model = load_model_from_xml(BASIC_MODEL_XML)
     sim = MjSim(model)
@@ -199,9 +199,9 @@ def main_tf_and_render_batch_cuda(batch_size=2):
         intra_op_parallelism_threads=1,
         inter_op_parallelism_threads=1)
     with tf.Session(config=conf) as sess:
-        images_tensor = read_gl_buffer(
+        images_tensor = read_cuda_buffer_uint8(
             renderer._cuda_rgb_ptr, image_width, image_height,
-            num_images=batch_size, const_handle=True)
+            num_images=batch_size)
 
         t_set_state, t_forward, t_render, t_copy, t_run_session = [], [], [], [], []
         images = []
@@ -247,9 +247,9 @@ def main_tf_and_render_batch_cuda(batch_size=2):
     print_timing(t_copy, 'copy')
     print_timing(t_run_session, 'run_session')
 
-    # print("Writing images...")
-    # for j, image in enumerate(images):
-    #     Image.fromarray(image).save('cuda_image_%03d.png' % j)
+    print("Writing images...")
+    for j, image in enumerate(images):
+        Image.fromarray(image).save('cuda_image_%03d.png' % j)
 
     from pycuda.driver import Context
     Context.pop()
@@ -268,4 +268,4 @@ if __name__ == "__main__":
     # main_tf()
     # main_egl_context()
     # main_tf_and_pycuda()
-    main_tf_and_render_batch_cuda(batch_size=128)
+    main_tf_and_render_batch_cuda(batch_size=2)

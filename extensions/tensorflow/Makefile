@@ -1,12 +1,11 @@
 .PHONY: build
 
 TENSORFLOW_PATH ?= /tensorflow
-LIBRARY_NAME = opengl_buffer_ops
+LIBRARY_NAME = cuda_buffer_ops
 
 
 build:
 	cp *.cc $(TENSORFLOW_PATH)/tensorflow/core/user_ops
-	cp *.h $(TENSORFLOW_PATH)/tensorflow/core/user_ops
 	cp tf_custom_op_lib_lcuda.bzl $(TENSORFLOW_PATH)/tensorflow/core/user_ops
 	cp BUILD $(TENSORFLOW_PATH)/tensorflow/core/user_ops
 	rm -f $(TENSORFLOW_PATH)/bazel-bin/tensorflow/core/user_ops/$(LIBRARY_NAME).so
