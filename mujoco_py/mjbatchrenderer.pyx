@@ -86,7 +86,6 @@ class MjBatchRenderer(object):
             self._cuda_rgb_pbo.unregister()
 
             # Clean up context
-            print("XXX Clean up context")
             from pycuda.driver import Context
             Context.pop()
             self._cuda_context.detach()
