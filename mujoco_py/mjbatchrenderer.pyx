@@ -123,6 +123,7 @@ class MjBatchRenderer(object):
         return rgb_arr, depth_arr
 
     def copy_gpu_buffers(self):
+        syncOpenGL()  # Need to ensure rendering and PBO ops have finished
         drv.memcpy_dtod(self._cuda_rgb_buffer, self._cuda_rgb_ptr, self._cuda_rgb_buf_size)
         if self._depth:
             drv.memcpy_dtod(self._cuda_depth_buffer, self._cuda_depth_ptr, self._cuda_depth_buf_size)
@@ -142,8 +143,9 @@ class MjBatchRenderer(object):
             self._cuda_context.push()
             self._cuda_rgb_mapping.unmap()
             self._cuda_rgb_pbo.unregister()
-            self._cuda_depth_mapping.unmap()
-            self._cuda_depth_pbo.unregister()
+            if self._depth:
+                self._cuda_depth_mapping.unmap()
+                self._cuda_depth_pbo.unregister()
 
             # Clean up context
             from pycuda.driver import Context

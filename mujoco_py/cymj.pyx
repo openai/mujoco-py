@@ -41,6 +41,8 @@ cdef extern from "gl/glshim.h":
                       unsigned int pbo_rgb, unsigned int pbo_depth,
                       int width, int height, int batchSize)
 
+    cdef void syncOpenGL()
+
 
 
 # TODO: make this function or class so these comments turn into doc strings:

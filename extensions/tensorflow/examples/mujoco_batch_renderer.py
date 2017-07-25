@@ -17,7 +17,7 @@ from mujoco_py import load_model_from_xml, MjSim, MjBatchRenderer
 from PIL import Image
 from pycuda.driver import Context
 
-from cuda_buffer_ops import read_cuda_buffer_uint8
+from cuda_buffer_ops import read_cuda_buffer_uint8, read_cuda_buffer_float
 
 BASIC_MODEL_XML = """
 <mujoco>
@@ -36,68 +36,31 @@ BASIC_MODEL_XML = """
 </mujoco>
 """
 
-
-def main(save_images):
-    batch_size = 100
-    n_batches = 10
-
-    image_width = 255
-    image_height = 255
-
-    print("Setting up MuJoCo model")
-    model = load_model_from_xml(BASIC_MODEL_XML)
-    sim = MjSim(model)
-
-    print("Creating MjBatchRenderer")
-    renderer = MjBatchRenderer(
-        sim, image_width, image_height, batch_size=batch_size,
-        use_cuda=True, depth=True)
-
-    print("Collecting states to set later")
-    states = []
-    for i in range(batch_size * n_batches):
-        sim.data.qpos[:3] = 0.1 / (batch_size * n_batches) * i
-        sim.forward()
-        states.append(sim.get_state())
-
-    conf = tf.ConfigProto(
-        intra_op_parallelism_threads=1,
-        inter_op_parallelism_threads=1)
-    with tf.Session(config=conf) as sess:
-        images_tensor = read_cuda_buffer_uint8(
-            renderer.cuda_rgb_buffer_pointer, image_width, image_height,
-            num_images=batch_size)
-
-        print("Running benchmark")
-        t_set_state, t_forward, t_render, t_copy, t_run_session = [], [], [], [], []
-        images = []
-        for batch_i in range(n_batches):
-            for i in range(batch_size):
-                idx = batch_i * batch_size + i
-
-                _t = perf_counter()
-                sim.set_state(states[idx])
-                t_set_state.append(perf_counter() - _t)
-
-                _t = perf_counter()
-                sim.forward()
-                t_forward.append(perf_counter() - _t)
-
-                _t = perf_counter()
-                renderer.render()
-                t_render.append(perf_counter() - _t)
+def iter_rendering(sim, renderer, n_batches, batch_size, states):
+    t_set_state, t_forward, t_render, t_copy, t_read = [], [], [], [], []
+    for batch_i in range(n_batches):
+        for i in range(batch_size):
+            idx = batch_i * batch_size + i
 
             _t = perf_counter()
-            renderer.copy_gpu_buffers()
-            t_copy.append(perf_counter() - _t)
+            sim.set_state(states[idx])
+            t_set_state.append(perf_counter() - _t)
 
             _t = perf_counter()
-            (tf_images,) = sess.run([images_tensor])
-            t_run_session.append(perf_counter() - _t)
-            assert tf_images.shape == (batch_size, image_height, image_width, 3)
+            sim.forward()
+            t_forward.append(perf_counter() - _t)
 
-            for img in tf_images:
-                images.append(img)
+            _t = perf_counter()
+            renderer.render()
+            t_render.append(perf_counter() - _t)
+
+        _t = perf_counter()
+        renderer.copy_gpu_buffers()
+        t_copy.append(perf_counter() - _t)
+
+        _t = perf_counter()
+        yield idx
+        t_read.append(perf_counter() - _t)
 
     def print_timing(var, var_name):
         print("- %s: mean=%.0f p50=%.0f p99=%.0f (µs)" % (
@@ -112,12 +75,67 @@ def main(save_images):
     print_timing(t_forward, 'forward')
     print_timing(t_render, 'render')
     print_timing(t_copy, 'copy')
-    print_timing(t_run_session, 'run_session')
+    print_timing(t_read, 'read')
+
+def main(save_images, depth):
+    batch_size = 8
+    n_batches = 16
+
+    image_width = 255
+    image_height = 255
+
+    print("Setting up MuJoCo model")
+    model = load_model_from_xml(BASIC_MODEL_XML)
+    sim = MjSim(model)
+
+    print("Creating MjBatchRenderer")
+    renderer = MjBatchRenderer(
+        sim, image_width, image_height, batch_size=batch_size,
+        use_cuda=True, depth=depth)
+
+    print("Collecting states to set later")
+    states = []
+    for i in range(batch_size * n_batches):
+        sim.data.qpos[:3] = 1.0 / (batch_size * n_batches) * i
+        sim.forward()
+        states.append(sim.get_state())
+
+    conf = tf.ConfigProto(
+        intra_op_parallelism_threads=1,
+        inter_op_parallelism_threads=1)
+    with tf.Session(config=conf) as sess:
+        ops = [
+            read_cuda_buffer_uint8(
+            renderer.cuda_rgb_buffer_pointer, image_width, image_height,
+            num_images=batch_size)]
+        if depth:
+            ops.append(read_cuda_buffer_float(
+                renderer.cuda_depth_buffer_pointer, image_width, image_height,
+                num_images=batch_size))
+
+        print("Running benchmark")
+        rgb_images, depth_images = [], []
+        for _ in iter_rendering(sim, renderer, n_batches, batch_size, states):
+            res = sess.run(ops)
+            if depth:
+                tf_rgb, tf_depth = res
+                assert tf_depth.shape == (batch_size, image_height, image_width)
+            else:
+                tf_rgb, tf_depth = res[0], [None] * batch_size
+            assert tf_rgb.shape == (batch_size, image_height, image_width, 3)
+
+            for rgb_img, depth_img in zip(tf_rgb, tf_depth):
+                rgb_images.append(rgb_img)
+                depth_images.append(depth_img)
 
     if save_images:
         print("Writing images...")
-        for j, image in enumerate(images):
-            Image.fromarray(image).save('cuda_image_%04d.png' % j)
+        for j, (rgb_img, depth_img) in enumerate(zip(rgb_images, depth_images)):
+            Image.fromarray(rgb_img).save('cuda_image_rgb_%04d.png' % j)
+
+            if depth:
+                d_img = np.asarray(depth_img * 255, dtype=np.uint8)
+                Image.fromarray(d_img).save('cuda_image_depth_%04d.png' % j)
 
     Context.pop()
     print("Done")
@@ -125,8 +143,13 @@ def main(save_images):
 
 if __name__ == "__main__":
     if len(sys.argv) > 1:
-        save_images = bool(sys.argv[1])
+        save_images = bool(int(sys.argv[1]))
     else:
         save_images = False
 
-    main(save_images)
+    if len(sys.argv) > 2:
+        depth = bool(int(sys.argv[2]))
+    else:
+        depth = False
+
+    main(save_images, depth)

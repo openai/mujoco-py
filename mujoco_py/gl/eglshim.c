@@ -255,3 +255,7 @@ void copyFBOToPBO(mjrContext* con,
     }
 }
 
+void syncOpenGL() {
+    // Use this wrapper so we don't need a PyOpenGL dependency
+    glFinish();
+}
