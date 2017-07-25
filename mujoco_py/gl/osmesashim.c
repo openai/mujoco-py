@@ -33,12 +33,7 @@ int initOpenGL(int device_id) {
 }
 
 int makeOpenGLContextCurrent(int device_id) {
-    if (is_initialized) {
-        if( !OSMesaMakeCurrent(ctx, buffer, GL_UNSIGNED_BYTE, BUFFER_WIDTH, BUFFER_HEIGHT) ) {
-            printf("OSMesa make current failed\n");
-            return -1;
-        }
-    }
+    // Don't need to make context current here, causes issues with large tests
     return 1;
 }
 
