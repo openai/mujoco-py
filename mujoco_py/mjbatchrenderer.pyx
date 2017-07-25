@@ -3,7 +3,7 @@ try:
     import pycuda.driver as drv
 except ImportError:
     drv = None
-
+from time import perf_counter
 
 class MjBatchRenderer(object):
 
@@ -62,6 +62,7 @@ class MjBatchRenderer(object):
                 raise ValueError("batch_offset out of range")
             self._current_batch_offset = batch_offset
 
+        t = perf_counter()
         self.render_context.render(self._width, self._height, camera_id=camera_id)
 
         cdef mjrRect viewport
@@ -97,7 +98,7 @@ class MjBatchRenderer(object):
             depth_arr = drv.from_device(
                 self._cuda_depth_buffer,
                 shape=(self._batch_size, self._height, self._width),
-                dtype=np.float32)
+                dtype=np.uint16)
         else:
             depth_arr = None
 
@@ -106,8 +107,8 @@ class MjBatchRenderer(object):
     def _read_nocuda(self):
         rgb_arr = np.zeros(3 * self._width * self._height * self._batch_size, dtype=np.uint8)
         cdef unsigned char[::view.contiguous] rgb_view = rgb_arr
-        depth_arr = np.zeros(self._width * self._height * self._batch_size, dtype=np.float32)
-        cdef float[::view.contiguous] depth_view = depth_arr
+        depth_arr = np.zeros(self._width * self._height * self._batch_size, dtype=np.uint16)
+        cdef unsigned short[::view.contiguous] depth_view = depth_arr
 
         if self._depth:
             readPBO(&rgb_view[0], &depth_view[0], self.pbo_rgb, self.pbo_depth,
@@ -148,8 +149,7 @@ class MjBatchRenderer(object):
                 self._cuda_depth_pbo.unregister()
 
             # Clean up context
-            from pycuda.driver import Context
-            Context.pop()
+            drv.Context.pop()
             self._cuda_context.detach()
 
         if self.pbo_depth:

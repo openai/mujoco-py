@@ -17,7 +17,7 @@ from mujoco_py import load_model_from_xml, MjSim, MjBatchRenderer
 from PIL import Image
 from pycuda.driver import Context
 
-from cuda_buffer_ops import read_cuda_buffer_uint8, read_cuda_buffer_float
+from cuda_buffer_ops import read_cuda_buffer_uint8_op, read_cuda_buffer_uint16_op
 
 BASIC_MODEL_XML = """
 <mujoco>
@@ -78,8 +78,8 @@ def iter_rendering(sim, renderer, n_batches, batch_size, states):
     print_timing(t_read, 'read')
 
 def main(save_images, depth):
-    batch_size = 8
-    n_batches = 16
+    batch_size = 16
+    n_batches = 8
 
     image_width = 255
     image_height = 255
@@ -105,12 +105,14 @@ def main(save_images, depth):
         inter_op_parallelism_threads=1)
     with tf.Session(config=conf) as sess:
         ops = [
-            read_cuda_buffer_uint8(
-            renderer.cuda_rgb_buffer_pointer, image_width, image_height,
-            num_images=batch_size)]
+            read_cuda_buffer_uint8_op(
+                buffer_pointer=renderer.cuda_rgb_buffer_pointer,
+                width=image_width, height=image_height, num_channels=3,
+                num_images=batch_size)]
         if depth:
-            ops.append(read_cuda_buffer_float(
-                renderer.cuda_depth_buffer_pointer, image_width, image_height,
+            ops.append(read_cuda_buffer_uint16_op(
+                buffer_pointer=renderer.cuda_depth_buffer_pointer,
+                width=image_width, height=image_height, num_channels=1,
                 num_images=batch_size))
 
         print("Running benchmark")
@@ -119,7 +121,8 @@ def main(save_images, depth):
             res = sess.run(ops)
             if depth:
                 tf_rgb, tf_depth = res
-                assert tf_depth.shape == (batch_size, image_height, image_width)
+                assert tf_depth.shape == (batch_size, image_height, image_width, 1)
+                tf_depth = tf_depth.squeeze()
             else:
                 tf_rgb, tf_depth = res[0], [None] * batch_size
             assert tf_rgb.shape == (batch_size, image_height, image_width, 3)
@@ -134,7 +137,8 @@ def main(save_images, depth):
             Image.fromarray(rgb_img).save('cuda_image_rgb_%04d.png' % j)
 
             if depth:
-                d_img = np.asarray(depth_img * 255, dtype=np.uint8)
+                d_img = np.asarray(depth_img.astype(float) / (2**16 - 1) * 255,
+                                   dtype=np.uint8)
                 Image.fromarray(d_img).save('cuda_image_depth_%04d.png' % j)
 
     Context.pop()

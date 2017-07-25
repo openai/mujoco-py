@@ -34,7 +34,7 @@ int initOpenGL(int device_id)
         EGL_GREEN_SIZE,         8,
         EGL_BLUE_SIZE,          8,
         EGL_ALPHA_SIZE,         8,
-        EGL_DEPTH_SIZE,         24,
+        EGL_DEPTH_SIZE,         16,
         EGL_STENCIL_SIZE,       8,
         EGL_COLOR_BUFFER_TYPE,  EGL_RGB_BUFFER,
         EGL_SURFACE_TYPE,       EGL_PBUFFER_BIT,
@@ -167,19 +167,19 @@ void closeOpenGL()
     }
 }
 
-unsigned int createPBO(int width, int height, int batchSize, int use_float)
+unsigned int createPBO(int width, int height, int batchSize, int use_short)
 {
     GLuint pixelBuffer = 0;
     glGenBuffers(1, &pixelBuffer);
     glBindBuffer(GL_PIXEL_PACK_BUFFER_ARB, pixelBuffer);
 
     GLsizeiptr buffer_size;
-    if (use_float) {
-        buffer_size = batchSize * width * height * sizeof(GLfloat);
+    if (use_short) {
+        buffer_size = batchSize * width * height * sizeof(short);
     } else {
         buffer_size = batchSize * width * height * 3;
     }
-    glBufferData(GL_PIXEL_PACK_BUFFER_ARB, buffer_size, 0, GL_STREAM_READ);
+    glBufferData(GL_PIXEL_PACK_BUFFER_ARB, buffer_size, 0, GL_DYNAMIC_READ);
     glBindBuffer(GL_PIXEL_PACK_BUFFER_ARB, 0);
 
     return (unsigned int) pixelBuffer;
@@ -191,7 +191,7 @@ void freePBO(unsigned int pixelBuffer)
     glDeleteBuffers(1, &pixelBuffer);
 }
 
-void readPBO(unsigned char *buffer_rgb, float *buffer_depth,
+void readPBO(unsigned char *buffer_rgb, unsigned short *buffer_depth,
              unsigned int pbo_rgb, unsigned int pbo_depth,
              int width, int height, int batchSize)
 {
@@ -206,8 +206,8 @@ void readPBO(unsigned char *buffer_rgb, float *buffer_depth,
     if (pbo_depth > 0) {
         glBindBuffer(GL_PIXEL_PACK_BUFFER_ARB, pbo_depth);
 
-        GLfloat* src_depth = (GLfloat*) glMapBufferARB(GL_PIXEL_PACK_BUFFER_ARB, GL_READ_ONLY_ARB);
-        memcpy(buffer_depth, src_depth, batchSize * width * height * sizeof(GLfloat));
+        GLushort* src_depth = (GLushort*) glMapBufferARB(GL_PIXEL_PACK_BUFFER_ARB, GL_READ_ONLY_ARB);
+        memcpy(buffer_depth, src_depth, batchSize * width * height * sizeof(GLushort));
 
         glUnmapBuffer(GL_PIXEL_PACK_BUFFER_ARB);
     }
@@ -249,8 +249,8 @@ void copyFBOToPBO(mjrContext* con,
     if (pbo_depth) {
         glBindBuffer(GL_PIXEL_PACK_BUFFER_ARB, pbo_depth);
         glReadPixels(viewport.left, viewport.bottom, viewport.width, viewport.height,
-                     GL_DEPTH_COMPONENT, GL_FLOAT,
-                     bufferOffset * viewport.width * viewport.height * sizeof(GLfloat));
+                     GL_DEPTH_COMPONENT, GL_UNSIGNED_SHORT,
+                     bufferOffset * viewport.width * viewport.height * sizeof(short));
         glBindBuffer(GL_PIXEL_PACK_BUFFER_ARB, 0);
     }
 }
