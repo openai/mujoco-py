@@ -78,20 +78,45 @@ class MjBatchRenderer(object):
         self._current_batch_offset = (self._current_batch_offset + 1) % self._batch_size
 
     def read(self):
-        rgb_arr = np.zeros(3 * self._width * self._height * self._batch_size, dtype=np.uint8)
+        if self._use_cuda:
+            return self._read_cuda()
+        else:
+            return self._read_nocuda()
 
-        cdef unsigned char[::view.contiguous] rgb_view = rgb_arr
-        cdef float[::view.contiguous] depth_view
+    def _read_cuda(self):
+        # Read from the CUDA buffer instead of the PBO directly, otherwise
+        # we'd have to unmap the buffer and remap it etc.
+        self.copy_gpu_buffers()
+
+        rgb_arr = drv.from_device(
+            self._cuda_rgb_buffer,
+            shape=(self._batch_size, self._height, self._width, 3),
+            dtype=np.uint8)
 
         if self._depth:
-            depth_arr = np.zeros(self._width * self._height * self._batch_size, dtype=np.float)
-            depth_view = depth_arr
+            depth_arr = drv.from_device(
+                self._cuda_depth_buffer,
+                shape=(self._batch_size, self._height, self._width),
+                dtype=np.float32)
+        else:
+            depth_arr = None
+
+        return rgb_arr, depth_arr
+
+    def _read_nocuda(self):
+        rgb_arr = np.zeros(3 * self._width * self._height * self._batch_size, dtype=np.uint8)
+        cdef unsigned char[::view.contiguous] rgb_view = rgb_arr
+        depth_arr = np.zeros(self._width * self._height * self._batch_size, dtype=np.float32)
+        cdef float[::view.contiguous] depth_view = depth_arr
+
+        if self._depth:
             readPBO(&rgb_view[0], &depth_view[0], self.pbo_rgb, self.pbo_depth,
                     self._width, self._height, self._batch_size)
             depth_arr = depth_arr.reshape(self._batch_size, self._height, self._width)
         else:
-            readPBO(&rgb_view[0], NULL, self.pbo_rgb, self.pbo_depth,
+            readPBO(&rgb_view[0], NULL, self.pbo_rgb, 0,
                     self._width, self._height, self._batch_size)
+            # Fine to throw aray depth_arr above since malloc/free is cheap
             depth_arr = None
 
         rgb_arr = rgb_arr.reshape(self._batch_size, self._height, self._width, 3)

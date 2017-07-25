@@ -238,8 +238,8 @@ void copyFBOToPBO(mjrContext* con,
         glBindFramebuffer(GL_READ_FRAMEBUFFER, con->offFBO_r);
     }
 
+    glReadBuffer(GL_COLOR_ATTACHMENT0);
     if (pbo_rgb) {
-        glReadBuffer(GL_COLOR_ATTACHMENT0);
         glBindBuffer(GL_PIXEL_PACK_BUFFER_ARB, pbo_rgb);
         glReadPixels(viewport.left, viewport.bottom, viewport.width, viewport.height,
                      GL_RGB, GL_UNSIGNED_BYTE,
@@ -250,7 +250,7 @@ void copyFBOToPBO(mjrContext* con,
         glBindBuffer(GL_PIXEL_PACK_BUFFER_ARB, pbo_depth);
         glReadPixels(viewport.left, viewport.bottom, viewport.width, viewport.height,
                      GL_DEPTH_COMPONENT, GL_FLOAT,
-                     bufferOffset * viewport.width * viewport.height * 3);
+                     bufferOffset * viewport.width * viewport.height * sizeof(GLfloat));
         glBindBuffer(GL_PIXEL_PACK_BUFFER_ARB, 0);
     }
 }
