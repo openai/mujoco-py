@@ -8,6 +8,7 @@ RUN apt-get update -q \
     git \
     libgl1-mesa-dev \
     libgl1-mesa-glx \
+    libglew-dev \
     libosmesa6-dev \
     python3-pip \
     python3-numpy \
