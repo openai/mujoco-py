@@ -18,6 +18,4 @@ void readPBO(unsigned char *buffer_rgb, unsigned short *buffer_depth,
              unsigned int pbo_rgb, unsigned int pbo_depth,
              int width, int height, int batchSize);
 
-void syncOpenGL();
-
 #endif

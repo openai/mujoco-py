@@ -254,8 +254,3 @@ void copyFBOToPBO(mjrContext* con,
         glBindBuffer(GL_PIXEL_PACK_BUFFER_ARB, 0);
     }
 }
-
-void syncOpenGL() {
-    // Use this wrapper so we don't need a PyOpenGL dependency
-    glFinish();
-}

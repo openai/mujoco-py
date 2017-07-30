@@ -5,6 +5,23 @@ except ImportError:
     drv = None
 from time import perf_counter
 
+
+class MjBatchRendererException(Exception):
+    pass
+
+
+class CudaNotEnabledError(MjBatchRendererException):
+    pass
+
+
+class CudaBufferNotMappedError(MjBatchRendererException):
+    pass
+
+
+class CudaBufferMappedError(MjBatchRendererException):
+    pass
+
+
 class MjBatchRenderer(object):
 
     def __init__(self, sim, width, height, batch_size=1, device_id=0,
@@ -26,6 +43,8 @@ class MjBatchRenderer(object):
         self._current_batch_offset = 0
 
         self._use_cuda = use_cuda
+        self._cuda_buffers_are_mapped = False
+        self._cuda_rgb_ptr, self._cuda_depth_ptr = None, None
         if use_cuda:
             self._init_cuda()
 
@@ -42,21 +61,66 @@ class MjBatchRenderer(object):
         self._cuda_context.push()
 
         self._cuda_rgb_pbo = RegisteredBuffer(self.pbo_rgb)
-        self._cuda_rgb_mapping = self._cuda_rgb_pbo.map()
-        self._cuda_rgb_ptr, self._cuda_rgb_buf_size = (
-            self._cuda_rgb_mapping.device_ptr_and_size())
-
-        self._cuda_rgb_buffer = drv.mem_alloc(self._cuda_rgb_buf_size)
-
         if self._depth:
             self._cuda_depth_pbo = RegisteredBuffer(self.pbo_depth)
-            self._cuda_depth_mapping = self._cuda_depth_pbo.map()
-            self._cuda_depth_ptr, self._cuda_depth_buf_size = (
-                self._cuda_depth_mapping.device_ptr_and_size())
 
-            self._cuda_depth_buffer = drv.mem_alloc(self._cuda_depth_buf_size)
+    def map(self):
+        if not self._use_cuda:
+            raise CudaNotEnabledError()
+        elif self._cuda_buffers_are_mapped:
+            return  # just make it a no-op
+
+        self._cuda_context.push()
+        self._cuda_rgb_mapping = self._cuda_rgb_pbo.map()
+        ptr, self._cuda_rgb_buf_size = (
+            self._cuda_rgb_mapping.device_ptr_and_size())
+        assert ptr is not None and self._cuda_rgb_buf_size > 0
+        if self._cuda_rgb_ptr is None:
+            self._cuda_rgb_ptr = ptr
+        # There doesn't seem to be a guarantee from the API that the
+        # pointer will be the same between mappings, but empirically
+        # this has been true. If this isn't true, we need to modify
+        # the interface to MjBatchRenderer to make this clearer to user.
+        # So, hopefully we won't hit this assert.
+        assert self._cuda_rgb_ptr == ptr, (
+            "Mapped CUDA rgb buffer pointer %d doesn't match old pointer %d" %
+            (ptr, self._cuda_rgb_ptr))
+
+        if self._depth:
+            self._cuda_depth_mapping = self._cuda_depth_pbo.map()
+            ptr, self._cuda_depth_buf_size = (
+                self._cuda_depth_mapping.device_ptr_and_size())
+            assert ptr is not None and self._cuda_depth_buf_size > 0
+            if self._cuda_depth_ptr is None:
+                self._cuda_depth_ptr = ptr
+            assert self._cuda_depth_ptr == ptr, (
+                "Mapped CUDA depth buffer pointer %d doesn't match old pointer %d" %
+                (ptr, self._cuda_depth_ptr))
+
+        self._cuda_buffers_are_mapped = True
+
+    def unmap(self):
+        if not self._use_cuda:
+            raise CudaNotEnabledError()
+        elif not self._cuda_buffers_are_mapped:
+            return  # just make it a no-op
+
+        self._cuda_context.push()
+        self._cuda_rgb_mapping.unmap()
+        self._cuda_rgb_mapping = None
+        self._cuda_rgb_ptr = None
+        if self._depth:
+            self._cuda_depth_mapping.unmap()
+            self._cuda_depth_mapping = None
+            self._cuda_depth_ptr = None
+
+        self._cuda_buffers_are_mapped = False
 
     def render(self, camera_id=None, batch_offset=None):
+        if self._use_cuda and self._cuda_buffers_are_mapped:
+            raise CudaBufferMappedError(
+                "CUDA buffers must be unmapped before calling render.")
+
         if batch_offset is not None:
             if batch_offset < 0 or batch_offset >= self._batch_size:
                 raise ValueError("batch_offset out of range")
@@ -85,18 +149,18 @@ class MjBatchRenderer(object):
             return self._read_nocuda()
 
     def _read_cuda(self):
-        # Read from the CUDA buffer instead of the PBO directly, otherwise
-        # we'd have to unmap the buffer and remap it etc.
-        self.copy_gpu_buffers()
+        if not self._cuda_buffers_are_mapped:
+            raise CudaBufferNotMappedError(
+                "CUDA buffers must be mapped before reading")
 
         rgb_arr = drv.from_device(
-            self._cuda_rgb_buffer,
+            self._cuda_rgb_ptr,
             shape=(self._batch_size, self._height, self._width, 3),
             dtype=np.uint8)
 
         if self._depth:
             depth_arr = drv.from_device(
-                self._cuda_depth_buffer,
+                self._cuda_depth_ptr,
                 shape=(self._batch_size, self._height, self._width),
                 dtype=np.uint16)
         else:
@@ -123,18 +187,20 @@ class MjBatchRenderer(object):
         rgb_arr = rgb_arr.reshape(self._batch_size, self._height, self._width, 3)
         return rgb_arr, depth_arr
 
-    def copy_gpu_buffers(self):
-        syncOpenGL()  # Need to ensure rendering and PBO ops have finished
-        drv.memcpy_dtod(self._cuda_rgb_buffer, self._cuda_rgb_ptr, self._cuda_rgb_buf_size)
-        if self._depth:
-            drv.memcpy_dtod(self._cuda_depth_buffer, self._cuda_depth_ptr, self._cuda_depth_buf_size)
-
     @property
     def cuda_rgb_buffer_pointer(self):
+        if not self._use_cuda:
+            raise CudaNotEnabledError()
+        elif not self._cuda_buffers_are_mapped:
+            raise CudaBufferNotMappedError()
         return self._cuda_rgb_ptr
 
     @property
     def cuda_depth_buffer_pointer(self):
+        if not self._use_cuda:
+            raise CudaNotEnabledError()
+        elif not self._cuda_buffers_are_mapped:
+            raise CudaBufferNotMappedError()
         if not self._depth:
             raise RuntimeError("Depth not enabled. Use depth=True on initialization.")
         return self._cuda_depth_ptr
@@ -142,10 +208,9 @@ class MjBatchRenderer(object):
     def __del__(self):
         if self._use_cuda:
             self._cuda_context.push()
-            self._cuda_rgb_mapping.unmap()
+            self.unmap()
             self._cuda_rgb_pbo.unregister()
             if self._depth:
-                self._cuda_depth_mapping.unmap()
                 self._cuda_depth_pbo.unregister()
 
             # Clean up context
