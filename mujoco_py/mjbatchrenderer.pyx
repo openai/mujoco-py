@@ -1,9 +1,7 @@
-from ctypes import c_float, sizeof
 try:
     import pycuda.driver as drv
 except ImportError:
     drv = None
-from time import perf_counter
 
 
 class MjBatchRendererException(Exception):
@@ -24,14 +22,18 @@ class CudaBufferMappedError(MjBatchRendererException):
 
 class MjBatchRenderer(object):
 
-    def __init__(self, sim, width, height, batch_size=1, device_id=0,
+    def __init__(self, width, height, batch_size=1, device_id=0,
                  depth=False, use_cuda=False):
         # Early initialization to prevent failure in __del__
         self._use_cuda = False
         self.pbo_depth, self.pbo_depth = 0, 0
 
-        self.render_context = MjRenderContext(sim, device_id=device_id)
-        self.render_context.update_offscreen_size(width, height)
+        # Make sure OpenGL Context is available before creating PBOs
+        print("BEFORE initOpenGL")
+        initOpenGL(device_id)
+        # makeOpenGLContextCurrent(device_id)
+
+        print("BEFORE createPBO")
         self.pbo_rgb = createPBO(width, height, batch_size, 0)
         self.pbo_depth = createPBO(width, height, batch_size, 1) if depth else 0
 
@@ -45,8 +47,10 @@ class MjBatchRenderer(object):
         self._use_cuda = use_cuda
         self._cuda_buffers_are_mapped = False
         self._cuda_rgb_ptr, self._cuda_depth_ptr = None, None
+        print("BEFORE _init_cuda")
         if use_cuda:
             self._init_cuda()
+        print("AFTER init")
 
     def _init_cuda(self):
         if drv is None:
@@ -116,7 +120,16 @@ class MjBatchRenderer(object):
 
         self._cuda_buffers_are_mapped = False
 
-    def render(self, camera_id=None, batch_offset=None):
+    def prepare_render_context(self, sim):
+        for c in sim.render_contexts:
+            if (c.offscreen and
+                    isinstance(c.opengl_context, OffscreenOpenGLContext) and
+                    c.opengl_context.device_id == self._device_id):
+                return c
+
+        return MjRenderContext(sim, device_id=self._device_id)
+
+    def render(self, sim, camera_id=None, batch_offset=None):
         if self._use_cuda and self._cuda_buffers_are_mapped:
             raise CudaBufferMappedError(
                 "CUDA buffers must be unmapped before calling render.")
@@ -126,8 +139,9 @@ class MjBatchRenderer(object):
                 raise ValueError("batch_offset out of range")
             self._current_batch_offset = batch_offset
 
-        t = perf_counter()
-        self.render_context.render(self._width, self._height, camera_id=camera_id)
+        render_context = self.prepare_render_context(sim)
+        render_context.update_offscreen_size(self._width, self._height)
+        render_context.render(self._width, self._height, camera_id=camera_id)
 
         cdef mjrRect viewport
         viewport.left = 0
@@ -135,7 +149,7 @@ class MjBatchRenderer(object):
         viewport.width = self._width
         viewport.height = self._height
 
-        cdef PyMjrContext con = <PyMjrContext> self.render_context.con
+        cdef PyMjrContext con = <PyMjrContext> render_context.con
 
         copyFBOToPBO(con.ptr, self.pbo_rgb, self.pbo_depth,
                      viewport, self._current_batch_offset)

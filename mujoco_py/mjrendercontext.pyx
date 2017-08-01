@@ -23,7 +23,7 @@ cdef class MjRenderContext(object):
     cdef readonly PyMjvPerturb pert
     cdef readonly PyMjrContext con
 
-    cdef readonly object _opengl_context
+    cdef readonly object opengl_context
     cdef readonly int _visible
     cdef readonly list _markers
     cdef readonly dict _overlay
@@ -89,11 +89,11 @@ cdef class MjRenderContext(object):
 
     def _setup_opengl_context(self, offscreen, device_id):
         if not offscreen or sys.platform == 'darwin':
-            self._opengl_context = GlfwContext(offscreen=offscreen)
+            self.opengl_context = GlfwContext(offscreen=offscreen)
         else:
             if device_id < 0:
                 device_id = int(os.getenv('CUDA_VISIBLE_DEVICES', '0').split(',')[0])
-            self._opengl_context = OffscreenOpenGLContext(device_id)
+            self.opengl_context = OffscreenOpenGLContext(device_id)
 
     def _init_camera(self, sim):
         # Make the free camera look at the scene
@@ -121,7 +121,7 @@ cdef class MjRenderContext(object):
         if width > self._con.offWidth or height > self._con.offHeight:
             new_width = max(width, self._model_ptr.vis.global_.offwidth)
             new_height = max(height, self._model_ptr.vis.global_.offheight)
-            self.render(new_width, new_height)
+            self.update_offscreen_size(new_width, new_height)
 
         if camera_id is not None:
             if camera_id == -1:
@@ -130,7 +130,7 @@ cdef class MjRenderContext(object):
                 self.cam.type = const.CAMERA_FIXED
             self.cam.fixedcamid = camera_id
 
-        self._opengl_context.set_buffer_size(width, height)
+        self.opengl_context.set_buffer_size(width, height)
 
         mjv_updateScene(self._model_ptr, self._data_ptr, &self._vopt,
                         &self._pert, &self._cam, mjCAT_ALL, &self._scn)
@@ -163,7 +163,7 @@ cdef class MjRenderContext(object):
 
     def upload_texture(self, int tex_id):
         """ Uploads given texture to the GPU. """
-        self._opengl_context.make_context_current()
+        self.opengl_context.make_context_current()
         mjr_uploadTexture(self._model_ptr, &self._con, tex_id)
 
     def draw_pixels(self, np.ndarray[np.uint8_t, ndim=3] image, int left, int bottom):
@@ -251,12 +251,12 @@ class MjRenderContextWindow(MjRenderContext):
     def __init__(self, MjSim sim):
         super().__init__(sim, offscreen=False)
 
-        assert isinstance(self._opengl_context, GlfwContext), (
+        assert isinstance(self.opengl_context, GlfwContext), (
             "Only GlfwContext supported for windowed rendering")
 
     @property
     def window(self):
-        return self._opengl_context.window
+        return self.opengl_context.window
 
     def render(self):
         if self.window is None or glfw.window_should_close(self.window):

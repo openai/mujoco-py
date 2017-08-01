@@ -109,6 +109,14 @@ int initOpenGL(int device_id)
         return -8;
     }
 
+    GLenum err = glewInit();
+    if( GLEW_OK != err ) {
+        // MuJoCo does this automatically, but we need it if we want
+        // to create e.g. PBOs before calling MuJoCo rendering functions.
+        fprintf("glewInit error: %s\n", glewGetErrorString(err));
+        return -9;
+    }
+
     is_device_initialized[device_id] = 1;
     eglDisplays[device_id] = eglDpy;
     eglContexts[device_id] = eglCtx;
