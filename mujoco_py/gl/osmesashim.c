@@ -11,6 +11,10 @@ unsigned char buffer[1024 * 1024 * 4];
 
 int is_initialized = 0;
 
+int usingEGL() {
+    return 0;
+}
+
 int initOpenGL(int device_id) {
     if (is_initialized)
         return 1;

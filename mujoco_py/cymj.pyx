@@ -27,6 +27,7 @@ include "mjbatchrenderer.pyx"
 
 cdef extern from "gl/glshim.h":
 
+    cdef int usingEGL()
     cdef int initOpenGL(int device_id)
     cdef void closeOpenGL()
     cdef int makeOpenGLContextCurrent(int device_id)

@@ -17,6 +17,10 @@ int is_device_initialized[MAX_DEVICES] = {0};
 EGLDisplay eglDisplays[MAX_DEVICES];
 EGLContext eglContexts[MAX_DEVICES];
 
+int usingEGL() {
+    return 1;
+}
+
 int initOpenGL(int device_id)
 {
     if (device_id < 0 || device_id > MAX_DEVICES) {

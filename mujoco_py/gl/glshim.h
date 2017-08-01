@@ -4,6 +4,7 @@
 #include "mujoco.h"
 #include "mjrender.h"
 
+int usingEGL();
 int initOpenGL(int device_id);
 void closeOpenGL();
 int makeOpenGLContextCurrent(int device_id);
