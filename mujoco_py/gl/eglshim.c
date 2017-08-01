@@ -218,25 +218,38 @@ void copyFBOToPBO(mjrContext* con,
                   unsigned int pbo_rgb, unsigned int pbo_depth,
                   mjrRect viewport, int bufferOffset)
 {
-    if (con->offSamples == 0) {
-        glBindFramebuffer(GL_READ_FRAMEBUFFER, con->offFBO);
-    } else {
+    GLbitfield mask = (pbo_rgb ? GL_COLOR_BUFFER_BIT : 0) |
+                      (pbo_depth ? GL_DEPTH_BUFFER_BIT : 0);
+
+    if (!mask)
+        return;
+
+    // multisample: blit to resolve buffer and read from there
+    if (con->offSamples)
+    {
+        // make sure blit is supported
+        if( !glBlitFramebuffer )
+            return;
+
+        // prepare for resolve-blit
         glBindFramebuffer(GL_READ_FRAMEBUFFER, con->offFBO);
         glReadBuffer(GL_COLOR_ATTACHMENT0);
         glBindFramebuffer(GL_DRAW_FRAMEBUFFER, con->offFBO_r);
         glDrawBuffer(GL_COLOR_ATTACHMENT0);
 
+        // resolve-blit
         glBlitFramebuffer(viewport.left, viewport.bottom,
-                          viewport.left + viewport.width,
-                          viewport.bottom + viewport.height,
-                          viewport.left,
-                          viewport.bottom,
-                          viewport.left + viewport.width,
-                          viewport.bottom + viewport.height,
-                          GL_COLOR_BUFFER_BIT, GL_NEAREST);
+                          viewport.left + viewport.width, viewport.bottom + viewport.height,
+                          viewport.left, viewport.bottom,
+                          viewport.left + viewport.width, viewport.bottom + viewport.height,
+                          mask, GL_NEAREST);
 
+        // read from resolved
         glBindFramebuffer(GL_READ_FRAMEBUFFER, con->offFBO_r);
     }
+    // no multisample: read from offscreen
+    else
+        glBindFramebuffer(GL_READ_FRAMEBUFFER, con->offFBO);
 
     glReadBuffer(GL_COLOR_ATTACHMENT0);
     if (pbo_rgb) {
@@ -253,4 +266,9 @@ void copyFBOToPBO(mjrContext* con,
                      bufferOffset * viewport.width * viewport.height * sizeof(short));
         glBindBuffer(GL_PIXEL_PACK_BUFFER_ARB, 0);
     }
+
+    // restore currentBuffer
+    glBindFramebuffer(GL_FRAMEBUFFER, con->offFBO);
+    glReadBuffer(GL_COLOR_ATTACHMENT0);
+    glDrawBuffer(GL_COLOR_ATTACHMENT0);
 }
