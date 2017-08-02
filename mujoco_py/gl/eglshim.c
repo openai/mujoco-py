@@ -179,6 +179,8 @@ void closeOpenGL()
     }
 }
 
+// Create Pixel Buffer Objects (PBO) for rgb and depth image, which can be
+// mapped to the CPU directly as a big batch.
 unsigned int createPBO(int width, int height, int batchSize, int use_short)
 {
     GLuint pixelBuffer = 0;
@@ -226,6 +228,8 @@ void readPBO(unsigned char *buffer_rgb, unsigned short *buffer_depth,
     glBindBuffer(GL_PIXEL_PACK_BUFFER_ARB, 0);
 }
 
+// Copy the render data from the Framebuffer Object (FBO) that Mujoco
+// uses for offscreen rendering into the PBOs.
 void copyFBOToPBO(mjrContext* con,
                   unsigned int pbo_rgb, unsigned int pbo_depth,
                   mjrRect viewport, int bufferOffset)
