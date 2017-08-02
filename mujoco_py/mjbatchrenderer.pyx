@@ -100,6 +100,7 @@ class MjBatchRenderer(object):
             self._cuda_depth_pbo = RegisteredBuffer(self.pbo_depth)
 
     def map(self):
+        """ Map OpenGL buffer to CUDA for reading. """
         if not self._use_cuda:
             raise CudaNotEnabledError()
         elif self._cuda_buffers_are_mapped:
@@ -136,6 +137,7 @@ class MjBatchRenderer(object):
         self._cuda_buffers_are_mapped = True
 
     def unmap(self):
+        """ Unmap OpenGL buffer from CUDA so that it can be rendered into. """
         if not self._use_cuda:
             raise CudaNotEnabledError()
         elif not self._cuda_buffers_are_mapped:
@@ -153,6 +155,10 @@ class MjBatchRenderer(object):
         self._cuda_buffers_are_mapped = False
 
     def prepare_render_context(self, sim):
+        """
+        Set up the rendering context for an MjSim. Also happens automatically
+        on `.render()`.
+        """
         for c in sim.render_contexts:
             if (c.offscreen and
                     isinstance(c.opengl_context, OffscreenOpenGLContext) and
