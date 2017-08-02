@@ -120,8 +120,12 @@ class MjRenderPool:
             shared_depths.get_obj(), dtype=ctypes.c_float)
 
         # avoid a circular import
-        from mujoco_py import MjSim, load_model_from_mjb
+        from mujoco_py import load_model_from_mjb, MjRenderContext, MjSim
         s.sim = MjSim(load_model_from_mjb(mjb_bytes))
+        # attach a render context to the sim (needs to happen before
+        # modder is called, since it might need to upload textures
+        # to the GPU).
+        MjRenderContext(s.sim, device_id=s.device_id)
 
         if modder is not None:
             s.modder = modder(s.sim, random_state=proc_worker_id)
