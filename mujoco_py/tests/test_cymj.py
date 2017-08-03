@@ -10,9 +10,7 @@ from mujoco_py import (MjSim, MjSimPool, load_model_from_xml,
 from mujoco_py import const, cymj
 from mujoco_py.tests.utils import compare_imgs, requires_rendering
 import scipy.misc
-import os
-import shutil
-import glob
+from threading import Thread
 from multiprocessing import get_context
 import sys
 
@@ -22,6 +20,7 @@ BASIC_MODEL_XML = """
     <worldbody>
         <light name="light1" diffuse=".5 .5 .5" pos="0 0 3" dir="0 0 -1"/>
         <camera name="camera1" pos="3 0 0" zaxis="1 0 0" />
+        <camera name="camera2" pos="4 0 0" zaxis="1 0 0" />
         <geom name="geom1" pos="0.5 0.4 0.3" type="plane" size="1 1 0.1" rgba=".9 0 0 1"/>
         <body pos="0 0 1" name="body1">
             <joint name="joint1" type="free"/>
@@ -649,6 +648,33 @@ def test_sensors():
     sim.model.sensor_names
     sim.data.get_sensor("touchsensor")
 
+
+@requires_rendering
+def test_lock():
+    # Tests whetever multithreaded rendering is safe.
+    model = load_model_from_xml(BASIC_MODEL_XML)
+    sim = MjSim(model)
+    sim.render(100, 100)
+    def func():
+        nonlocal sim
+        sim.data.qpos[:] = 0.0
+        sim.forward()
+        img1 = sim.render(width=40, height=40, camera_name="camera1")
+        assert np.sum(img1[:]) == 23255
+
+        img2 = sim.render(width=40, height=40, camera_name="camera2")
+        assert np.sum(img2[:]) == 12007
+
+    threads = []
+    for _ in range(100):
+        thread = Thread(target=func)
+        threads.append(thread)
+
+    for thread in threads:
+        thread.start()
+
+    for thread in threads:
+        thread.join()
 
 @requires_rendering
 def test_high_res():
