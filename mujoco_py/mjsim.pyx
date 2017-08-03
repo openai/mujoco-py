@@ -2,7 +2,7 @@ from xml.dom import minidom
 from mujoco_py.utils import remove_empty_lines
 from threading import Lock
 
-render_lock = Lock()
+_MjSim_render_lock = Lock()
 
 
 cdef class MjSim(object):
@@ -125,7 +125,7 @@ cdef class MjSim(object):
             camera_id = self.model.camera_name2id(camera_name)
 
         if mode == 'offscreen':
-            with render_lock:
+            with _MjSim_render_lock:
                 if self._render_context_offscreen is None:
                     render_context = MjRenderContextOffscreen(
                         self, device_id=device_id)

@@ -10,7 +10,7 @@ from mujoco_py import (MjSim, MjSimPool, load_model_from_xml,
 from mujoco_py import const, cymj
 from mujoco_py.tests.utils import compare_imgs, requires_rendering
 import scipy.misc
-from threading import Thread
+from threading import Thread, Event
 from multiprocessing import get_context
 import sys
 
@@ -650,29 +650,30 @@ def test_sensors():
 
 
 @requires_rendering
-def test_lock():
-    # Tests whetever multithreaded rendering is safe.
-    model = load_model_from_xml(BASIC_MODEL_XML)
-    sim = MjSim(model)
-    sim.render(100, 100)
-    def func():
-        nonlocal sim
+def test_concurrent_rendering():
+    '''Best-effort testing that concurrent multi-threaded rendering works. 
+    The test has no guarantees around being deterministic, but if it fails 
+    you know something is wrong with concurrent rendering. If it passes, 
+    things are probably working.'''
+    def func(sim, event):
+        event.wait()
         sim.data.qpos[:] = 0.0
         sim.forward()
         img1 = sim.render(width=40, height=40, camera_name="camera1")
         assert np.sum(img1[:]) == 23255
-
         img2 = sim.render(width=40, height=40, camera_name="camera2")
         assert np.sum(img2[:]) == 12007
 
+    model = load_model_from_xml(BASIC_MODEL_XML)
+    sim = MjSim(model)
+    sim.render(100, 100)
+    event = Event()
     threads = []
     for _ in range(100):
-        thread = Thread(target=func)
+        thread = Thread(target=func, args=(sim, event))
         threads.append(thread)
-
-    for thread in threads:
         thread.start()
-
+    event.set()
     for thread in threads:
         thread.join()
 
