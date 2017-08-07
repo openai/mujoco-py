@@ -13,6 +13,7 @@ RUN apt-get update -q \
     python3-pip \
     python3-numpy \
     python3-scipy \
+    net-tools \
     unzip \
     vim \
     wget \

@@ -651,9 +651,9 @@ def test_sensors():
 
 @requires_rendering
 def test_concurrent_rendering():
-    '''Best-effort testing that concurrent multi-threaded rendering works. 
-    The test has no guarantees around being deterministic, but if it fails 
-    you know something is wrong with concurrent rendering. If it passes, 
+    '''Best-effort testing that concurrent multi-threaded rendering works.
+    The test has no guarantees around being deterministic, but if it fails
+    you know something is wrong with concurrent rendering. If it passes,
     things are probably working.'''
     def func(sim, event):
         event.wait()
