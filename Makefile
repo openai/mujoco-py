@@ -39,7 +39,7 @@ shell:
 	$(DOCKER) run --rm -it $(DOCKER_NAME) /bin/bash
 
 mount:
-	NV_GPU=$(GPUS) $(DOCKER) run -it -v `pwd`:/mujoco_py-dev $(DOCKER_NAME) /bin/bash -c "pip3 uninstall -y mujoco-py; rm -rf /mujoco_py; (cd /mujoco_py-dev; export PYTHONPATH='/mujoco_py-dev'; /bin/bash)"
+	$(DOCKER) run -e GPUS -it -v `pwd`:/mujoco_py-dev $(DOCKER_NAME) /bin/bash -c "pip uninstall -y mujoco-py; rm -rf /mujoco_py; (cd /mujoco_py-dev; export PYTHONPATH='/mujoco_py-dev'; /bin/bash)"
 
 cirra:
 	$(eval NODE="$(shell cirrascale-cli reserve)")
