@@ -36,6 +36,10 @@ ENV LD_LIBRARY_PATH /root/.mujoco/mjpro150/bin:$LD_LIBRARY_PATH
 COPY vendor/Xdummy /usr/local/bin/Xdummy
 RUN chmod +x /usr/local/bin/Xdummy
 
+RUN rm /usr/bin/python
+RUN ln -s /usr/bin/python3 /usr/bin/python
+RUN ln -s /usr/bin/pip3 /usr/bin/pip
+
 # Workaround for https://bugs.launchpad.net/ubuntu/+source/nvidia-graphics-drivers-375/+bug/1674677
 COPY ./vendor/10_nvidia.json /usr/share/glvnd/egl_vendor.d/10_nvidia.json
 
@@ -44,11 +48,11 @@ WORKDIR /mujoco_py
 # expire until we actually change the requirements.
 COPY ./requirements.txt /mujoco_py/
 COPY ./requirements.dev.txt /mujoco_py/
-RUN pip3 install -r requirements.txt
-RUN pip3 install -r requirements.dev.txt
+RUN pip install -r requirements.txt
+RUN pip install -r requirements.dev.txt
 
 # Delay moving in the entire code until the very end.
 ENTRYPOINT ["/mujoco_py/vendor/Xdummy-entrypoint"]
 CMD ["pytest"]
 COPY . /mujoco_py
-RUN python3 setup.py install
+RUN python setup.py install
