@@ -674,7 +674,7 @@ def test_concurrent_rendering():
     sim.render(100, 100)
     event = Event()
     threads = []
-    for _ in range(5):
+    for _ in range(100):
         thread = Thread(target=func, args=(sim, event))
         threads.append(thread)
         thread.start()
