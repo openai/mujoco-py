@@ -1,6 +1,7 @@
 .PHONY: all clean build test mount_shell shell upload check-env
 
 MUJOCO_LICENSE_PATH ?= ~/.mujoco/mjkey.txt
+DOCKER_NAME ?= mujoco_py
 
 all: test
 
@@ -20,17 +21,17 @@ clean:
 
 build: check-license
 	cp $(MUJOCO_LICENSE_PATH) mjkey.txt
-	docker build -t mujoco_py . || rm mjkey.txt && rm mjkey.txt
+	docker build -t $(DOCKER_NAME) . || rm mjkey.txt && rm mjkey.txt
 
 test: build
 	# run it interactive mode so we can abort with CTRL+C
-	docker run --rm -i mujoco_py pytest
+	docker run --rm -i $(DOCKER_NAME) pytest
 
 mount_shell:
-	docker run --rm -it -v `pwd`:/code mujoco_py /bin/bash -c "pip3 uninstall -y mujoco_py; rm -rf /mujoco_py; (cd /code; /bin/bash)"
+	docker run --rm -it -v `pwd`:/code $(DOCKER_NAME) /bin/bash -c "pip3 uninstall -y mujoco_py; rm -rf /mujoco_py; (cd /code; /bin/bash)"
 
 shell:
-	docker run --rm -it mujoco_py /bin/bash
+	docker run --rm -it $(DOCKER_NAME) /bin/bash
 
 upload:
 	rm -rf dist
