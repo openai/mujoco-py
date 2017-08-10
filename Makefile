@@ -45,7 +45,7 @@ cirra:
 	$(eval NODE="$(shell cirrascale-cli reserve)")
 	$(eval GPUS="$(shell echo $(NODE)| grep -oE '[^:]+f' | cut -c1-1 )")
 	$(eval NODE="$(shell echo $(NODE)| grep -oE '[^=]+:' | sed 's/://')")
-	tmux new-session  "while :; do rsync -e 'ssh -o StrictHostKeyChecking=no' --delete -rzai --out-format='%t %f %b' --chmod=Du+rwx --exclude="dist" --exclude='cymj.c' --exclude='_pyxbld_*' --exclude='*extensionbuilder.so' --exclude='__pycache__' --exclude="*.egg-info" --exclude=".cache" --exclude='.git' --exclude='*.pyc' --exclude='*.swp' --exclude='.idea' . $(NODE):~/mujoco_py/ ; sleep 1; done" \; \
+	tmux new-session  "while :; do rsync -e 'ssh -o StrictHostKeyChecking=no' --delete -rzai --out-format='%t %f %b' --chmod=Du+rwx --exclude='dist' --exclude='cymj.c' --exclude='_pyxbld_*' --exclude='*extensionbuilder.so' --exclude='__pycache__' --exclude='*.egg-info' --exclude='.cache' --exclude='.git' --exclude='*.pyc' --exclude='*.swp' --exclude='.idea' . $(NODE):~/mujoco_py/ ; sleep 1; done" \; \
 	     split-window "ssh -t -o StrictHostKeyChecking=no $(NODE) 'mkdir -p ~/mujoco_py && cd ~/mujoco_py && export GPUS=$(GPUS) && /bin/bash'; " \; select-layout 9ce0,204x51,0,0[204x4,0,0,32,204x46,0,5,33]
 
 
