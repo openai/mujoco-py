@@ -649,7 +649,7 @@ def test_sensors():
     sim.data.get_sensor("touchsensor")
 
 
-@pytest.mark.skipif("Darwin" not in sys.platform, reason="It fails with EGL and GPUs.")
+@pytest.mark.skipif("Darwin" not in sys.platform, reason="Only Darwin code is thread safe.")
 def test_concurrent_rendering():
     '''Best-effort testing that concurrent multi-threaded rendering works.
     The test has no guarantees around being deterministic, but if it fails
