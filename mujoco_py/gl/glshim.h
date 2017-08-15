@@ -4,6 +4,10 @@
 #include "mujoco.h"
 #include "mjrender.h"
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 int usingEGL();
 int initOpenGL(int device_id);
 void closeOpenGL();
@@ -18,5 +22,9 @@ void copyFBOToPBO(mjrContext* con,
 void readPBO(unsigned char *buffer_rgb, unsigned short *buffer_depth,
              unsigned int pbo_rgb, unsigned int pbo_depth,
              int width, int height, int batchSize);
+
+#ifdef __cplusplus
+}  // extern "C"
+#endif
 
 #endif
