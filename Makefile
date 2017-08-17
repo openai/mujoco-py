@@ -47,7 +47,7 @@ shell:
 mount:
 	$(DOCKER) run -e GPUS -it -v `pwd`:/mujoco_py-dev $(DOCKER_NAME) /bin/bash -c "pip uninstall -y mujoco-py; rm -rf /mujoco_py; (cd /mujoco_py-dev; export PYTHONPATH='/mujoco_py-dev'; /bin/bash)"
 
-cirra: setup_cirra
+cirra:
 	$(eval NODE="$(shell cirrascale-cli reserve)")
 	$(eval GPUS="$(shell echo $(NODE)| grep -oE '[^:]+f' | cut -c1-1 )")
 	$(eval NODE="$(shell echo $(NODE)| grep -oE '[^=]+:' | sed 's/://')")
