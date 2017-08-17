@@ -9,7 +9,7 @@ import pytest
 
 from mujoco_py import MjSim, MjRenderPool, load_model_from_xml
 from mujoco_py.modder import TextureModder
-from mujoco_py.tests.utils import compare_imgs, requires_rendering
+from mujoco_py.tests.utils import compare_imgs
 
 BASIC_MODEL_XML = """
 <mujoco>
@@ -42,7 +42,7 @@ BASIC_MODEL_XML = """
 """
 
 
-@requires_rendering
+@pytest.mark.requires_rendering
 def test_spawn():
     # pytest and nose both use 'fork' by default, so we
     # expect a runtime error
@@ -51,7 +51,7 @@ def test_spawn():
         MjRenderPool(model, n_workers=3)
 
 
-@requires_rendering
+@pytest.mark.requires_rendering
 def test_multiprocessing():
     # pytest doesn't work well with multiprocessing, so just
     # run the multiprocessing tests manually by running this

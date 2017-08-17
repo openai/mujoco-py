@@ -8,7 +8,7 @@ from mujoco_py import (MjSim, MjSimPool, load_model_from_xml,
                        ignore_mujoco_warnings,
                        load_model_from_mjb)
 from mujoco_py import const, cymj
-from mujoco_py.tests.utils import compare_imgs, requires_rendering
+from mujoco_py.tests.utils import compare_imgs
 import scipy.misc
 from threading import Thread, Event
 from multiprocessing import get_context
@@ -54,7 +54,7 @@ def test_mj_sim_basics():
     sim.forward()
 
 
-@requires_rendering
+@pytest.mark.requires_rendering
 def test_arrays_of_objs():
     model = load_model_from_xml(BASIC_MODEL_XML)
     sim = MjSim(model)
@@ -554,7 +554,7 @@ def test_xvelr():  # xvelr = rotational velocity in world frame
     np.testing.assert_allclose(body2_xvelr, sim.data.body_xvelr[2])
 
 
-@requires_rendering
+@pytest.mark.requires_rendering
 def test_rendering():
     model = load_model_from_xml(BASIC_MODEL_XML)
     sim = MjSim(model)
@@ -587,7 +587,7 @@ def test_rendering():
     compare_imgs(img, 'test_rendering_markers.camera1.png')
 
 
-@requires_rendering
+@pytest.mark.requires_rendering
 def test_rendering_failing():
     model = load_model_from_xml(BASIC_MODEL_XML)
     sim = MjSim(model)
@@ -607,7 +607,7 @@ def test_rendering_failing():
         pass
 
 
-@requires_rendering
+@pytest.mark.requires_rendering
 def test_viewercontext():
     model = load_model_from_xml(BASIC_MODEL_XML)
     sim = MjSim(model)
@@ -621,7 +621,7 @@ def test_viewercontext():
                         label="mark")
 
 
-@requires_rendering
+@pytest.mark.requires_rendering
 def test_many_sims_rendering():
     model = load_model_from_xml(BASIC_MODEL_XML)
     sims = [MjSim(model) for _ in range(5)]
@@ -649,7 +649,9 @@ def test_sensors():
     sim.data.get_sensor("touchsensor")
 
 
-@pytest.mark.skipif("Darwin" not in sys.platform, reason="Only Darwin code is thread safe.")
+@pytest.mark.requires_rendering
+@pytest.mark.skipif("Darwin" not in sys.platform,
+                    reason="Only Darwin code is thread safe.")
 def test_concurrent_rendering():
     '''Best-effort testing that concurrent multi-threaded rendering works.
     The test has no guarantees around being deterministic, but if it fails
@@ -683,7 +685,7 @@ def test_concurrent_rendering():
         thread.join()
     assert err is None, "Exception: %s" % (str(err))
 
-@requires_rendering
+@pytest.mark.requires_rendering
 def test_high_res():
     model = load_model_from_xml(BASIC_MODEL_XML)
     sim = MjSim(model)

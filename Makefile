@@ -35,6 +35,12 @@ test: build
 	# run it interactive mode so we can abort with CTRL+C
 	$(DOCKER) run --rm -i $(DOCKER_NAME) pytest
 
+test_gpu: build push
+	$(eval NODE="$(shell cirrascale-cli reserve -g 1080ti -t 10m)")
+	$(eval GPUS="$(shell echo $(NODE)| grep -oE '[^:]+f' | cut -c1-1 )")
+	$(eval NODE="$(shell echo $(NODE)| grep -oE '[^=]+:' | sed 's/://')")
+	ssh -t -o StrictHostKeyChecking=no $(NODE) 'docker pull $(DOCKER_NAME) && export GPUS=$(GPUS) && nvidia-docker run --rm -e GPUS -i $(DOCKER_NAME) pytest -m "not requires_glfw"'
+
 shell:
 	$(DOCKER) run --rm -it $(DOCKER_NAME) /bin/bash
 
@@ -47,7 +53,6 @@ cirra:
 	$(eval NODE="$(shell echo $(NODE)| grep -oE '[^=]+:' | sed 's/://')")
 	tmux new-session  "while :; do rsync -e 'ssh -o StrictHostKeyChecking=no' --delete -rzai --out-format='%t %f %b' --chmod=Du+rwx --exclude='dist' --exclude='cymj.c' --exclude='_pyxbld_*' --exclude='*extensionbuilder.so' --exclude='__pycache__' --exclude='*.egg-info' --exclude='.cache' --exclude='.git' --exclude='*.pyc' --exclude='*.swp' --exclude='.idea' . $(NODE):~/mujoco_py/ ; sleep 1; done" \; \
 	     split-window "ssh -t -o StrictHostKeyChecking=no $(NODE) 'mkdir -p ~/mujoco_py && cd ~/mujoco_py && export GPUS=$(GPUS) && /bin/bash'; " \; select-layout 9ce0,204x51,0,0[204x4,0,0,32,204x46,0,5,33]
-
 
 upload:
 	rm -rf dist
