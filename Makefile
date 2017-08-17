@@ -27,6 +27,9 @@ test: build
 	# run it interactive mode so we can abort with CTRL+C
 	docker run --rm -i $(DOCKER_NAME) pytest
 
+test_gpu:
+	nvidia-docker run --rm -i $(DOCKER_NAME) pytest -m "not requires_glfw"
+
 mount_shell:
 	docker run --rm -it -v `pwd`:/code $(DOCKER_NAME) /bin/bash -c "pip3 uninstall -y mujoco_py; rm -rf /mujoco_py; (cd /code; /bin/bash)"
 

@@ -26,7 +26,6 @@ install:
     - conda create -q -n test-environment python=3.5 numpy scipy
     - activate test-environment
     - SET PATH=%userprofile%\.mujoco\mjpro150\bin;%PATH%;
-    - SET RENDERING_OFF=1
     - cd C:\projects\mujoco-py
     - pip install -r requirements.txt
     - pip install -r requirements.dev.txt
@@ -34,6 +33,6 @@ install:
 build: off
 
 test_script:
-    - pytest -s --verbose --durations=10 --instafail
+    - pytest -s --verbose --durations=10 --instafail -m "not requires_rendering"
 
 

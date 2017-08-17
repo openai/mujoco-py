@@ -50,8 +50,3 @@ def compare_imgs(img, truth_filename, do_assert=True):
     if do_assert:
         assert diff <= 1
     return diff
-
-
-# Skips test when RENDERING_OFF.
-requires_rendering = pytest.mark.skipif(os.environ.get("RENDERING_OFF", False),
-                                        reason="Skip test when system doesn't support rendering")

@@ -1,6 +1,7 @@
+import pytest
 from mujoco_py import MjSim, load_model_from_xml
 from mujoco_py.modder import MaterialModder, TextureModder
-from mujoco_py.tests.utils import compare_imgs, requires_rendering
+from mujoco_py.tests.utils import compare_imgs
 import numpy as np
 
 BASIC_MODEL_XML = """
@@ -31,7 +32,7 @@ BASIC_MODEL_XML = """
 </mujoco>
 """
 
-@requires_rendering
+@pytest.mark.requires_rendering
 def test_textures():
     model = load_model_from_xml(BASIC_MODEL_XML)
     sim = MjSim(model)
@@ -85,7 +86,7 @@ def test_textures():
     compare_imgs(sim.render(201, 205, camera_name="topcam"),
                  'test_textures.rand_texrepeat.png')
 
-@requires_rendering
+@pytest.mark.requires_rendering
 def test_materials():
     model = load_model_from_xml(BASIC_MODEL_XML)
     sim = MjSim(model)
@@ -107,7 +108,7 @@ def test_materials():
     compare_imgs(sim.render(201, 205, camera_name="topcam"),
                  'test_materials.rand_all.png')
 
-@requires_rendering
+@pytest.mark.requires_rendering
 def test_multiple_sims():
     # Ensure that creating new simulators still produces good renderings.
     xml = """
@@ -138,7 +139,7 @@ def test_multiple_sims():
                 'test_multiple_sims.loop%d_%d.png' % (i, j))
 
 
-@requires_rendering
+@pytest.mark.requires_rendering
 def test_resetting():
     # Ensure that resetting environment and creating new simulators
     # still produces good renderings.
