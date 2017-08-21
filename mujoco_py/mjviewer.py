@@ -229,6 +229,7 @@ class MjViewer(MjViewerBasic):
         rec_assign(offscreen_ctx.cam, rec_copy(window_ctx.cam))
 
         img = self.sim.render(*resolution)
+        img = img[::-1, :, :] # Rendered images are upside-down.
         # Restore markers and overlay to offscreen.
         offscreen_ctx._markers[:] = saved[0][:]
         offscreen_ctx._overlay.clear()

@@ -164,5 +164,5 @@ if __name__ == '__main__':
     mp_test_create_destroy()
     mp_test_rendering()
     mp_test_states()
-    mp_test_cameras()
+    # mp_test_cameras()
     mp_test_modder()
