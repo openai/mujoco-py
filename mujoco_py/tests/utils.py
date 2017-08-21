@@ -16,6 +16,7 @@ else:
 def save_test_image(filename, array):
     Image.fromarray(array).save(filename)
 
+
 def compare_imgs(img, truth_filename, do_assert=True):
     """
     PROTIP: run the following to re-generate the test images:
@@ -35,10 +36,8 @@ def compare_imgs(img, truth_filename, do_assert=True):
         return 0
     true_img = np.asarray(Image.open(truth_filename))
     assert img.shape == true_img.shape
-    img0 = Image.fromarray(smooth(img))
-    hash0 = imagehash.dhash(img0)
-    img1 = Image.fromarray(smooth(true_img))
-    hash1 = imagehash.dhash(img1)
+    hash0 = imagehash.dhash(Image.fromarray(img))
+    hash1 = imagehash.dhash(Image.fromarray(true_img))
     diff = np.sum(hash0.hash != hash1.hash)
     if diff != 0:
         # If the assert fails, the best way to investigate is to run
@@ -49,5 +48,5 @@ def compare_imgs(img, truth_filename, do_assert=True):
         save_test_image("/tmp/true_img.png", true_img)
         save_test_image("/tmp/diff_img.png", img - true_img)
     if do_assert:
-        assert diff <= 1, "Difference between hashes= %d" % diff
+        assert diff <= 1
     return diff
