@@ -157,9 +157,9 @@ cdef class MjRenderContext(object):
         cdef unsigned char[::view.contiguous] rgb_view = rgb_arr
         cdef float[::view.contiguous] depth_view = depth_arr
         mjr_readPixels(&rgb_view[0], &depth_view[0], rect, &self._con)
-        rgb_img = np.flipud(rgb_arr.reshape(rect.height, rect.width, 3))
+        rgb_img = rgb_arr.reshape(rect.height, rect.width, 3)
         if depth:
-            depth_img = np.flipud(depth_arr.reshape(rect.height, rect.width))
+            depth_img = depth_arr.reshape(rect.height, rect.width)
             return (rgb_img, depth_img)
         else:
             return rgb_img
