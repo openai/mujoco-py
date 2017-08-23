@@ -778,6 +778,10 @@ cdef class {wrapper_name}(object):
     {model_decl}
     {member_decls}
     {extra}
+
+    @property
+    def uintptr(self): return <uintptr_t>self.ptr
+
     cdef void _set(self, {struct_name}* p{model_param}):
         {extra_set}
         self.ptr = p
@@ -831,6 +835,7 @@ cdef inline np.ndarray _wrap_{type_name_nospaces}_2d({type_name}* a, int shape0,
 # Automatically generated. Do not modify!
 
 include "../pxd/mujoco.pxd"
+from libc.stdint cimport uintptr_t
 from cpython.mem cimport PyMem_Malloc, PyMem_Free
 cimport numpy as np
 import numpy as np
