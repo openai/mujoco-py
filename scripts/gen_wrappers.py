@@ -780,7 +780,7 @@ cdef class {wrapper_name}(object):
     {extra}
 
     @property
-    def _ptr(self): return <uintptr_t>self.ptr
+    def uintptr(self): return <uintptr_t>self.ptr
 
     cdef void _set(self, {struct_name}* p{model_param}):
         {extra_set}
