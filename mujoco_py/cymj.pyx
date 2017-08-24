@@ -121,7 +121,13 @@ def load_model_from_path(str path):
     cdef char errstr[300]
     cdef mjModel *model
     with wrap_mujoco_warning():
-        model = mj_loadXML(path.encode(), NULL, errstr, 300)
+        if (path.endswith(".mjb")):
+            model = mj_loadModel(path.encode(), NULL)
+        elif (path.endswith(".xml")):
+            model = mj_loadXML(path.encode(), NULL, errstr, 300)
+        else:
+            raise RuntimeError("Unrecognized extension for %s. Expected .xml or .mjb" % path)
+
     if model == NULL:
         raise Exception('Failed to load XML file: %s. mj_loadXML error: %s' % (path, errstr,))
     return WrapMjModel(model)
