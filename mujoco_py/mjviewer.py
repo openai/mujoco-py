@@ -121,6 +121,7 @@ class MjViewer(MjViewerBasic):
     - D: Enable/disable frame skipping when rendering lags behind real time.
     - R: Toggle transparency of geoms.
     - M: Toggle display of mocap bodies.
+    - 0-4: Toggle display of geomgroups
 
     Parameters
     ----------
@@ -289,6 +290,7 @@ class MjViewer(MjViewerBasic):
             self.sim.data.solver_iter + 1))
         step = round(self.sim.data.time / self.sim.model.opt.timestep)
         self.add_overlay(const.GRID_BOTTOMRIGHT, "Step", str(step))
+        self.add_overlay(const.GRID_TOPLEFT, "Toggle geomgroup visibility", "0-4")
 
     def key_callback(self, window, key, scancode, action, mods):
         if action != glfw.RELEASE:
@@ -359,6 +361,8 @@ class MjViewer(MjViewerBasic):
                             else:
                                 self.sim.model.geom_rgba[
                                     geom_idx, 3] = self.sim.extras[geom_idx]
+        elif key in (glfw.KEY_0, glfw.KEY_1, glfw.KEY_2, glfw.KEY_3, glfw.KEY_4):
+            self.vopt.geomgroup[key - glfw.KEY_0] ^= 1
         super().key_callback(window, key, scancode, action, mods)
 
 # Separate Process to save video. This way visualization is
