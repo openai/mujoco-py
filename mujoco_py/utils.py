@@ -17,7 +17,7 @@ def rec_assign(node, assign):
     # Assigns values to node recursively.
     # This is neccessary to avoid overriding pointers in MuJoCo.
     for field in dir(node):
-        if field.find("__") == -1:
+        if field.find("__") == -1 and field != 'uintptr':
             val = getattr(node, field)
             if isinstance(val, (int, bool, float, None.__class__, str)):
                 setattr(node, field, assign[field])
