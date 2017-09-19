@@ -61,6 +61,9 @@ cdef object py_warning_callback
 #   with wrap_mujoco_warning():
 #       mj_somefunc()
 cdef object py_warning_exception = None
+# Actuator Gain Callback, see above for how callbacks work.
+cdef object __mujoco_py_act_gain_callback_fn = None  # callback function
+cdef object __mujoco_py_act_gain_callback_ex = None  # callback exception
 
 
 cdef void c_warning_callback(const char *msg) with gil:
@@ -114,6 +117,53 @@ class wrap_mujoco_warning(object):
         global py_warning_exception
         if py_warning_exception is not None:
             raise py_warning_exception
+
+
+cdef mjtNum c_act_gain_callback(const mjModel* m, const mjData* d, int i) with gil:
+    '''
+    Wrap the actuator gain callback.  See c_warning_callback() about callbacks.
+    '''
+    # TODO: generating these would be nice, but is a lot of work for 1 callback
+    global __mujoco_py_act_gain_callback_fn
+    cdef mjtNum res
+    try:
+        model = WrapMjModel(m)
+        data = WrapMjData(d, model)
+        res = (<object> __mujoco_py_act_gain_callback_fn)(model, data, i)
+        return res
+    except Exception as e:
+        global __mujoco_py_act_gain_callback_ex
+        __mujoco_py_act_gain_callback_ex = e
+    return float('nan')
+
+
+def set_act_gain_callback_fn(fn=None):
+    ''' Set Actuator Gain callback function.  None resets default behavior. '''
+    global __mujoco_py_act_gain_callback_fn
+    global mjcb_act_gain
+    __mujoco_py_act_gain_callback_fn = fn
+    if fn is not None:
+        mjcb_act_gain = c_act_gain_callback
+    else:
+        mjcb_act_gain = NULL
+
+
+def get_act_gain_callback_fn():
+    ''' Return current actuator gain callback '''
+    global __mujoco_py_act_gain_callback_fn
+    return __mujoco_py_act_gain_callback_fn
+
+
+def set_act_gain_callback_ex(ex=None):
+    ''' Set actuator gain callback exception value '''
+    global __mujoco_py_act_gain_callback_ex
+    __mujoco_py_act_gain_callback_ex = ex
+
+
+def set_act_gain_callback_ex(ex=None):
+    ''' Get actuator gain callback exception value '''
+    global __mujoco_py_act_gain_callback_ex
+    return __mujoco_py_act_gain_callback_ex
 
 
 def load_model_from_path(str path):
