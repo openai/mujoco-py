@@ -68,6 +68,7 @@ class custom_build_ext(build_ext):
     """
 
     def build_extensions(self):
+        self.cython_gdb = bool(os.environ.get('CYMJ_GDB_DEBUG', False))
         customize_compiler(self.compiler)
 
         try:

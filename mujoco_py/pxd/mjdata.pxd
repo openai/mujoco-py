@@ -294,7 +294,7 @@ cdef extern from "mjdata.h" nogil:
 # typedef long long int (*mjfTime)(void);
 #
 # # actuator dynamics, gain, bias
-# typedef mjtNum (*mjfAct)(const mjModel* m, const mjData* d, int id);
+ctypedef mjtNum (*mjfAct)(const mjModel* m, const mjData* d, int id);
 #
 # # solver impedance
 # typedef mjtNum (*mjfSolImp)(const mjModel* m, const mjData* d, int id,

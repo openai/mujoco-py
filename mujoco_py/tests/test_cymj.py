@@ -724,3 +724,23 @@ def import_process(queue):
         queue.put(False)
     else:
         queue.put(True)
+
+
+def test_actuator_gain_callback():
+    ''' Test the actuator gain callback '''
+    xml = '''
+    <mujoco>
+        <worldbody>
+            <body name="body1" pos="0 0 0">
+                <joint axis="1 0 0" name="a" pos="0 0 0" type="hinge"/>
+                <geom pos="0 0 0" size="1.0"/>
+            </body>
+        </worldbody>
+        <actuator>
+            <general joint="a" gaintype="user"/>
+        </actuator>
+    </mujoco>
+    '''
+    sim = MjSim(load_model_from_xml(xml))
+    import ipdb; ipdb.set_trace()
+    pass
