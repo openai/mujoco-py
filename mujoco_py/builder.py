@@ -68,6 +68,7 @@ class custom_build_ext(build_ext):
     """
 
     def build_extensions(self):
+        self.cython_gdb = bool(os.environ.get('CYMJ_GDB_DEBUG', False))
         customize_compiler(self.compiler)
 
         try:
@@ -113,8 +114,7 @@ class MujocoExtensionBuilder():
                 '-w',  # suppress numpy compilation warnings
             ],
             extra_link_args=['-fopenmp'],
-            language='c',
-            gdb_debug=bool(os.environ.get('CYMJ_GDB_DEBUG', False)))
+            language='c')
 
     def build(self):
         built_so_file_path = self._build_impl()
