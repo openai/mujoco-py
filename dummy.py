@@ -1,5 +1,8 @@
 #!/usr/bin/env python
+import tracemalloc
 from mujoco_py import MjSim, load_model_from_xml, set_act_gain_callback_fn
+
+tracemalloc.start()
 xml = '''
 <mujoco>
     <worldbody>
@@ -20,6 +23,10 @@ def p(model, data, id_):
     return None
 
 sim.step()
+
+for lineno in tracemalloc.take_snapshot().statistics('lineno')[:10]:
+    print(lineno)
+
 
 set_act_gain_callback_fn(p)
 

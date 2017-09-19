@@ -113,7 +113,8 @@ class MujocoExtensionBuilder():
                 '-w',  # suppress numpy compilation warnings
             ],
             extra_link_args=['-fopenmp'],
-            language='c')
+            language='c',
+            gdb_debug=bool(os.environ.get('CYMJ_GDB_DEBUG', False)))
 
     def build(self):
         built_so_file_path = self._build_impl()
