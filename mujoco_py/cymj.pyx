@@ -126,14 +126,20 @@ cdef mjtNum c_act_gain_callback(const mjModel* m, const mjData* d, int i) with g
     # TODO: generating these would be nice, but is a lot of work for 1 callback
     global __mujoco_py_act_gain_callback_fn
     cdef mjtNum res
+    print("c_act_gain_callback: m d i", m, d, i)
     try:
         model = WrapMjModel(m)
+        print("c_act_gain_callback: model", model)
         data = WrapMjData(d, model)
+        print("c_act_gain_callback: data", data)
         res = (<object> __mujoco_py_act_gain_callback_fn)(model, data, i)
+        print("c_act_gain_callback: exit res", res)
         return res
     except Exception as e:
         global __mujoco_py_act_gain_callback_ex
+        print("c_act_gain_callback: exception e", e)
         __mujoco_py_act_gain_callback_ex = e
+    print("c_act_gain_callback: exit nan")
     return float('nan')
 
 
@@ -160,7 +166,7 @@ def set_act_gain_callback_ex(ex=None):
     __mujoco_py_act_gain_callback_ex = ex
 
 
-def set_act_gain_callback_ex(ex=None):
+def get_act_gain_callback_ex():
     ''' Get actuator gain callback exception value '''
     global __mujoco_py_act_gain_callback_ex
     return __mujoco_py_act_gain_callback_ex
@@ -214,5 +220,3 @@ def load_model_from_mjb(bytes mjb_bytes):
     if model == NULL:
         raise Exception('%s\nFailed to load MJB')
     return WrapMjModel(model)
-
-
