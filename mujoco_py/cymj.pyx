@@ -126,7 +126,9 @@ cdef mjtNum c_act_gain_callback(const mjModel* m, const mjData* d, int i) with g
     # TODO: generating these would be nice, but is a lot of work for 1 callback
     global __mujoco_py_act_gain_callback_fn
     cdef mjtNum res
-    print("c_act_gain_callback: m d i", m, d, i)
+    cdef object model
+    cdef object data
+    print("c_act_gain_callback: i", i)
     try:
         model = WrapMjModel(m)
         print("c_act_gain_callback: model", model)
