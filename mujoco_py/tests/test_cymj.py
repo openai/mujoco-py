@@ -650,7 +650,7 @@ def test_sensors():
 
 
 @pytest.mark.requires_rendering
-@pytest.mark.skipif("Darwin" not in sys.platform,
+@pytest.mark.skipif("darwin" not in sys.platform,
                     reason="Only Darwin code is thread safe.")
 def test_concurrent_rendering():
     '''Best-effort testing that concurrent multi-threaded rendering works.
