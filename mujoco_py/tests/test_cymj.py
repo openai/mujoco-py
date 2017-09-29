@@ -650,7 +650,7 @@ def test_sensors():
 
 
 @pytest.mark.requires_rendering
-@pytest.mark.skipif("Darwin" not in sys.platform,
+@pytest.mark.skipif("darwin" not in sys.platform,
                     reason="Only Darwin code is thread safe.")
 def test_concurrent_rendering():
     '''Best-effort testing that concurrent multi-threaded rendering works.
@@ -665,8 +665,8 @@ def test_concurrent_rendering():
         img1 = sim.render(width=40, height=40, camera_name="camera1")
         img2 = sim.render(width=40, height=40, camera_name="camera2")
         try:
-            assert np.sum(img1[:]) == 23255
-            assert np.sum(img2[:]) == 12007
+            assert np.sum(img1[:]) == 23251
+            assert np.sum(img2[:]) == 12001
         except Exception as e:
             nonlocal err
             err = e
