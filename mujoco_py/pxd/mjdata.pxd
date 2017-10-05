@@ -4,7 +4,7 @@ include "mjmodel.pxd"
 cdef extern from "mjdata.h" nogil:
 
     #---------------------------- primitive types (mjt) ------------------------------------
-        
+
     ctypedef enum mjtWarning:            # warning types
         mjWARN_INERTIA      = 0,        # (near) singular inertia matrix
         mjWARN_CONTACTFULL,             # too many contacts in contact list
@@ -282,28 +282,28 @@ cdef extern from "mjdata.h" nogil:
         mjtNum*   cfrc_ext              # com-based external force on body         (nbody x 6)
 
 
-# #---------------------------------- callback function types ----------------------------
-#
-# # generic MuJoCo function
-# typedef void (*mjfGeneric)(const mjModel* m, mjData* d)
-#
-# # sensor simulation
-# typedef void (*mjfSensor)(const mjModel* m, mjData* d, int stage)
-#
-# # timer
-# typedef long long int (*mjfTime)(void);
-#
-# # actuator dynamics, gain, bias
-# typedef mjtNum (*mjfAct)(const mjModel* m, const mjData* d, int id);
-#
-# # solver impedance
-# typedef mjtNum (*mjfSolImp)(const mjModel* m, const mjData* d, int id,
-#                             mjtNum distance, mjtNum* constimp);
-#
-# # solver reference
-# typedef void (*mjfSolRef)(const mjModel* m, const mjData* d, int id,
-#                           mjtNum constimp, mjtNum imp, int dim, mjtNum* ref);
-#
-# # collision detection
-# typedef int (*mjfCollision)(const mjModel* m, const mjData* d,
-#                             mjContact* con, int g1, int g2, mjtNum margin);
+#---------------------------------- callback function types ----------------------------
+
+# generic MuJoCo function
+ctypedef void (*mjfGeneric)(const mjModel* m, mjData* d)
+
+# sensor simulation
+ctypedef void (*mjfSensor)(const mjModel* m, mjData* d, int stage)
+
+# timer
+ctypedef long long int (*mjfTime)();
+
+# actuator dynamics, gain, bias
+ctypedef mjtNum (*mjfAct)(const mjModel* m, const mjData* d, int id);
+
+# solver impedance
+ctypedef mjtNum (*mjfSolImp)(const mjModel* m, const mjData* d, int id,
+                             mjtNum distance, mjtNum* constimp);
+
+# solver reference
+ctypedef void (*mjfSolRef)(const mjModel* m, const mjData* d, int id,
+                           mjtNum constimp, mjtNum imp, int dim, mjtNum* ref);
+
+# collision detection
+ctypedef int (*mjfCollision)(const mjModel* m, const mjData* d,
+                             mjContact* con, int g1, int g2, mjtNum margin);

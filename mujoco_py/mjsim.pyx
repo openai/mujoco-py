@@ -1,8 +1,11 @@
 from xml.dom import minidom
 from mujoco_py.utils import remove_empty_lines
+from mujoco_py.builder import build_callback_fn
 from threading import Lock
 
 _MjSim_render_lock = Lock()
+
+ctypedef void (*substep_udd_t)(const mjModel* m, mjData* d)
 
 
 cdef class MjSim(object):
@@ -27,6 +30,11 @@ cdef class MjSim(object):
         next ``udd_state`` after applying the user-defined dynamics. This is
         useful e.g. for reward functions that operate over functions of historical
         state.
+    substep_callback : str or int or None
+        This uses a compiled C function as user-defined dynamics in substeps.
+        If given as a string, it's compiled as a C function and set as pointer.
+        If given as int, it's interpreted as a function pointer.
+        See :meth:``set_substep_callback`` for detailed info.
     """
     # MjRenderContext for rendering camera views.
     cdef readonly list render_contexts
@@ -48,9 +56,11 @@ cdef class MjSim(object):
     cdef readonly object _udd_callback
     # Allows to store extra information in MjSim.
     cdef readonly dict extras
+    # Function pointer for substep callback, stored as uintptr
+    cdef readonly uintptr_t substep_callback_ptr
 
     def __cinit__(self, PyMjModel model, PyMjData data=None, int nsubsteps=1,
-                  udd_callback=None):
+                  udd_callback=None, substep_callback=None):
         self.nsubsteps = nsubsteps
         self.model = model
         if data is None:
@@ -68,6 +78,13 @@ cdef class MjSim(object):
         self.udd_state = None
         self.udd_callback = udd_callback
         self.extras = {}
+        # TODO: add magic name-based indexing to userdata based on fields
+        # TODO: add convenient way to get field info from data
+        # assert isinstance(userdata_fields, list), 'fields must be list'
+        # assert model.nuserdata >= len(userdata_fields), \
+        #     'userdata {} < len {}'.format(model.nuserdata, len(userdata_fields))
+        # self.userdata_fields = userdata_fields
+        self.set_substep_callback(substep_callback)
 
     def reset(self):
         """
@@ -98,6 +115,7 @@ cdef class MjSim(object):
 
         with wrap_mujoco_warning():
             for _ in range(self.nsubsteps):
+                self.substep_callback()
                 mj_step(self.model.ptr, self.data.ptr)
 
     def render(self, width=None, height=None, *, camera_name=None, depth=False,
@@ -164,6 +182,24 @@ cdef class MjSim(object):
         self._udd_callback = value
         self.udd_state = None
         self.step_udd()
+
+    cpdef substep_callback(self):
+        if self.substep_callback_ptr:
+            (<mjfGeneric>self.substep_callback_ptr)(self.model.ptr, self.data.ptr)
+
+    def set_substep_callback(self, substep_callback):
+        '''
+        TODO: tons of docs right here
+        '''
+        if substep_callback is None:
+            self.substep_callback_ptr = 0
+        elif isinstance(substep_callback, int):
+            self.substep_callback_ptr = substep_callback
+        elif isinstance(substep_callback, str):
+            self.substep_callback_ptr = build_callback_fn(substep_callback,
+                                                          self.model.userdata_names)
+        else:
+            raise TypeError('substep_callback must be string or int or None')
 
     def step_udd(self):
         if self._udd_callback is None:
