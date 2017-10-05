@@ -4,6 +4,8 @@ from threading import Lock
 
 _MjSim_render_lock = Lock()
 
+ctypedef void (*substep_udd_t)(const mjModel* m, mjData* d)
+
 
 cdef class MjSim(object):
     """MjSim represents a running simulation including its state.
@@ -48,6 +50,8 @@ cdef class MjSim(object):
     cdef readonly object _udd_callback
     # Allows to store extra information in MjSim.
     cdef readonly dict extras
+    # Function pointer for UDD substeps
+    cdef substep_udd_t _substep_udd_fn
 
     def __cinit__(self, PyMjModel model, PyMjData data=None, int nsubsteps=1,
                   udd_callback=None):
@@ -68,6 +72,7 @@ cdef class MjSim(object):
         self.udd_state = None
         self.udd_callback = udd_callback
         self.extras = {}
+        self._substep_udd_fn = NULL
 
     def reset(self):
         """
@@ -98,6 +103,7 @@ cdef class MjSim(object):
 
         with wrap_mujoco_warning():
             for _ in range(self.nsubsteps):
+                self.substep_udd()
                 mj_step(self.model.ptr, self.data.ptr)
 
     def render(self, width=None, height=None, *, camera_name=None, depth=False,
@@ -154,6 +160,10 @@ cdef class MjSim(object):
             self._render_context_offscreen = render_context
         elif not render_context.offscreen and self._render_context_window is None:
             self._render_context_window = render_context
+
+    cdef substep_udd(self):
+        if self._substep_udd_fn:
+            self._substep_udd_fn(self.model.ptr, self.data.ptr)
 
     @property
     def udd_callback(self):
