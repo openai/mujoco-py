@@ -53,6 +53,22 @@ print(sim.data.qpos)
 
 See the [full documentation](https://openai.github.io/mujoco-py/build/html/index.html) for advanced usage.
 
+### Missing GLFW
+
+A common error when installing is:
+
+    raise ImportError("Failed to load GLFW3 shared library.")
+
+Which happens when the `glfw` python package fails to find a GLFW dynamic library.
+
+MuJoCo ships with its own copy of this library, which can be used during installation.
+
+Add the path to the mujoco bin directory to your dynamic loader:
+
+    LD_LIBRARY_PATH=$HOME/.mujoco/mjpro150/bin pip install mujoco-py
+
+This is particularly useful on Ubuntu 14.04, which does not have a GLFW package.
+
 ## Usage Examples
 
 A number of examples demonstrating some advanced features of `mujoco-py` can be found in [`examples/`](/./examples/). These include:
