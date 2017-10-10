@@ -44,8 +44,7 @@ class TestSubstep(unittest.TestCase):
     def test_substep(self):
         sim = MjSim(load_model_from_xml(XML))
         substep_fn = self.build_stubstep()
-        import ipdb; ipdb.set_trace()
-        print(sim)
+        sim.set_substep_fn(substep_fn)
 
 
 if __name__ == '__main__':

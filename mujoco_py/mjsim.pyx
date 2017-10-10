@@ -5,7 +5,7 @@ from threading import Lock
 _MjSim_render_lock = Lock()
 
 # ctypedef void (*substep_udd_t)(const mjModel* m, mjData* d)
-ctypedef void (*substep_udd_t)(void)
+ctypedef void (*substep_udd_t)()
 
 
 cdef class MjSim(object):
@@ -177,9 +177,9 @@ cdef class MjSim(object):
         self.udd_state = None
         self.step_udd()
 
-    def set_substep_fn(self, substep_fn):
+    def set_substep_fn(self, uintptr_t substep_fn):
         ''' Needs setter to be callable from python '''
-        self._substep_udd_fn = substep_fn
+        self._substep_udd_fn = <substep_udd_t>substep_fn
 
     def step_udd(self):
         if self._udd_callback is None:
