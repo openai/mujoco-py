@@ -177,6 +177,10 @@ cdef class MjSim(object):
         self.udd_state = None
         self.step_udd()
 
+    def set_substep_fn(self, substep_fn):
+        ''' Needs setter to be callable from python '''
+        self._substep_udd_fn = substep_fn
+
     def step_udd(self):
         if self._udd_callback is None:
             self.udd_state = {}

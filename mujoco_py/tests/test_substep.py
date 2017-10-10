@@ -19,13 +19,16 @@ XML = '''
 
 DUMMY_CDEF = '''
     void hello(void);
+    extern uintptr_t hello_fn;
 '''
 
 DUMMY_SOURCE = '''
     #include <stdio.h>
+''' + DUMMY_CDEF + '''
     void hello(void) {
         printf("hello\\n");
     }
+    uintptr_t hello_fn = (uintptr_t) hello;
 '''
 
 
@@ -35,9 +38,12 @@ class TestSubstep(unittest.TestCase):
         ffibuilder.cdef(DUMMY_CDEF)
         ffibuilder.set_source("_dummy", DUMMY_SOURCE)
         ffibuilder.compile(verbose=True)
+        from _dummy import lib  # noqa, import compiled function
+        return lib.hello_fn
 
     def test_substep(self):
         sim = MjSim(load_model_from_xml(XML))
+        substep_fn = self.build_stubstep()
         import ipdb; ipdb.set_trace()
         print(sim)
 
