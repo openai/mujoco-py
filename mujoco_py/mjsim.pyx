@@ -4,7 +4,8 @@ from threading import Lock
 
 _MjSim_render_lock = Lock()
 
-ctypedef void (*substep_udd_t)(const mjModel* m, mjData* d)
+# ctypedef void (*substep_udd_t)(const mjModel* m, mjData* d)
+ctypedef void (*substep_udd_t)(void)
 
 
 cdef class MjSim(object):
@@ -163,7 +164,8 @@ cdef class MjSim(object):
 
     cdef substep_udd(self):
         if self._substep_udd_fn:
-            self._substep_udd_fn(self.model.ptr, self.data.ptr)
+            # self._substep_udd_fn(self.model.ptr, self.data.ptr)
+            self._substep_udd_fn()
 
     @property
     def udd_callback(self):

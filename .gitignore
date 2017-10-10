@@ -48,3 +48,5 @@ outputfile
 tmp*
 cymj.c
 **/.git
+*.c
+*.so
