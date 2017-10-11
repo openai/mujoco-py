@@ -1,8 +1,10 @@
 #!/usr/bin/env python
 import os
+import glob
 import unittest
-import numpy as np
+from random import choice
 from shutil import move
+from string import ascii_lowercase
 from cffi import FFI
 from mujoco_py import load_model_from_xml, MjSim, cymj
 from mujoco_py.builder import mjpro_path, manually_link_libraries, load_dynamic_ext
@@ -47,18 +49,19 @@ class TestSubstep(unittest.TestCase):
     def build_stubstep(self):
         ffibuilder = FFI()
         ffibuilder.cdef(DUMMY_CDEF)
-        # TODO: randomize library name to prevent conflicts
-        # TODO: build library name is some directory in mujoco-py
         # TODO: time library building and note how long it should take
-        name = '_substep_udd'
+        name = '_substep_udd_'
+        name += ''.join(choice(ascii_lowercase) for _ in range(15))
         ffibuilder.set_source(name, DUMMY_SOURCE,
                               include_dirs=[MJ_INCLUDE],
                               library_dirs=[MJ_BIN],
                               libraries=['mujoco150'])
         library_path = ffibuilder.compile(verbose=True)
         fixed_library_path = manually_link_libraries(mjpro_path, library_path)
-        move(fixed_library_path, library_path)  # Overwrite
-        module = load_dynamic_ext(name, library_path)
+        module = load_dynamic_ext(name, fixed_library_path)
+        # Now that the module is loaded into memory, we can actually delete it
+        for f in glob.glob(name + '*'):
+            os.remove(f)
         return module.lib.hello_fn
 
     def test_substep(self):
