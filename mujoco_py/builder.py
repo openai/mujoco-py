@@ -16,16 +16,25 @@ from Cython.Distutils.old_build_ext import old_build_ext as build_ext
 
 from mujoco_py.utils import discover_mujoco
 
-def get_nvidia_lib_dir():
+
+def get_nvidia_version():
     cmd = 'nvidia-smi --query-gpu=driver_version --format=csv,noheader --id=0'
     try:
-        nvidia_version = subprocess.check_output(cmd.split(), universal_newlines=True)
+        return subprocess.check_output(cmd.split(), universal_newlines=True)
     except FileNotFoundError:
         return None
-    major_version = nvidia_version.split('.')[0]
+
+
+def get_nvidia_lib_dir():
+    nvidia_version = get_nvidia_version()
+    if nvidia_version is None:
+        return None
     root = os.path.abspath(os.sep)
-    nvidia_lib_dir = join(root, 'usr', 'lib', 'nvidia-' + major_version)
-    return nvidia_lib_dir if exists(nvidia_lib_dir) else None
+    major_version = nvidia_version.split('.')[0]
+    for nvidia_lib_dir in [join(root, 'usr', 'local', 'nvidia', 'lib64'), 
+                           join(root, 'usr', 'lib', 'nvidia-' + major_version)]:
+        if exists(nvidia_lib_dir):
+            return nvidia_lib_dir
 
 
 def load_cython_ext(mjpro_path):
