@@ -39,8 +39,6 @@ def load_cython_ext(mjpro_path):
     to only do that once and then atomically move to the final
     location.
     """
-
-
     if ('glfw' in sys.modules and
             'mujoco' in abspath(sys.modules["glfw"].__file__)):
         print('''

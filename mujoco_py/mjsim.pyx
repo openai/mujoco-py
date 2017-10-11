@@ -41,7 +41,7 @@ cdef class MjSim(object):
     """
     cdef readonly PyMjData data
     # Number of substeps when calling .step
-    cdef readonly int nsubsteps
+    cdef public int nsubsteps
     # User defined state.
     cdef readonly dict udd_state
     # User defined dynamics callback
