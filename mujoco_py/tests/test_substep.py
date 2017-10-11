@@ -2,9 +2,10 @@
 import os
 import unittest
 import numpy as np
+from shutil import move
 from cffi import FFI
 from mujoco_py import load_model_from_xml, MjSim, cymj
-from mujoco_py.builder import mjpro_path, manually_link_libraries
+from mujoco_py.builder import mjpro_path, manually_link_libraries, load_dynamic_ext
 
 MJ_INCLUDE = os.path.join(mjpro_path, 'include')
 MJ_BIN = os.path.join(mjpro_path, 'bin')
@@ -26,7 +27,6 @@ XML = '''
 
 DUMMY_CDEF = '''
     extern uintptr_t hello_fn;
-    extern double result;
 '''
 
 # TODO: fixed header set always prepended
@@ -36,7 +36,6 @@ DUMMY_SOURCE = '''
     #include <mujoco.h>
     #define my_field d->userdata[0]
 ''' + DUMMY_CDEF + '''
-    double result;
     static void hello(const mjModel* m, mjData* d) {
         printf("hello\\n");
     }
@@ -51,20 +50,24 @@ class TestSubstep(unittest.TestCase):
         # TODO: randomize library name to prevent conflicts
         # TODO: build library name is some directory in mujoco-py
         # TODO: time library building and note how long it should take
-        ffibuilder.set_source("_substep_udd", DUMMY_SOURCE,
-                              include_dirs=[MJ_INCLUDE, np.get_include],
+        name = '_substep_udd'
+        ffibuilder.set_source(name, DUMMY_SOURCE,
+                              include_dirs=[MJ_INCLUDE],
                               library_dirs=[MJ_BIN],
                               libraries=['mujoco150'])
-        ffibuilder.compile(verbose=True)
-        from __pycache__._todo_randomize import lib  # noqa, import compiled function
-        return lib.hello_fn
+        library_path = ffibuilder.compile(verbose=True)
+        fixed_library_path = manually_link_libraries(mjpro_path, library_path)
+        move(fixed_library_path, library_path)  # Overwrite
+        module = load_dynamic_ext(name, library_path)
+        return module.lib.hello_fn
 
     def test_substep(self):
         # TODO: desired interface
         # TODO: check for room in userdata for fields
         sim = MjSim(load_model_from_xml(XML))
         substep_fn = self.build_stubstep()
-        sim.set_substep_fn(substep_fn)
+        sim.set_substep_udd_fn(substep_fn)
+        sim.step()
 
 
 if __name__ == '__main__':

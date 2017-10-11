@@ -1,5 +1,4 @@
 import distutils
-import imp
 import os
 import shutil
 import subprocess
@@ -9,6 +8,7 @@ from distutils.dist import Distribution
 from distutils.sysconfig import customize_compiler
 from os.path import abspath, dirname, exists, join, getmtime
 from shutil import move
+from importlib.machinery import ExtensionFileLoader
 
 import numpy as np
 from Cython.Build import cythonize
@@ -54,8 +54,13 @@ The easy solution is to `import mujoco_py` _before_ `import glfw`.
     cext_so_path = builder.get_so_file_path()
     if not exists(cext_so_path):
         cext_so_path = builder.build()
-    mod = imp.load_dynamic("cymj", cext_so_path)
-    return mod
+    return load_dynamic_ext('cymj', cext_so_path)
+
+
+def load_dynamic_ext(name, path):
+    ''' Load compiled shared object and return as python module. '''
+    loader = ExtensionFileLoader(name, path)
+    return loader.load_module()
 
 
 class custom_build_ext(build_ext):
