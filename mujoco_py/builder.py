@@ -78,6 +78,7 @@ class custom_build_ext(build_ext):
 
 
 def fix_shared_library(so_file, name, library_path):
+    ''' Used to fixup shared libraries on Linux '''
     ldd_output = subprocess.check_output(
         ['ldd', so_file]).decode('utf-8')
 
@@ -90,6 +91,44 @@ def fix_shared_library(so_file, name, library_path):
         ['patchelf', '--add-needed',
          library_path,
          so_file])
+
+
+def manually_link_libraries(mjpro_path, raw_cext_dll_path):
+    ''' Used to fix mujoco library linking on Mac '''
+    root, ext = os.path.splitext(raw_cext_dll_path)
+    final_cext_dll_path = root + '_final' + ext
+
+    # If someone else already built the final DLL, don't bother
+    # recreating it here, even though this should still be idempotent.
+    if (exists(final_cext_dll_path) and
+            getmtime(final_cext_dll_path) >= getmtime(raw_cext_dll_path)):
+        return final_cext_dll_path
+
+    tmp_final_cext_dll_path = final_cext_dll_path + '~'
+    shutil.copyfile(raw_cext_dll_path, tmp_final_cext_dll_path)
+
+    mj_bin_path = join(mjpro_path, 'bin')
+
+    # Fix the rpath of the generated library -- i lost the Stackoverflow
+    # reference here
+    from_mujoco_path = '@executable_path/libmujoco150.dylib'
+    to_mujoco_path = '%s/libmujoco150.dylib' % mj_bin_path
+    subprocess.check_call(['install_name_tool',
+                           '-change',
+                           from_mujoco_path,
+                           to_mujoco_path,
+                           tmp_final_cext_dll_path])
+
+    from_glfw_path = 'libglfw.3.dylib'
+    to_glfw_path = os.path.join(mj_bin_path, 'libglfw.3.dylib')
+    subprocess.check_call(['install_name_tool',
+                           '-change',
+                           from_glfw_path,
+                           to_glfw_path,
+                           tmp_final_cext_dll_path])
+
+    os.rename(tmp_final_cext_dll_path, final_cext_dll_path)
+    return final_cext_dll_path
 
 
 class MujocoExtensionBuilder():
@@ -212,43 +251,7 @@ class MacExtensionBuilder(MujocoExtensionBuilder):
 
         so_file_path = super()._build_impl()
         del os.environ['CC']
-        return self.manually_link_libraries(so_file_path)
-
-    def manually_link_libraries(self, raw_cext_dll_path):
-        root, ext = os.path.splitext(raw_cext_dll_path)
-        final_cext_dll_path = root + '_final' + ext
-
-        # If someone else already built the final DLL, don't bother
-        # recreating it here, even though this should still be idempotent.
-        if (exists(final_cext_dll_path) and
-                getmtime(final_cext_dll_path) >= getmtime(raw_cext_dll_path)):
-            return final_cext_dll_path
-
-        tmp_final_cext_dll_path = final_cext_dll_path + '~'
-        shutil.copyfile(raw_cext_dll_path, tmp_final_cext_dll_path)
-
-        mj_bin_path = join(self.mjpro_path, 'bin')
-
-        # Fix the rpath of the generated library -- i lost the Stackoverflow
-        # reference here
-        from_mujoco_path = '@executable_path/libmujoco150.dylib'
-        to_mujoco_path = '%s/libmujoco150.dylib' % mj_bin_path
-        subprocess.check_call(['install_name_tool',
-                               '-change',
-                               from_mujoco_path,
-                               to_mujoco_path,
-                               tmp_final_cext_dll_path])
-
-        from_glfw_path = 'libglfw.3.dylib'
-        to_glfw_path = os.path.join(mj_bin_path, 'libglfw.3.dylib')
-        subprocess.check_call(['install_name_tool',
-                               '-change',
-                               from_glfw_path,
-                               to_glfw_path,
-                               tmp_final_cext_dll_path])
-
-        os.rename(tmp_final_cext_dll_path, final_cext_dll_path)
-        return final_cext_dll_path
+        return manually_link_libraries(self.mjpro_path, so_file_path)
 
 
 class MujocoException(Exception):

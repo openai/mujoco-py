@@ -55,7 +55,7 @@ cdef class MjSim(object):
     cdef substep_udd_t _substep_udd_fn
 
     def __cinit__(self, PyMjModel model, PyMjData data=None, int nsubsteps=1,
-                  udd_callback=None):
+                  udd_callback=None, substep_udd_fn=None):
         self.nsubsteps = nsubsteps
         self.model = model
         if data is None:
@@ -73,7 +73,14 @@ cdef class MjSim(object):
         self.udd_state = None
         self.udd_callback = udd_callback
         self.extras = {}
-        self._substep_udd_fn = NULL
+        if substep_udd_fn is None:
+            self._substep_udd_fn = NULL
+        else:
+            assert isinstance(substep_udd_fn, (str, int)), 'Must be string or int'
+            if isinstance(substep_udd_fn, int):
+                self.set_substep_udd_fn(substep_udd_fn)
+            else:
+                self.build_substep_udd_fn(substep_udd_fn)
 
     def reset(self):
         """
@@ -177,7 +184,7 @@ cdef class MjSim(object):
         self.udd_state = None
         self.step_udd()
 
-    def set_substep_fn(self, uintptr_t substep_fn):
+    def set_substep_udd_fn(self, uintptr_t substep_fn):
         ''' Needs setter to be callable from python '''
         self._substep_udd_fn = <substep_udd_t>substep_fn
 
