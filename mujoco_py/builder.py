@@ -16,6 +16,17 @@ from Cython.Distutils.old_build_ext import old_build_ext as build_ext
 
 from mujoco_py.utils import discover_mujoco
 
+def get_nvidia_lib_dir():
+    cmd = 'nvidia-smi --query-gpu=driver_version --format=csv,noheader --id=0'
+    try:
+        nvidia_version = subprocess.check_output(cmd.split(), universal_newlines=True)
+    except FileNotFoundError:
+        return None
+    major_version = nvidia_version.split('.')[0]
+    root = os.path.abspath(os.sep)
+    nvidia_lib_dir = join(root, 'usr', 'lib', 'nvidia-' + major_version)
+    return nvidia_lib_dir if exists(nvidia_lib_dir) else None
+
 
 def load_cython_ext(mjpro_path):
     """
@@ -28,6 +39,8 @@ def load_cython_ext(mjpro_path):
     to only do that once and then atomically move to the final
     location.
     """
+
+
     if ('glfw' in sys.modules and
             'mujoco' in abspath(sys.modules["glfw"].__file__)):
         print('''
@@ -41,7 +54,7 @@ The easy solution is to `import mujoco_py` _before_ `import glfw`.
     if sys.platform == 'darwin':
         Builder = MacExtensionBuilder
     elif sys.platform == 'linux':
-        if exists('/usr/local/nvidia/lib64') and os.getenv('MUJOCO_PY_FORCE_CPU') is None:
+        if get_nvidia_lib_dir() is not None and os.getenv('MUJOCO_PY_FORCE_CPU') is None:
             Builder = LinuxGPUExtensionBuilder
         else:
             Builder = LinuxCPUExtensionBuilder
@@ -177,11 +190,10 @@ class LinuxGPUExtensionBuilder(MujocoExtensionBuilder):
 
     def _build_impl(self):
         so_file_path = super()._build_impl()
-        nvidia_lib_dir = '/usr/local/nvidia/lib64/'
         fix_shared_library(so_file_path, 'libOpenGL.so',
-                           join(nvidia_lib_dir, 'libOpenGL.so.0'))
+                           join(get_nvidia_lib_dir(), 'libOpenGL.so.0'))
         fix_shared_library(so_file_path, 'libEGL.so',
-                           join(nvidia_lib_dir, 'libEGL.so.1'))
+                           join(get_nvidia_lib_dir(), 'libEGL.so.1'))
         return so_file_path
 
 
