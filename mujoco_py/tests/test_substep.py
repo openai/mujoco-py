@@ -15,6 +15,7 @@ GENERATED_DIR = os.path.dirname(cymj.__file__)
 
 XML = '''
 <mujoco>
+    <size nuserdata="1"/>
     <worldbody>
         <body pos="0 0 0">
             <joint name="j" type="hinge" axis="1 0 0"/>
@@ -37,13 +38,40 @@ HELLO_FN = '''
 '''
 
 SINGLE_FN = '''
+    #include <stdio.h>
     void generic(const mjModel* m, mjData* d) {
+        printf("nuserdata %d\\n", m->nuserdata);
+        fflush(stdout);
         d->userdata[0] = 1;
     }
 '''
 
 
 class TestSubstep(unittest.TestCase):
+    def test_userdata(self):
+        ''' Verify userdata works without substep function '''
+        model = load_model_from_xml(XML)
+        self.assertEqual(model.nuserdata, 1)
+        sim = MjSim(model)
+        self.assertEqual(sim.data.userdata[0], 0)
+        sim.data.userdata[0] = 1
+        self.assertEqual(sim.data.userdata[0], 1)
+
+    def test_incremental(self):
+        ''' Test nuserdata is not corrupted '''
+        model = load_model_from_xml(XML)
+        self.assertEqual(model.nuserdata, 1)
+        sim = MjSim(model)
+        self.assertEqual(sim.model.nuserdata, 1)
+        self.assertEqual(sim.data.userdata[0], 0)
+        sim.set_substep_udd_fn(HELLO_FN)
+        self.assertEqual(sim.model.nuserdata, 1)
+        self.assertEqual(sim.data.userdata[0], 0)
+        sim.step()
+        self.assertEqual(sim.model.nuserdata, 1)
+        self.assertEqual(sim.data.userdata[0], 0)
+
+
     def test_hello(self):
         # TODO: desired interface
         sim = MjSim(load_model_from_xml(XML), substep_udd_fn=HELLO_FN)

@@ -173,8 +173,7 @@ cdef class MjSim(object):
 
     cdef substep_udd(self):
         if self._substep_udd_fn:
-            # self._substep_udd_fn(self.model.ptr, self.data.ptr)
-            self._substep_udd_fn()
+            self._substep_udd_fn(self.model.ptr, self.data.ptr)
 
     @property
     def udd_callback(self):
