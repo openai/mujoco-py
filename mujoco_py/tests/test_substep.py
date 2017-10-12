@@ -129,6 +129,33 @@ class TestSubstep(unittest.TestCase):
         # Assert that min penetration is much less than current penetration
         self.assertLess(sim.data.userdata[0], 10 * sim.data.contact[0].dist)
 
+    def test_reuse(self):
+        ''' Test that we can re-use a substep_udd_fn between sims '''
+        fn = '''
+            #define MAX(a, b) (a > b ? a : b)
+            void generic(const mjModel* m, mjData* d) {
+                for (int i = 0; i < m->nu; i++) {
+                    ctrl_max = MAX(ctrl_max, d->ctrl[i]);
+                }
+            }
+        '''
+        sim = MjSim(load_model_from_xml(XML.format(nuserdata=1)),
+                    substep_udd_fn=fn,
+                    substep_udd_fields=['ctrl_max'])
+        sim.step()
+        self.assertEqual(sim.data.userdata[0], 0)
+        sim.data.ctrl[:] = [1, 2]
+        sim.step()
+        self.assertEqual(sim.data.userdata[0], 2)
+        sim2 = MjSim(sim.model,
+                     substep_udd_fn=sim.substep_udd_fn,
+                     substep_udd_fields=sim.substep_udd_fields)
+        sim2.step()
+        self.assertEqual(sim2.data.userdata[0], 0)
+        sim2.data.ctrl[:] = [.1, .2]
+        sim2.step()
+        self.assertEqual(sim2.data.userdata[0], .2)
+
 
 if __name__ == '__main__':
     unittest.main()

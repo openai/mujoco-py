@@ -61,6 +61,8 @@ cdef class MjSim(object):
     cdef readonly dict extras
     # Function pointer for UDD substeps
     cdef substep_udd_t _substep_udd_fn
+    # Integer value of function pointer, for reuse by other sims
+    cdef public uintptr_t substep_udd_fn
     # List of names for substep function
     cdef public list substep_udd_fields
 
@@ -195,6 +197,7 @@ cdef class MjSim(object):
     def set_substep_udd_fn(self, substep_udd_fn):
         '''
         TODO: tons of docs right here
+        TODO: document how we can reuse these between sims
         '''
         if substep_udd_fn is None:
             self._substep_udd_fn = NULL
@@ -215,6 +218,7 @@ cdef class MjSim(object):
 
     def _set_substep_udd_fn(self, uintptr_t substep_udd_fn):
         ''' Needs setter to be callable from python to get correct types '''
+        self.substep_udd_fn = substep_udd_fn
         self._substep_udd_fn = <substep_udd_t>substep_udd_fn
 
     def step_udd(self):
