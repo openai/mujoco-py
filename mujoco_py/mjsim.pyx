@@ -30,15 +30,11 @@ cdef class MjSim(object):
         next ``udd_state`` after applying the user-defined dynamics. This is
         useful e.g. for reward functions that operate over functions of historical
         state.
-    substep_udd_fn : str or int or None
+    substep_callback : str or int or None
         This uses a compiled C function as user-defined dynamics in substeps.
-        It's downsides are that it doesn't have access to python functionality,
-        and it's upsides are that it's fast and parallelizeable.
-        See :meth:``set_substep_udd_fn`` for detailed info.
-    userdata_fields : list of strings
-        These are strings that are named values which index into userdata.
-        These can also be used to store results from the ``substep_udd_fn``,
-        and as convenience names in the function definition.
+        If given as a string, it's compiled as a C function and set as pointer.
+        If given as int, it's interpreted as a function pointer.
+        See :meth:``set_substep_callback`` for detailed info.
     """
     # MjRenderContext for rendering camera views.
     cdef readonly list render_contexts
@@ -60,15 +56,11 @@ cdef class MjSim(object):
     cdef readonly object _udd_callback
     # Allows to store extra information in MjSim.
     cdef readonly dict extras
-    # Function pointer for UDD substeps
-    cdef substep_udd_t _substep_udd_fn
-    # Integer value of function pointer, for reuse by other sims
-    cdef public uintptr_t substep_udd_fn
-    # List of names for fields in userdata
-    cdef public list userdata_fields
+    # Function pointer for substep callback, stored as uintptr
+    cdef readonly uintptr_t substep_callback_ptr
 
     def __cinit__(self, PyMjModel model, PyMjData data=None, int nsubsteps=1,
-                  udd_callback=None, substep_udd_fn=None, userdata_fields=[]):
+                  udd_callback=None, substep_callback=None):
         self.nsubsteps = nsubsteps
         self.model = model
         if data is None:
@@ -88,11 +80,11 @@ cdef class MjSim(object):
         self.extras = {}
         # TODO: add magic name-based indexing to userdata based on fields
         # TODO: add convenient way to get field info from data
-        assert isinstance(userdata_fields, list), 'fields must be list'
-        assert model.nuserdata >= len(userdata_fields), \
-            'userdata {} < len {}'.format(model.nuserdata, len(userdata_fields))
-        self.userdata_fields = userdata_fields
-        self.set_substep_udd_fn(substep_udd_fn)
+        # assert isinstance(userdata_fields, list), 'fields must be list'
+        # assert model.nuserdata >= len(userdata_fields), \
+        #     'userdata {} < len {}'.format(model.nuserdata, len(userdata_fields))
+        # self.userdata_fields = userdata_fields
+        self.set_substep_callback(substep_callback)
 
     def reset(self):
         """
@@ -123,7 +115,7 @@ cdef class MjSim(object):
 
         with wrap_mujoco_warning():
             for _ in range(self.nsubsteps):
-                self.substep_udd()
+                self.substep_callback()
                 mj_step(self.model.ptr, self.data.ptr)
 
     def render(self, width=None, height=None, *, camera_name=None, depth=False,
@@ -181,10 +173,6 @@ cdef class MjSim(object):
         elif not render_context.offscreen and self._render_context_window is None:
             self._render_context_window = render_context
 
-    cdef substep_udd(self):
-        if self._substep_udd_fn:
-            self._substep_udd_fn(self.model.ptr, self.data.ptr)
-
     @property
     def udd_callback(self):
         return self._udd_callback
@@ -195,31 +183,23 @@ cdef class MjSim(object):
         self.udd_state = None
         self.step_udd()
 
-    def set_substep_udd_fn(self, substep_udd_fn):
+    cpdef substep_callback(self):
+        if self.substep_callback_ptr:
+            (<mjfGeneric>self.substep_callback_ptr)(self.model.ptr, self.data.ptr)
+
+    def set_substep_callback(self, substep_callback):
         '''
         TODO: tons of docs right here
-        TODO: document how we can reuse these between sims
         '''
-        if substep_udd_fn is None:
-            self._substep_udd_fn = NULL
-        elif isinstance(substep_udd_fn, int):
-            # There's not much we can do to verify this, so trust it works
-            self._set_substep_udd_fn(substep_udd_fn)
-        elif isinstance(substep_udd_fn, str):
-            # See build_callback_fn() for how to make callbacks
-            # TODO: add userdata_fields parsing
-            # TODO: generate defines for userdata (function lives in builder.py)
-            # TODO: check for room in userdata for fields
-            # TODO: desired interface (aray: see whiteboard photos)
-            substep_udd_fn = build_callback_fn(substep_udd_fn, self.userdata_fields)
-            self._set_substep_udd_fn(substep_udd_fn)
+        if substep_callback is None:
+            self.substep_callback_ptr = 0
+        elif isinstance(substep_callback, int):
+            self.substep_callback_ptr = substep_callback
+        elif isinstance(substep_callback, str):
+            self.substep_callback_ptr = build_callback_fn(substep_callback,
+                                                          self.model.userdata_names)
         else:
-            assert False, 'substep_udd_fn must be string or int'
-
-    def _set_substep_udd_fn(self, uintptr_t substep_udd_fn):
-        ''' Needs setter to be callable from python to get correct types '''
-        self.substep_udd_fn = substep_udd_fn
-        self._substep_udd_fn = <substep_udd_t>substep_udd_fn
+            raise TypeError('substep_callback must be string or int or None')
 
     def step_udd(self):
         if self._udd_callback is None:

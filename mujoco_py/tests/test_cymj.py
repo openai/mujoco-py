@@ -724,3 +724,15 @@ def import_process(queue):
         queue.put(False)
     else:
         queue.put(True)
+
+
+def test_nuserdata_assert(self):
+    # Check that we throw an assert if there's not enough userdata
+    model = load_model_from_xml(XML.format(nuserdata=0))
+    with self.assertRaises(AssertionError):
+        model.set_userdata_names(['foo'])
+    # Doesn't throw assert
+    model = load_model_from_xml(XML.format(nuserdata=1))
+    model.set_userdata_names(['foo'])
+    with self.assertRaises(AssertionError):
+        model.set_userdata_names(['foo', 'bar'])

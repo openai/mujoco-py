@@ -44,18 +44,19 @@ INCREMENT_FN = '''
 
 class TestSubstep(unittest.TestCase):
     def test_hello(self):
-        sim = MjSim(load_model_from_xml(XML.format(nuserdata=0)),
-                    substep_udd_fn=HELLO_FN)
+        sim = MjSim(load_model_from_xml(XML.format(nuserdata=0)))
+        sim.set_substep_callback(HELLO_FN)
         sim.step()  # should print 'hello'
 
     def test_increment(self):
-        sim = MjSim(load_model_from_xml(XML.format(nuserdata=1)),
-                    substep_udd_fn=INCREMENT_FN)
+        sim = MjSim(load_model_from_xml(XML.format(nuserdata=1)))
+        sim.set_substep_callback(INCREMENT_FN)
         self.assertEqual(sim.data.userdata[0], 0)
         sim.step()  # should increment userdata[0]
         self.assertEqual(sim.data.userdata[0], 1)
         # Test again with different nsubsteps, reuse model
-        sim = MjSim(sim.model, nsubsteps=7, substep_udd_fn=INCREMENT_FN)
+        sim = MjSim(sim.model, nsubsteps=7)
+        sim.set_substep_callback(INCREMENT_FN)
         self.assertEqual(sim.data.userdata[0], 0)
         sim.step()  # should increment userdata[0] 7 times
         self.assertEqual(sim.data.userdata[0], 7)
@@ -68,9 +69,10 @@ class TestSubstep(unittest.TestCase):
                 }
             }
         '''
-        sim = MjSim(load_model_from_xml(XML.format(nuserdata=1)),
-                    substep_udd_fn=fn,
-                    userdata_fields=['my_sum'])
+        model = load_model_from_xml(XML.format(nuserdata=1))
+        model.set_userdata_names(['my_sum'])
+        sim = MjSim(model)
+        sim.set_substep_callback(fn)
         self.assertEqual(sim.data.userdata[0], 0)
         sim.step()  # should set userdata[0] to sum of controls
         self.assertEqual(sim.data.userdata[0], 0)
@@ -80,23 +82,6 @@ class TestSubstep(unittest.TestCase):
         self.assertEqual(sim.data.userdata[0], 12.34)
         sim.step()
         self.assertEqual(sim.data.userdata[0], 24.68)
-
-    def test_nuserdata_assert(self):
-        model = load_model_from_xml(XML.format(nuserdata=0))
-        MjSim(model, substep_udd_fn=HELLO_FN)
-        with self.assertRaises(AssertionError):
-            MjSim(model,
-                  substep_udd_fn=INCREMENT_FN,
-                  userdata_fields=['foo'])
-        # Doesn't throw assert
-        model = load_model_from_xml(XML.format(nuserdata=1))
-        MjSim(model,
-              substep_udd_fn=INCREMENT_FN,
-              userdata_fields=['foo'])
-        with self.assertRaises(AssertionError):
-            MjSim(model,
-                  substep_udd_fn=INCREMENT_FN,
-                  userdata_fields=['foo', 'bar'])
 
     def test_penetrations(self):
         # Test that we capture the max penetration of a falling sphere

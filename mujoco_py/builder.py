@@ -314,7 +314,7 @@ def build_fn_cleanup(name):
             os.remove(f)
 
 
-def build_callback_fn(function_string, userdata_fields=[]):
+def build_callback_fn(function_string, userdata_names=[]):
     '''
     Builds a callback function with a `mjfGeneric` signature.
     TODO: note future work for building other kinds of callback
@@ -330,15 +330,15 @@ def build_callback_fn(function_string, userdata_fields=[]):
     TODO: note possible future improvements, e.g. ability to link in external libs
     TODO: Docurment MUJOCO_PY_DEBUG_FN_BUILDER=1 to keep files
     '''
-    assert isinstance(userdata_fields, list), 'userdata_fields must be list'
+    assert isinstance(userdata_names, (list, tuple)), 'bad userdata_names'
     ffibuilder = FFI()
     ffibuilder.cdef('extern uintptr_t __fun;')
     # TODO: time library building and note how long it should take
     name = '_generic_fn_' + ''.join(choice(ascii_lowercase) for _ in range(15))
     source_string = '#include <mujoco.h>\n'
     # Add defines for each userdata to make setting them easier
-    for i, fieldname in enumerate(userdata_fields):
-        source_string += '#define {} d->userdata[{}]\n'.format(fieldname, i)
+    for i, name in enumerate(userdata_names):
+        source_string += '#define {} d->userdata[{}]\n'.format(name, i)
     source_string += function_string
     source_string += '\nuintptr_t __fun = (uintptr_t) fun;'
     # Link against mujoco so we can call mujoco functions from within callback
