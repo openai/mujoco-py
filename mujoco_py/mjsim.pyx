@@ -5,8 +5,7 @@ from threading import Lock
 
 _MjSim_render_lock = Lock()
 
-# ctypedef void (*substep_udd_t)(const mjModel* m, mjData* d)
-ctypedef void (*substep_udd_t)()
+ctypedef void (*substep_udd_t)(const mjModel* m, mjData* d)
 
 
 cdef class MjSim(object):
@@ -199,6 +198,7 @@ cdef class MjSim(object):
             # TODO: add substep_udd_fields parsing
             # TODO: generate defines for userdata (function lives in builder.py)
             # TODO: check for room in userdata for fields
+            # TODO: desired interface (aray: see whiteboard photos)
             substep_udd_fn = build_generic_fn(substep_udd_fn)
             self._set_substep_udd_fn(substep_udd_fn)
         else:
