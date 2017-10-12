@@ -21,10 +21,10 @@ def tryint(x):
 
 def get_struct_dict(struct, struct_name, array_shapes):
     struct_dict = OrderedDict()
-    struct_dict[struct_name] = {'scalars': [],
-                                'arrays': [],
-                                'ptrs': [],
-                                'depends_on_model': False}
+    struct_dict[struct_name] = OrderedDict([('scalars', []),
+                                            ('arrays', []),
+                                            ('ptrs', []),
+                                            ('depends_on_model', False)])
     for child in struct.children():
         child_name = child[1].name
         child_type = child[1].type
@@ -74,6 +74,7 @@ def get_struct_dict(struct, struct_name, array_shapes):
                     struct_dict[struct_name]['depends_on_model'] = True
         else:
             raise NotImplementedError
+    assert isinstance(struct_dict, OrderedDict), 'Must be deterministic'
     return struct_dict
 
 
@@ -90,7 +91,7 @@ def get_full_scr_lines(HEADER_DIR, HEADER_FILES):
 
 def get_array_shapes(full_src_lines):
     #  ===== Parse array shape hints =====
-    array_shapes = {}
+    array_shapes = OrderedDict()
     curr_struct_name = None
     for line in full_src_lines:
         # Current struct name
@@ -133,8 +134,9 @@ def get_full_struct_dict(processed_src, array_shapes):
             assert struct.name.startswith('_mj')
             struct_name = struct.name[1:]  # take out leading underscore
             assert struct_name not in struct_dict
-            struct_dict = dict(
-                struct_dict, **get_struct_dict(struct, struct_name, array_shapes))
+            struct_dict = struct_dict.copy()
+            struct_dict.update(get_struct_dict(struct, struct_name, array_shapes))
+    assert isinstance(struct_dict, OrderedDict), 'Must be deterministic'
     return struct_dict
 
 
@@ -173,8 +175,8 @@ def get_const_from_enum(processed_src):
 
 def get_struct_wrapper(struct_dict):
     #  ===== Generate code =====
-    structname2wrappername = {}
-    structname2wrapfuncname = {}
+    structname2wrappername = OrderedDict()
+    structname2wrapfuncname = OrderedDict()
     for name in struct_dict:
         assert name.startswith('mj')
         structname2wrappername[name] = 'PyMj' + name[2:]
@@ -449,12 +451,12 @@ def main():
         model_var_name = 'p' if name == 'mjModel' else 'model'
 
         # Disabling a few accessors that are unsafe due to ambiguous meaning.
-        REPLACEMENT_BY_ORIGINAL = {
-            'xpos': 'body_xpos',
-            'xmat': 'body_xmat',
-            'xquat': 'body_xquat',
-            'efc_pos': 'active_contacts_efc_pos',
-        }
+        REPLACEMENT_BY_ORIGINAL = OrderedDict([
+            ('xpos', 'body_xpos'),
+            ('xmat', 'body_xmat'),
+            ('xquat', 'body_xquat'),
+            ('efc_pos', 'active_contacts_efc_pos'),
+        ])
 
         for scalar_name, scalar_type in fields['scalars']:
             if scalar_type in ['float', 'int', 'mjtNum', 'mjtByte', 'unsigned int']:
