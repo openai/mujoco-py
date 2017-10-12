@@ -1,17 +1,6 @@
 #!/usr/bin/env python
-import os
-import glob
 import unittest
-from random import choice
-from shutil import move
-from string import ascii_lowercase
-from cffi import FFI
-from mujoco_py import load_model_from_xml, MjSim, cymj
-from mujoco_py.builder import mjpro_path, manually_link_libraries, load_dynamic_ext
-
-MJ_INCLUDE = os.path.join(mjpro_path, 'include')
-MJ_BIN = os.path.join(mjpro_path, 'bin')
-GENERATED_DIR = os.path.dirname(cymj.__file__)
+from mujoco_py import load_model_from_xml, MjSim
 
 XML = '''
 <mujoco>
@@ -32,27 +21,6 @@ XML = '''
     </actuator>
 </mujoco>
 '''
-
-COMPLEX_XML = '''
-<mujoco>
-    <size nuserdata="1"/>
-    <worldbody>
-        <body pos="0 0 0">
-            <joint name="j1" type="hinge" axis="1 0 0"/>
-            <geom type="sphere" size=".5"/>
-            <body pos="0 0 1">
-                <joint name="j2" type="hinge" axis="1 0 0"/>
-                <geom type="sphere" size=".5"/>
-            </body>
-        </body>
-    </worldbody>
-    <actuator>
-        <position joint="j1" kp="100"/>
-        <position joint="j2" kp="100"/>
-    </actuator>
-</mujoco>
-'''
-
 
 HELLO_FN = '''
     #include <stdio.h>
