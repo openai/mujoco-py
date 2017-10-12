@@ -334,7 +334,9 @@ def build_generic_fn(function_string, userdata_fields=[]):
                           library_dirs=[join(mjpro_path, 'bin')],
                           libraries=['mujoco150'])
     library_path = ffibuilder.compile(verbose=True)
-    fixed_library_path = manually_link_libraries(mjpro_path, library_path)
+    if sys.platform == 'darwin':
+        fixed_library_path = manually_link_libraries(mjpro_path, library_path)
+        move(fixed_library_path, library_path)  # Overwrite with fixed library
     module = load_dynamic_ext(name, fixed_library_path)
     # Now that the module is loaded into memory, we can actually delete it
     if not os.environ.get('MUJOCO_PY_DEBUG_FN_BUILDER', False):
