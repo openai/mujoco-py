@@ -1,5 +1,6 @@
 from xml.dom import minidom
 from mujoco_py.utils import remove_empty_lines
+from mujoco_py.builder import build_generic_fn
 from threading import Lock
 
 _MjSim_render_lock = Lock()
@@ -30,6 +31,14 @@ cdef class MjSim(object):
         next ``udd_state`` after applying the user-defined dynamics. This is
         useful e.g. for reward functions that operate over functions of historical
         state.
+    substep_udd_fn : str or int or None
+        This uses a compiled C function as user-defined dynamics in substeps.
+        It's downsides are that it doesn't have access to python functionality,
+        and it's upsides are that it's fast and parallelizeable.
+        See :meth:``set_substep_udd_fn`` for detailed info.
+    substep_udd_fields : list of strings
+        These are strings that are named values which index into userdata,
+        which is used to store results from the ``substep_udd`` function.
     """
     # MjRenderContext for rendering camera views.
     cdef readonly list render_contexts
@@ -55,7 +64,7 @@ cdef class MjSim(object):
     cdef substep_udd_t _substep_udd_fn
 
     def __cinit__(self, PyMjModel model, PyMjData data=None, int nsubsteps=1,
-                  udd_callback=None, substep_udd_fn=None):
+                  udd_callback=None, substep_udd_fn=None, substep_udd_fields=[]):
         self.nsubsteps = nsubsteps
         self.model = model
         if data is None:
@@ -73,14 +82,7 @@ cdef class MjSim(object):
         self.udd_state = None
         self.udd_callback = udd_callback
         self.extras = {}
-        if substep_udd_fn is None:
-            self._substep_udd_fn = NULL
-        else:
-            assert isinstance(substep_udd_fn, (str, int)), 'Must be string or int'
-            if isinstance(substep_udd_fn, int):
-                self.set_substep_udd_fn(substep_udd_fn)
-            else:
-                self.build_substep_udd_fn(substep_udd_fn)
+        self.set_substep_udd_fn(substep_udd_fn)
 
     def reset(self):
         """
@@ -184,9 +186,27 @@ cdef class MjSim(object):
         self.udd_state = None
         self.step_udd()
 
-    def set_substep_udd_fn(self, uintptr_t substep_fn):
-        ''' Needs setter to be callable from python '''
-        self._substep_udd_fn = <substep_udd_t>substep_fn
+    def set_substep_udd_fn(self, substep_udd_fn):
+        '''
+        TODO: tons of docs right here
+        '''
+        if substep_udd_fn is None:
+            self._substep_udd_fn = NULL
+        elif isinstance(substep_udd_fn, int):
+            # There's not much we can do to verify this, so trust it works
+            self._set_substep_udd_fn(substep_udd_fn)
+        elif isinstance(substep_udd_fn, str):
+            # See build_callback_fn() for how to make callbacks
+            # TODO: add substep_udd_fields parsing
+            # TODO: generate defines for userdata (function lives in builder.py)
+            substep_udd_fn = build_generic_fn(substep_udd_fn)
+            self._set_substep_udd_fn(substep_udd_fn)
+        else:
+            assert False, 'substep_udd_fn must be string or int'
+
+    def _set_substep_udd_fn(self, uintptr_t substep_udd_fn):
+        ''' Needs setter to be callable from python to get correct types '''
+        self._substep_udd_fn = <substep_udd_t>substep_udd_fn
 
     def step_udd(self):
         if self._udd_callback is None:
