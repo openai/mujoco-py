@@ -2,6 +2,12 @@
 import unittest
 from mujoco_py import load_model_from_xml, MjSim
 
+'''
+TODO (REMOVEME):
+  - Test calling mujoco functions from within callback (e.g. quaternion math)
+'''
+
+
 XML = '''
 <mujoco>
     <size nuserdata="{nuserdata}"/>
@@ -24,13 +30,13 @@ XML = '''
 
 HELLO_FN = '''
     #include <stdio.h>
-    void generic(const mjModel* m, mjData* d) {
+    void fun(const mjModel* m, mjData* d) {
         printf("hello");
     }
 '''
 
 INCREMENT_FN = '''
-    void generic(const mjModel* m, mjData* d) {
+    void fun(const mjModel* m, mjData* d) {
         d->userdata[0] += 1;
     }
 '''
@@ -56,7 +62,7 @@ class TestSubstep(unittest.TestCase):
 
     def test_sum_ctrl(self):
         fn = '''
-            void generic(const mjModel* m, mjData* d) {
+            void fun(const mjModel* m, mjData* d) {
                 for (int i = 0; i < m->nu; i++) {
                     my_sum += d->ctrl[i];
                 }
@@ -64,7 +70,7 @@ class TestSubstep(unittest.TestCase):
         '''
         sim = MjSim(load_model_from_xml(XML.format(nuserdata=1)),
                     substep_udd_fn=fn,
-                    substep_udd_fields=['my_sum'])
+                    userdata_fields=['my_sum'])
         self.assertEqual(sim.data.userdata[0], 0)
         sim.step()  # should set userdata[0] to sum of controls
         self.assertEqual(sim.data.userdata[0], 0)
@@ -81,16 +87,16 @@ class TestSubstep(unittest.TestCase):
         with self.assertRaises(AssertionError):
             MjSim(model,
                   substep_udd_fn=INCREMENT_FN,
-                  substep_udd_fields=['foo'])
+                  userdata_fields=['foo'])
         # Doesn't throw assert
         model = load_model_from_xml(XML.format(nuserdata=1))
         MjSim(model,
               substep_udd_fn=INCREMENT_FN,
-              substep_udd_fields=['foo'])
+              userdata_fields=['foo'])
         with self.assertRaises(AssertionError):
             MjSim(model,
                   substep_udd_fn=INCREMENT_FN,
-                  substep_udd_fields=['foo', 'bar'])
+                  userdata_fields=['foo', 'bar'])
 
     def test_penetrations(self):
         # Test that we capture the max penetration of a falling sphere
@@ -110,7 +116,7 @@ class TestSubstep(unittest.TestCase):
         # NOTE: penetration is negative distance in contacts
         fn = '''
             #define MIN(a, b) (a < b ? a : b)
-            void generic(const mjModel* m, mjData* d) {
+            void fun(const mjModel* m, mjData* d) {
                 for (int i = 0; i < d->ncon; i++) {
                     min_contact_dist = MIN(min_contact_dist, d->contact[i].dist);
                 }
@@ -120,7 +126,7 @@ class TestSubstep(unittest.TestCase):
         sim = MjSim(load_model_from_xml(xml),
                     nsubsteps=1000,
                     substep_udd_fn=fn,
-                    substep_udd_fields=fields)
+                    userdata_fields=fields)
         self.assertEqual(sim.data.userdata[0], 0)
         sim.step()
         self.assertEqual(sim.data.ncon, 1)  # Assert we have a contact
@@ -132,7 +138,7 @@ class TestSubstep(unittest.TestCase):
         ''' Test that we can re-use a substep_udd_fn between sims '''
         fn = '''
             #define MAX(a, b) (a > b ? a : b)
-            void generic(const mjModel* m, mjData* d) {
+            void fun(const mjModel* m, mjData* d) {
                 for (int i = 0; i < m->nu; i++) {
                     ctrl_max = MAX(ctrl_max, d->ctrl[i]);
                 }
@@ -140,7 +146,7 @@ class TestSubstep(unittest.TestCase):
         '''
         sim = MjSim(load_model_from_xml(XML.format(nuserdata=1)),
                     substep_udd_fn=fn,
-                    substep_udd_fields=['ctrl_max'])
+                    userdata_fields=['ctrl_max'])
         sim.step()
         self.assertEqual(sim.data.userdata[0], 0)
         sim.data.ctrl[:] = [1, 2]
@@ -148,7 +154,7 @@ class TestSubstep(unittest.TestCase):
         self.assertEqual(sim.data.userdata[0], 2)
         sim2 = MjSim(sim.model,
                      substep_udd_fn=sim.substep_udd_fn,
-                     substep_udd_fields=sim.substep_udd_fields)
+                     userdata_fields=sim.userdata_fields)
         sim2.step()
         self.assertEqual(sim2.data.userdata[0], 0)
         sim2.data.ctrl[:] = [.1, .2]

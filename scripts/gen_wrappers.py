@@ -567,19 +567,25 @@ def main():
         model_arg = ', model' if fields['depends_on_model'] else ''
 
         if name == "mjModel":
-            extra = '''
-    cdef readonly tuple body_names, joint_names, geom_names, site_names, light_names, camera_names, actuator_names, sensor_names
-    cdef readonly dict _body_id2name, _joint_id2name, _geom_id2name, _site_id2name, _light_id2name, _camera_id2name, _actuator_id2name, _sensor_id2name
-    cdef readonly dict _body_name2id, _joint_name2id, _geom_name2id, _site_name2id, _light_name2id, _camera_name2id, _actuator_name2id, _sensor_name2id
-'''
-            extra += _add_getters('body')
-            extra += _add_getters('joint')
-            extra += _add_getters('geom')
-            extra += _add_getters('site')
-            extra += _add_getters('light')
-            extra += _add_getters('camera')
-            extra += _add_getters('actuator')
-            extra += _add_getters('sensor')
+            extra = ''
+            obj_types = ['body',
+                         'joint',
+                         'geom',
+                         'site',
+                         'light',
+                         'camera',
+                         'actuator',
+                         # Note: named userdata is not present in MuJoCo,
+                         # they're special accessors we add in mujoco-py.
+                         'userdata']
+            obj_types_names = [o + '_names' for o in obj_types]
+            extra += 'cdef readonly tuple ' + ', '.join(obj_types_names)
+            obj_types_id2names = ['_' + o + '_id2name' for o in obj_types]
+            extra += 'cdef readonly dict' + ', '.join(obj_types_id2names)
+            obj_types_name2ids = ['_' + o + '_name2id' for o in obj_types]
+            extra += 'cdef readonly dict' + ', '.join(obj_types_name2ids)
+            for obj_type in obj_types:
+                extra += _add_getters(obj_type)
             extra += '''
     cdef inline tuple _extract_mj_names(self, mjModel* p, int*name_adr, int n, mjtObj obj_type):
         cdef char *name

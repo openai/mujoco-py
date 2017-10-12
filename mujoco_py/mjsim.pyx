@@ -1,6 +1,6 @@
 from xml.dom import minidom
 from mujoco_py.utils import remove_empty_lines
-from mujoco_py.builder import build_generic_fn
+from mujoco_py.builder import build_callback_fn
 from threading import Lock
 
 _MjSim_render_lock = Lock()
@@ -35,9 +35,10 @@ cdef class MjSim(object):
         It's downsides are that it doesn't have access to python functionality,
         and it's upsides are that it's fast and parallelizeable.
         See :meth:``set_substep_udd_fn`` for detailed info.
-    substep_udd_fields : list of strings
-        These are strings that are named values which index into userdata,
-        which is used to store results from the ``substep_udd`` function.
+    userdata_fields : list of strings
+        These are strings that are named values which index into userdata.
+        These can also be used to store results from the ``substep_udd_fn``,
+        and as convenience names in the function definition.
     """
     # MjRenderContext for rendering camera views.
     cdef readonly list render_contexts
@@ -63,11 +64,11 @@ cdef class MjSim(object):
     cdef substep_udd_t _substep_udd_fn
     # Integer value of function pointer, for reuse by other sims
     cdef public uintptr_t substep_udd_fn
-    # List of names for substep function
-    cdef public list substep_udd_fields
+    # List of names for fields in userdata
+    cdef public list userdata_fields
 
     def __cinit__(self, PyMjModel model, PyMjData data=None, int nsubsteps=1,
-                  udd_callback=None, substep_udd_fn=None, substep_udd_fields=[]):
+                  udd_callback=None, substep_udd_fn=None, userdata_fields=[]):
         self.nsubsteps = nsubsteps
         self.model = model
         if data is None:
@@ -87,10 +88,10 @@ cdef class MjSim(object):
         self.extras = {}
         # TODO: add magic name-based indexing to userdata based on fields
         # TODO: add convenient way to get field info from data
-        assert isinstance(substep_udd_fields, list), 'fields must be list'
-        assert model.nuserdata >= len(substep_udd_fields), \
-            'userdata {} < len {}'.format(model.nuserdata, len(substep_udd_fields))
-        self.substep_udd_fields = substep_udd_fields
+        assert isinstance(userdata_fields, list), 'fields must be list'
+        assert model.nuserdata >= len(userdata_fields), \
+            'userdata {} < len {}'.format(model.nuserdata, len(userdata_fields))
+        self.userdata_fields = userdata_fields
         self.set_substep_udd_fn(substep_udd_fn)
 
     def reset(self):
@@ -206,12 +207,11 @@ cdef class MjSim(object):
             self._set_substep_udd_fn(substep_udd_fn)
         elif isinstance(substep_udd_fn, str):
             # See build_callback_fn() for how to make callbacks
-            # TODO: add substep_udd_fields parsing
+            # TODO: add userdata_fields parsing
             # TODO: generate defines for userdata (function lives in builder.py)
             # TODO: check for room in userdata for fields
             # TODO: desired interface (aray: see whiteboard photos)
-            substep_udd_fn = build_generic_fn(substep_udd_fn,
-                                              self.substep_udd_fields)
+            substep_udd_fn = build_callback_fn(substep_udd_fn, self.userdata_fields)
             self._set_substep_udd_fn(substep_udd_fn)
         else:
             assert False, 'substep_udd_fn must be string or int'
