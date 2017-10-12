@@ -83,6 +83,8 @@ cdef class MjSim(object):
         self.udd_state = None
         self.udd_callback = udd_callback
         self.extras = {}
+        # TODO: add magic name-based indexing to userdata based on fields
+        # TODO: add convenient way to get field info from data
         assert isinstance(substep_udd_fields, list), 'fields must be list'
         assert model.nuserdata >= len(substep_udd_fields), \
             'userdata {} < len {}'.format(model.nuserdata, len(substep_udd_fields))
