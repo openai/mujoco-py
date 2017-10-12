@@ -726,24 +726,13 @@ def import_process(queue):
         queue.put(True)
 
 
-def test_userdata():
-    xml = '''
-        <mujoco>
-            <size nuserdata="{}"/>
-            <worldbody>
-                <body pos="0 0 0">
-                    <joint type="free"/>
-                    <geom type="sphere" size=".1"/>
-                </body>
-            </worldbody>
-        </mujoco>
-    '''
-    model = load_model_from_xml(xml.format(1))
-    assert model.nuserdata == 1, 'bad nuserdata {}'.format(model.nuserdata)
-    model = load_model_from_xml(xml.format(10))
-    assert model.nuserdata == 10, 'bad nuserdata {}'.format(model.nuserdata)
-    sim = MjSim(model)
-    data = sim.data
-    assert data.userdata[0] == 0, 'bad userdata {}'.format(data.userdata)
-    data.userdata[0] = 1
-    assert data.userdata[0] == 1, 'bad userdata {}'.format(data.userdata)
+def test_nuserdata_assert(self):
+    # Check that we throw an assert if there's not enough userdata
+    model = load_model_from_xml(XML.format(nuserdata=0))
+    with self.assertRaises(AssertionError):
+        model.set_userdata_names(['foo'])
+    # Doesn't throw assert
+    model = load_model_from_xml(XML.format(nuserdata=1))
+    model.set_userdata_names(['foo'])
+    with self.assertRaises(AssertionError):
+        model.set_userdata_names(['foo', 'bar'])
