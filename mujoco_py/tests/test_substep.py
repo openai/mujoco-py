@@ -1,6 +1,7 @@
 #!/usr/bin/env python
 import unittest
 from mujoco_py import load_model_from_xml, MjSim
+from mujoco_py import MjViewer
 
 XML = '''
 <mujoco>
@@ -91,6 +92,42 @@ class TestSubstep(unittest.TestCase):
             MjSim(model,
                   substep_udd_fn=INCREMENT_FN,
                   substep_udd_fields=['foo', 'bar'])
+
+    def test_penetrations(self):
+        # Test that we capture the max penetration of a falling sphere
+        # Given a single step with many substeps
+        xml = '''
+            <mujoco>
+                <size nuserdata="1"/>
+                <worldbody>
+                    <body pos="0 0 1">
+                        <joint type="free"/>
+                        <geom size=".1"/>
+                    </body>
+                    <geom type="plane" size="1 1 1"/>
+                </worldbody>
+            </mujoco>
+        '''
+        # NOTE: penetration is negative distance in contacts
+        fn = '''
+            #define MIN(a, b) (a < b ? a : b)
+            void generic(const mjModel* m, mjData* d) {
+                for (int i = 0; i < d->ncon; i++) {
+                    min_contact_dist = MIN(min_contact_dist, d->contact[i].dist);
+                }
+            }
+        '''
+        fields = ['min_contact_dist']
+        sim = MjSim(load_model_from_xml(xml),
+                    nsubsteps=1000,
+                    substep_udd_fn=fn,
+                    substep_udd_fields=fields)
+        self.assertEqual(sim.data.userdata[0], 0)
+        sim.step()
+        self.assertEqual(sim.data.ncon, 1)  # Assert we have a contact
+        self.assertLess(sim.data.contact[0].dist, 0)  # assert penetration
+        # Assert that min penetration is much greater than current penetration
+        self.assertLess(sim.data.userdata[0], 10 * sim.data.contact[0].dist)
 
 
 if __name__ == '__main__':
