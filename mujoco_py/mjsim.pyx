@@ -199,6 +199,7 @@ cdef class MjSim(object):
             # See build_callback_fn() for how to make callbacks
             # TODO: add substep_udd_fields parsing
             # TODO: generate defines for userdata (function lives in builder.py)
+            # TODO: check for room in userdata for fields
             substep_udd_fn = build_generic_fn(substep_udd_fn)
             self._set_substep_udd_fn(substep_udd_fn)
         else:

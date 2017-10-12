@@ -28,20 +28,32 @@ XML = '''
 '''
 
 
-GENERIC_FN = '''
+HELLO_FN = '''
     #include <stdio.h>
-    static void generic(const mjModel* m, mjData* d) {
+    void generic(const mjModel* m, mjData* d) {
         printf("hello\\n");
+        printf("%d\\n", m->nuserdata);
+    }
+'''
+
+SINGLE_FN = '''
+    void generic(const mjModel* m, mjData* d) {
+        d->userdata[0] = 1;
     }
 '''
 
 
 class TestSubstep(unittest.TestCase):
-    def test_substep(self):
+    def test_hello(self):
         # TODO: desired interface
-        # TODO: check for room in userdata for fields
-        sim = MjSim(load_model_from_xml(XML), substep_udd_fn=GENERIC_FN)
-        sim.step()
+        sim = MjSim(load_model_from_xml(XML), substep_udd_fn=HELLO_FN)
+        sim.step()  # should print 'hello'
+
+    def test_single(self):
+        sim = MjSim(load_model_from_xml(XML), substep_udd_fn=SINGLE_FN)
+        self.assertEqual(sim.data.userdata[0], 0)
+        sim.step()  # should print 'hello'
+        self.assertEqual(sim.data.userdata[0], 1)
 
 
 if __name__ == '__main__':
