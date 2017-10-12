@@ -61,6 +61,8 @@ cdef class MjSim(object):
     cdef readonly dict extras
     # Function pointer for UDD substeps
     cdef substep_udd_t _substep_udd_fn
+    # List of names for substep function
+    cdef public list substep_udd_fields
 
     def __cinit__(self, PyMjModel model, PyMjData data=None, int nsubsteps=1,
                   udd_callback=None, substep_udd_fn=None, substep_udd_fields=[]):
@@ -81,6 +83,10 @@ cdef class MjSim(object):
         self.udd_state = None
         self.udd_callback = udd_callback
         self.extras = {}
+        assert isinstance(substep_udd_fields, list), 'fields must be list'
+        assert model.nuserdata >= len(substep_udd_fields), \
+            'userdata {} < len {}'.format(model.nuserdata, len(substep_udd_fields))
+        self.substep_udd_fields = substep_udd_fields
         self.set_substep_udd_fn(substep_udd_fn)
 
     def reset(self):
@@ -199,7 +205,8 @@ cdef class MjSim(object):
             # TODO: generate defines for userdata (function lives in builder.py)
             # TODO: check for room in userdata for fields
             # TODO: desired interface (aray: see whiteboard photos)
-            substep_udd_fn = build_generic_fn(substep_udd_fn)
+            substep_udd_fn = build_generic_fn(substep_udd_fn,
+                                              self.substep_udd_fields)
             self._set_substep_udd_fn(substep_udd_fn)
         else:
             assert False, 'substep_udd_fn must be string or int'

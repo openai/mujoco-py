@@ -304,21 +304,29 @@ class ignore_mujoco_warnings:
         cymj.set_warning_callback(self.prev_user_warning)
 
 
-def build_generic_fn(function_string):
+def build_generic_fn(function_string, userdata_fields=[]):
     '''
     Builds a callback function with a `mjfGeneric` signature.
+    TODO: document userdata_fields
+    TODO: note important to remember these are just #defines
+    TODO: have debug flag/envvar which prints out source (or doesn't delete it)
     TODO: document requirement that function have name `generic`
     TODO: simple example
     TODO: example iterating over contacts
     TODO: example that defines other functions and calls them
     TODO: tons of docs here
     TODO: note possible future improvements, e.g. ability to link in external libs
+    TODO: Docurment MUJOCO_PY_DEBUG_FN_BUILDER=1 to keep files
     '''
+    assert isinstance(userdata_fields, list), 'userdata_fields must be list'
     ffibuilder = FFI()
     ffibuilder.cdef('extern uintptr_t generic_fn;')
     # TODO: time library building and note how long it should take
     name = '_generic_fn_' + ''.join(choice(ascii_lowercase) for _ in range(15))
     source_string = '#include <mujoco.h>\n'
+    # Add defines for each userdata to make setting them easier
+    for i, fieldname in enumerate(userdata_fields):
+        source_string += '#define {} d->userdata[{}]\n'.format(fieldname, i)
     source_string += function_string
     source_string += '\nuintptr_t generic_fn = (uintptr_t) generic;'
     ffibuilder.set_source(name, source_string,
@@ -329,8 +337,9 @@ def build_generic_fn(function_string):
     fixed_library_path = manually_link_libraries(mjpro_path, library_path)
     module = load_dynamic_ext(name, fixed_library_path)
     # Now that the module is loaded into memory, we can actually delete it
-    for f in glob.glob(name + '*'):
-        os.remove(f)
+    if not os.environ.get('MUJOCO_PY_DEBUG_FN_BUILDER', False):
+        for f in glob.glob(name + '*'):
+            os.remove(f)
     return module.lib.generic_fn
 
 
