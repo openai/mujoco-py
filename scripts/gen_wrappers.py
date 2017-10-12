@@ -567,19 +567,30 @@ def main():
         model_arg = ', model' if fields['depends_on_model'] else ''
 
         if name == "mjModel":
-            extra = '''
-    cdef readonly tuple body_names, joint_names, geom_names, site_names, light_names, camera_names, actuator_names, sensor_names
-    cdef readonly dict _body_id2name, _joint_id2name, _geom_id2name, _site_id2name, _light_id2name, _camera_id2name, _actuator_id2name, _sensor_id2name
-    cdef readonly dict _body_name2id, _joint_name2id, _geom_name2id, _site_name2id, _light_name2id, _camera_name2id, _actuator_name2id, _sensor_name2id
-'''
-            extra += _add_getters('body')
-            extra += _add_getters('joint')
-            extra += _add_getters('geom')
-            extra += _add_getters('site')
-            extra += _add_getters('light')
-            extra += _add_getters('camera')
-            extra += _add_getters('actuator')
-            extra += _add_getters('sensor')
+            extra = '\n'
+            obj_types = ['body',
+                         'joint',
+                         'geom',
+                         'site',
+                         'light',
+                         'camera',
+                         'actuator',
+                         'sensor']
+            obj_types_names = [o + '_names' for o in obj_types]
+            extra += '    cdef readonly tuple ' + ', '.join(obj_types_names) + '\n'
+            obj_types_id2names = ['_' + o + '_id2name' for o in obj_types]
+            extra += '    cdef readonly dict ' + ', '.join(obj_types_id2names) + '\n'
+            obj_types_name2ids = ['_' + o + '_name2id' for o in obj_types]
+            extra += '    cdef readonly dict ' + ', '.join(obj_types_name2ids) + '\n'
+            for obj_type in obj_types:
+                extra += _add_getters(obj_type)
+            # Note: named userdata fields are not present in MuJoCo,
+            # they're special accessors we add in mujoco-py.
+            # So these fields need to be python accessible instead of readonly.
+            extra += '    cdef public tuple userdata_names\n'
+            extra += '    cdef public dict _userdata_id2name\n'
+            extra += '    cdef public dict _userdata_name2id\n'
+            extra += _add_getters('userdata')
             extra += '''
     cdef inline tuple _extract_mj_names(self, mjModel* p, int*name_adr, int n, mjtObj obj_type):
         cdef char *name
@@ -618,6 +629,17 @@ def main():
                 mj_saveModel(self.ptr, filename.encode(), NULL, 0)
             return open(filename, 'rb').read()
 
+    def set_userdata_names(self, userdata_names):
+        assert isinstance(userdata_names, (list, tuple)), 'bad userdata names'
+        assert len(userdata_names) <= self.nuserdata, 'insufficient userdata'
+        self.userdata_names = tuple(userdata_names)
+        self._userdata_id2name = dict()
+        self._userdata_name2id = dict()
+        for i, name in enumerate(userdata_names):
+            assert isinstance(name, str), 'names must all be strings'
+            self._userdata_id2name[i] = name
+            self._userdata_name2id[name] = i
+
     def __dealloc__(self):
         mj_deleteModel(self.ptr)
 '''
@@ -636,6 +658,10 @@ def main():
                                                'actuator', 'actuator', 'ACTUATOR')
             extra_set += _set_body_identifiers('sensor',
                                                'sensor', 'sensor', 'SENSOR')
+            # userdata_names is empty at construction time
+            extra_set += '        self.userdata_names = tuple()\n'
+            extra_set += '        self._userdata_name2id = dict()\n'
+            extra_set += '        self._userdata_id2name = dict()\n'
 
             for q_type in ('pos', 'vel'):
                 # Position dimensionality and degrees of freedom are different
