@@ -126,7 +126,7 @@ class TestSubstep(unittest.TestCase):
         sim.step()
         self.assertEqual(sim.data.ncon, 1)  # Assert we have a contact
         self.assertLess(sim.data.contact[0].dist, 0)  # assert penetration
-        # Assert that min penetration is much greater than current penetration
+        # Assert that min penetration is much less than current penetration
         self.assertLess(sim.data.userdata[0], 10 * sim.data.contact[0].dist)
 
 
