@@ -1,7 +1,6 @@
 #!/usr/bin/env python
 import unittest
 from mujoco_py import load_model_from_xml, MjSim
-from mujoco_py import MjViewer
 
 XML = '''
 <mujoco>
