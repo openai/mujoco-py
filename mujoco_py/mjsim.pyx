@@ -78,12 +78,6 @@ cdef class MjSim(object):
         self.udd_state = None
         self.udd_callback = udd_callback
         self.extras = {}
-        # TODO: add magic name-based indexing to userdata based on fields
-        # TODO: add convenient way to get field info from data
-        # assert isinstance(userdata_fields, list), 'fields must be list'
-        # assert model.nuserdata >= len(userdata_fields), \
-        #     'userdata {} < len {}'.format(model.nuserdata, len(userdata_fields))
-        # self.userdata_fields = userdata_fields
         self.set_substep_callback(substep_callback)
 
     def reset(self):
@@ -189,7 +183,14 @@ cdef class MjSim(object):
 
     def set_substep_callback(self, substep_callback):
         '''
-        TODO: tons of docs right here
+        Set a substep callback function.
+
+        If `substep_callback` is a string, compile to function pointer and set.
+            See `builder.build_callback_fn()` for documentation.
+
+        If `substep_callback` is an int, we interpret it as a function pointer.
+
+        If `substep_callback` is None, we disable substep_callbacks.
         '''
         if substep_callback is None:
             self.substep_callback_ptr = 0
@@ -199,7 +200,7 @@ cdef class MjSim(object):
             self.substep_callback_ptr = build_callback_fn(substep_callback,
                                                           self.model.userdata_names)
         else:
-            raise TypeError('substep_callback must be string or int or None')
+            raise TypeError('invalid: {}'.format(type(substep_callback)))
 
     def step_udd(self):
         if self._udd_callback is None:

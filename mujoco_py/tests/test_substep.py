@@ -128,15 +128,13 @@ class TestSubstep(unittest.TestCase):
         fields = ['ctrl_max']
         model = load_model_from_xml(XML.format(nuserdata=1))
         model.set_userdata_names(fields)
-        sim = MjSim(model)
-        sim.set_substep_callback(fn)
+        sim = MjSim(model, substep_callback=fn)
         sim.step()
         self.assertEqual(sim.data.userdata[0], 0)
         sim.data.ctrl[:] = [1, 2]
         sim.step()
         self.assertEqual(sim.data.userdata[0], 2)
-        sim2 = MjSim(sim.model)
-        sim2.set_substep_callback(fn)
+        sim2 = MjSim(sim.model, substep_callback=sim.substep_callback_ptr)
         sim2.step()
         self.assertEqual(sim2.data.userdata[0], 0)
         sim2.data.ctrl[:] = [.1, .2]
@@ -152,8 +150,7 @@ class TestSubstep(unittest.TestCase):
             }
         '''
         model = load_model_from_xml(XML.format(nuserdata=9))
-        sim = MjSim(model)
-        sim.set_substep_callback(fn)
+        sim = MjSim(model, substep_callback=fn)
         sim.data.ctrl[:] = [9, 13]
         for _ in range(30):
             sim.step()

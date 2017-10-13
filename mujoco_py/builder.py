@@ -35,7 +35,7 @@ def get_nvidia_lib_dir():
         return None
     root = os.path.abspath(os.sep)
     major_version = nvidia_version.split('.')[0]
-    for nvidia_lib_dir in [join(root, 'usr', 'local', 'nvidia', 'lib64'), 
+    for nvidia_lib_dir in [join(root, 'usr', 'local', 'nvidia', 'lib64'),
                            join(root, 'usr', 'lib', 'nvidia-' + major_version)]:
         if exists(nvidia_lib_dir):
             return nvidia_lib_dir
@@ -335,26 +335,75 @@ def build_fn_cleanup(name):
 
 def build_callback_fn(function_string, userdata_names=[]):
     '''
-    Builds a callback function with a `mjfGeneric` signature.
-    TODO: note future work for building other kinds of callback
-    TODO: document userdata_fields
-    TODO: note important to remember these are just #defines
-    TODO: have debug flag/envvar which prints out source (or doesn't delete it)
-    TODO: document requirement that function have name `fun`
-    TODO: document calling mujoco functions from within callback
-    TODO: simple example
-    TODO: example iterating over contacts
-    TODO: example that defines other functions and calls them
-    TODO: tons of docs here
-    TODO: note possible future improvements, e.g. ability to link in external libs
-    TODO: Document MUJOCO_PY_DEBUG_FN_BUILDER=1 to keep files
+    Builds a C callback function and returns a function pointer int.
+
+        function_string : str
+            This is a string of the C function to be compiled
+        userdata_names : list or tuple
+            This is an optional list to defince convenience names
+
+    We compile and link and load the function, and return a function pointer.
+    See `MjSim.set_substep_callback()` for an example use of these callbacks.
+
+    The callback function should match the signature:
+        void fun(const mjModel *m, mjData *d);
+
+    Here's an example function_string:
+        ```
+        """
+        #include <stdio.h>
+        void fun(const mjModel* m, mjData* d) {
+            printf("hello");
+        }
+        """
+        ```
+
+    Input and output for the function pass through userdata in the data struct:
+        ```
+        """
+        void fun(const mjModel* m, mjData* d) {
+            d->userdata[0] += 1;
+        }
+        """
+        ```
+
+    `userdata_names` is expected to match the model where the callback is used.
+    These can bet set on a model with:
+        `model.set_userdata_names([...])`
+
+    If `userdata_names` is supplied, convenience `#define`s are added for each.
+    For example:
+        `userdata_names = ['my_sum']`
+    Will get gerenerated into the extra line:
+        `#define my_sum d->userdata[0]`
+    And prepended to the top of the function before compilation.
+    Here's an example that takes advantage of this:
+        ```
+        """
+        void fun(const mjModel* m, mjData* d) {
+            for (int i = 0; i < m->nu; i++) {
+                my_sum += d->ctrl[i];
+            }
+        }
+        """
+        ```
+    Note these are just C `#define`s and are limited in how they can be used.
+
+    After compilation, the built library containing the function is loaded
+    into memory and all of the files (including the library) are deleted.
+    To retain these for debugging set the `MUJOCO_PY_DEBUG_FN_BUILDER` envvar.
+
+    To save time compiling, these function pointers may be re-used by many
+    different consumers.  They are thread-safe and don't acquire the GIL.
+
+    See the file `tests/test_substep.py` for additional examples,
+    including an example which iterates over contacts to compute penetrations.
     '''
     assert isinstance(userdata_names, (list, tuple)), \
         'invalid userdata_names: {}'.format(userdata_names)
     ffibuilder = FFI()
     ffibuilder.cdef('extern uintptr_t __fun;')
-    # TODO: time library building and note how long it should take
-    name = '_generic_fn_' + ''.join(choice(ascii_lowercase) for _ in range(15))
+    name = '_fn_' + ''.join(choice(ascii_lowercase) for _ in range(15))
     source_string = '#include <mujoco.h>\n'
     # Add defines for each userdata to make setting them easier
     for i, name in enumerate(userdata_names):
