@@ -968,6 +968,19 @@ cdef class PyMjModel(object):
         if name not in self._sensor_name2id:
             raise ValueError("No \"sensor\" with name %s exists. Available \"sensor\" names = %s." % (name, self.sensor_names))
         return self._sensor_name2id[name]
+    cdef public tuple userdata_names
+    cdef public dict _userdata_id2name
+    cdef public dict _userdata_name2id
+
+    def userdata_id2name(self, id):
+        if id not in self._userdata_id2name:
+            raise ValueError("No userdata with id %d exists." % id)
+        return self._userdata_id2name[id]
+
+    def userdata_name2id(self, name):
+        if name not in self._userdata_name2id:
+            raise ValueError("No \"userdata\" with name %s exists. Available \"userdata\" names = %s." % (name, self.userdata_names))
+        return self._userdata_name2id[name]
 
     cdef inline tuple _extract_mj_names(self, mjModel* p, int*name_adr, int n, mjtObj obj_type):
         cdef char *name
@@ -1005,6 +1018,17 @@ cdef class PyMjModel(object):
             with wrap_mujoco_warning():
                 mj_saveModel(self.ptr, filename.encode(), NULL, 0)
             return open(filename, 'rb').read()
+
+    def set_userdata_names(self, userdata_names):
+        assert isinstance(userdata_names, (list, tuple)), 'bad userdata names'
+        assert len(userdata_names) <= self.nuserdata, 'insufficient userdata'
+        self.userdata_names = tuple(userdata_names)
+        self._userdata_id2name = dict()
+        self._userdata_name2id = dict()
+        for i, name in enumerate(userdata_names):
+            assert isinstance(name, str), 'names must all be strings'
+            self._userdata_id2name[i] = name
+            self._userdata_name2id[name] = i
 
     def __dealloc__(self):
         mj_deleteModel(self.ptr)
@@ -1071,6 +1095,9 @@ cdef class PyMjModel(object):
         self.camera_names, self._camera_name2id, self._camera_id2name = self._extract_mj_names(p, p.name_camadr, p.ncam, mjtObj.mjOBJ_CAMERA)
         self.actuator_names, self._actuator_name2id, self._actuator_id2name = self._extract_mj_names(p, p.name_actuatoradr, p.nu, mjtObj.mjOBJ_ACTUATOR)
         self.sensor_names, self._sensor_name2id, self._sensor_id2name = self._extract_mj_names(p, p.name_sensoradr, p.nsensor, mjtObj.mjOBJ_SENSOR)
+        self.userdata_names = tuple()
+        self._userdata_name2id = dict()
+        self._userdata_id2name = dict()
 
         self.ptr = p
         
