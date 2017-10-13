@@ -1,11 +1,7 @@
 #!/usr/bin/env python
 import unittest
-from mujoco_py import load_model_from_xml, MjSim
-
-'''
-TODO (REMOVEME):
-  - Test calling mujoco functions from within callback (e.g. quaternion math)
-'''
+import numpy as np
+from mujoco_py import load_model_from_xml, MjSim, functions
 
 
 XML = '''
@@ -146,6 +142,25 @@ class TestSubstep(unittest.TestCase):
         sim2.data.ctrl[:] = [.1, .2]
         sim2.step()
         self.assertEqual(sim2.data.userdata[0], .2)
+
+    def test_mjfunctions(self):
+        # Test calling mujoco function from within callback
+        fn = '''
+            void fun(const mjModel *m, mjData *d) {
+                // set userdata to rotation matrix for body_xquat[2]
+                mju_quat2Mat(d->userdata, &(d->xquat[4 * 2]));
+            }
+        '''
+        model = load_model_from_xml(XML.format(nuserdata=9))
+        sim = MjSim(model)
+        sim.set_substep_callback(fn)
+        sim.data.ctrl[:] = [9, 13]
+        for _ in range(30):
+            sim.step()
+        sim.substep_callback()
+        mat = np.zeros(9, dtype=np.float64)
+        functions.mju_quat2Mat(mat, sim.data.body_xquat[2])
+        np.testing.assert_array_equal(sim.data.userdata, mat)
 
 
 if __name__ == '__main__':
