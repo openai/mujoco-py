@@ -330,7 +330,11 @@ def build_fn_cleanup(name):
     '''
     if not os.environ.get('MUJOCO_PY_DEBUG_FN_BUILDER', False):
         for f in glob.glob(name + '*'):
-            os.remove(f)
+            try:
+                os.remove(f)
+            except PermissionError as e:
+                # This happens trying to remove libraries on appveyor
+                print('Error removing {}, continuing anyway: {}'.format(f, e))
 
 
 def build_callback_fn(function_string, userdata_names=[]):
