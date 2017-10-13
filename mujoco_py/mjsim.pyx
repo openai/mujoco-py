@@ -34,7 +34,10 @@ cdef class MjSim(object):
         This uses a compiled C function as user-defined dynamics in substeps.
         If given as a string, it's compiled as a C function and set as pointer.
         If given as int, it's interpreted as a function pointer.
-        See :meth:``set_substep_callback`` for detailed info.
+        See :meth:`.set_substep_callback` for detailed info.
+    userdata_names : list of strings or None
+        This is a convenience parameter which is just set on the model.
+        Equivalent to calling ``model.set_userdata_names``
     """
     # MjRenderContext for rendering camera views.
     cdef readonly list render_contexts
@@ -60,7 +63,7 @@ cdef class MjSim(object):
     cdef readonly uintptr_t substep_callback_ptr
 
     def __cinit__(self, PyMjModel model, PyMjData data=None, int nsubsteps=1,
-                  udd_callback=None, substep_callback=None):
+                  udd_callback=None, substep_callback=None, userdata_names=None):
         self.nsubsteps = nsubsteps
         self.model = model
         if data is None:
@@ -78,7 +81,7 @@ cdef class MjSim(object):
         self.udd_state = None
         self.udd_callback = udd_callback
         self.extras = {}
-        self.set_substep_callback(substep_callback)
+        self.set_substep_callback(substep_callback, userdata_names)
 
     def reset(self):
         """
@@ -181,17 +184,22 @@ cdef class MjSim(object):
         if self.substep_callback_ptr:
             (<mjfGeneric>self.substep_callback_ptr)(self.model.ptr, self.data.ptr)
 
-    def set_substep_callback(self, substep_callback):
+    def set_substep_callback(self, substep_callback, userdata_names=None):
         '''
         Set a substep callback function.
 
-        If `substep_callback` is a string, compile to function pointer and set.
-            See `builder.build_callback_fn()` for documentation.
-
-        If `substep_callback` is an int, we interpret it as a function pointer.
-
-        If `substep_callback` is None, we disable substep_callbacks.
+        Parameters :
+            substep_callback : str or int or None
+                If `substep_callback` is a string, compile to function pointer and set.
+                    See `builder.build_callback_fn()` for documentation.
+                If `substep_callback` is an int, we interpret it as a function pointer.
+                If `substep_callback` is None, we disable substep_callbacks.
+            userdata_names : list of strings or None
+                This is a convenience parameter, if not None, this is passed
+                onto ``model.set_userdata_names()``.
         '''
+        if userdata_names is not None:
+            self.model.set_userdata_names(userdata_names)
         if substep_callback is None:
             self.substep_callback_ptr = 0
         elif isinstance(substep_callback, int):

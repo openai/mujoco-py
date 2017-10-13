@@ -24,13 +24,6 @@ XML = '''
 </mujoco>
 '''
 
-HELLO_FN = '''
-    #include <stdio.h>
-    void fun(const mjModel* m, mjData* d) {
-        printf("hello");
-    }
-'''
-
 INCREMENT_FN = '''
     void fun(const mjModel* m, mjData* d) {
         d->userdata[0] += 1;
@@ -40,19 +33,24 @@ INCREMENT_FN = '''
 
 class TestSubstep(unittest.TestCase):
     def test_hello(self):
-        sim = MjSim(load_model_from_xml(XML.format(nuserdata=0)))
-        sim.set_substep_callback(HELLO_FN)
+        fn = '''
+            #include <stdio.h>
+            void fun(const mjModel* m, mjData* d) {
+                printf("hello");
+            }
+        '''
+        sim = MjSim(load_model_from_xml(XML.format(nuserdata=0)),
+                    substep_callback=fn)
         sim.step()  # should print 'hello'
 
     def test_increment(self):
-        sim = MjSim(load_model_from_xml(XML.format(nuserdata=1)))
-        sim.set_substep_callback(INCREMENT_FN)
+        sim = MjSim(load_model_from_xml(XML.format(nuserdata=1)),
+                    substep_callback=INCREMENT_FN)
         self.assertEqual(sim.data.userdata[0], 0)
         sim.step()  # should increment userdata[0]
         self.assertEqual(sim.data.userdata[0], 1)
         # Test again with different nsubsteps, reuse model
-        sim = MjSim(sim.model, nsubsteps=7)
-        sim.set_substep_callback(INCREMENT_FN)
+        sim = MjSim(sim.model, nsubsteps=7, substep_callback=INCREMENT_FN)
         self.assertEqual(sim.data.userdata[0], 0)
         sim.step()  # should increment userdata[0] 7 times
         self.assertEqual(sim.data.userdata[0], 7)
@@ -65,10 +63,9 @@ class TestSubstep(unittest.TestCase):
                 }
             }
         '''
-        model = load_model_from_xml(XML.format(nuserdata=1))
-        model.set_userdata_names(['my_sum'])
-        sim = MjSim(model)
-        sim.set_substep_callback(fn)
+        sim = MjSim(load_model_from_xml(XML.format(nuserdata=1)),
+                    substep_callback=fn,
+                    userdata_names=['my_sum'])
         self.assertEqual(sim.data.userdata[0], 0)
         sim.step()  # should set userdata[0] to sum of controls
         self.assertEqual(sim.data.userdata[0], 0)
@@ -103,11 +100,8 @@ class TestSubstep(unittest.TestCase):
                 }
             }
         '''
-        fields = ['min_contact_dist']
-        model = load_model_from_xml(xml)
-        model.set_userdata_names(fields)
-        sim = MjSim(model, nsubsteps=1000)
-        sim.set_substep_callback(fn)
+        sim = MjSim(load_model_from_xml(xml), nsubsteps=1000,
+                    substep_callback=fn, userdata_names=['min_contact_dist'])
         self.assertEqual(sim.data.userdata[0], 0)
         sim.step()
         self.assertEqual(sim.data.ncon, 1)  # Assert we have a contact
@@ -125,10 +119,8 @@ class TestSubstep(unittest.TestCase):
                 }
             }
         '''
-        fields = ['ctrl_max']
-        model = load_model_from_xml(XML.format(nuserdata=1))
-        model.set_userdata_names(fields)
-        sim = MjSim(model, substep_callback=fn)
+        sim = MjSim(load_model_from_xml(XML.format(nuserdata=1)),
+                    substep_callback=fn, userdata_names=['ctrl_max'])
         sim.step()
         self.assertEqual(sim.data.userdata[0], 0)
         sim.data.ctrl[:] = [1, 2]
@@ -149,8 +141,8 @@ class TestSubstep(unittest.TestCase):
                 mju_quat2Mat(d->userdata, &(d->xquat[4 * 2]));
             }
         '''
-        model = load_model_from_xml(XML.format(nuserdata=9))
-        sim = MjSim(model, substep_callback=fn)
+        sim = MjSim(load_model_from_xml(XML.format(nuserdata=9)),
+                    substep_callback=fn)
         sim.data.ctrl[:] = [9, 13]
         for _ in range(30):
             sim.step()
