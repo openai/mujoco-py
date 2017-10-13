@@ -8,1399 +8,6 @@ cimport numpy as np
 import numpy as np
 from tempfile import TemporaryDirectory
 
-cdef class PyMjVisual_headlight(object):
-    cdef mjVisual_headlight* ptr
-    
-    
-    cdef np.ndarray _ambient
-    cdef np.ndarray _diffuse
-    cdef np.ndarray _specular
-    
-    def __cinit__(self):
-        self.ptr = NULL
-
-
-    @property
-    def uintptr(self): return <uintptr_t>self.ptr
-
-    cdef void _set(self, mjVisual_headlight* p):
-        
-        self.ptr = p
-        
-        
-        self._ambient = _wrap_float_1d(&p.ambient[0], 3)
-        self._diffuse = _wrap_float_1d(&p.diffuse[0], 3)
-        self._specular = _wrap_float_1d(&p.specular[0], 3)
-        
-    @property
-    def active(self): return self.ptr.active
-    @active.setter
-    def active(self, int x): self.ptr.active = x
-    @property
-    def ambient(self): return self._ambient
-    @property
-    def diffuse(self): return self._diffuse
-    @property
-    def specular(self): return self._specular
-
-cdef PyMjVisual_headlight WrapMjVisual_headlight(mjVisual_headlight* p):
-    cdef PyMjVisual_headlight o = PyMjVisual_headlight()
-    o._set(p)
-    return o
-
-cdef class PyMjrRect(object):
-    cdef mjrRect* ptr
-    
-    
-    
-    def __cinit__(self):
-        self.ptr = <mjrRect*> PyMem_Malloc(sizeof(mjrRect))
-        if not self.ptr:
-            raise MemoryError()
-
-    def __dealloc__(self):
-        PyMem_Free(self.ptr)
-
-
-    @property
-    def uintptr(self): return <uintptr_t>self.ptr
-
-    cdef void _set(self, mjrRect* p):
-        
-        self.ptr = p
-        
-        
-        
-    @property
-    def left(self): return self.ptr.left
-    @left.setter
-    def left(self, int x): self.ptr.left = x
-    @property
-    def bottom(self): return self.ptr.bottom
-    @bottom.setter
-    def bottom(self, int x): self.ptr.bottom = x
-    @property
-    def width(self): return self.ptr.width
-    @width.setter
-    def width(self, int x): self.ptr.width = x
-    @property
-    def height(self): return self.ptr.height
-    @height.setter
-    def height(self, int x): self.ptr.height = x
-
-cdef PyMjrRect WrapMjrRect(mjrRect* p):
-    cdef PyMjrRect o = PyMjrRect()
-    o._set(p)
-    return o
-
-cdef class PyMjVisual_scale(object):
-    cdef mjVisual_scale* ptr
-    
-    
-    
-    def __cinit__(self):
-        self.ptr = NULL
-
-
-    @property
-    def uintptr(self): return <uintptr_t>self.ptr
-
-    cdef void _set(self, mjVisual_scale* p):
-        
-        self.ptr = p
-        
-        
-        
-    @property
-    def forcewidth(self): return self.ptr.forcewidth
-    @forcewidth.setter
-    def forcewidth(self, float x): self.ptr.forcewidth = x
-    @property
-    def contactwidth(self): return self.ptr.contactwidth
-    @contactwidth.setter
-    def contactwidth(self, float x): self.ptr.contactwidth = x
-    @property
-    def contactheight(self): return self.ptr.contactheight
-    @contactheight.setter
-    def contactheight(self, float x): self.ptr.contactheight = x
-    @property
-    def connect(self): return self.ptr.connect
-    @connect.setter
-    def connect(self, float x): self.ptr.connect = x
-    @property
-    def com(self): return self.ptr.com
-    @com.setter
-    def com(self, float x): self.ptr.com = x
-    @property
-    def camera(self): return self.ptr.camera
-    @camera.setter
-    def camera(self, float x): self.ptr.camera = x
-    @property
-    def light(self): return self.ptr.light
-    @light.setter
-    def light(self, float x): self.ptr.light = x
-    @property
-    def selectpoint(self): return self.ptr.selectpoint
-    @selectpoint.setter
-    def selectpoint(self, float x): self.ptr.selectpoint = x
-    @property
-    def jointlength(self): return self.ptr.jointlength
-    @jointlength.setter
-    def jointlength(self, float x): self.ptr.jointlength = x
-    @property
-    def jointwidth(self): return self.ptr.jointwidth
-    @jointwidth.setter
-    def jointwidth(self, float x): self.ptr.jointwidth = x
-    @property
-    def actuatorlength(self): return self.ptr.actuatorlength
-    @actuatorlength.setter
-    def actuatorlength(self, float x): self.ptr.actuatorlength = x
-    @property
-    def actuatorwidth(self): return self.ptr.actuatorwidth
-    @actuatorwidth.setter
-    def actuatorwidth(self, float x): self.ptr.actuatorwidth = x
-    @property
-    def framelength(self): return self.ptr.framelength
-    @framelength.setter
-    def framelength(self, float x): self.ptr.framelength = x
-    @property
-    def framewidth(self): return self.ptr.framewidth
-    @framewidth.setter
-    def framewidth(self, float x): self.ptr.framewidth = x
-    @property
-    def constraint(self): return self.ptr.constraint
-    @constraint.setter
-    def constraint(self, float x): self.ptr.constraint = x
-    @property
-    def slidercrank(self): return self.ptr.slidercrank
-    @slidercrank.setter
-    def slidercrank(self, float x): self.ptr.slidercrank = x
-
-cdef PyMjVisual_scale WrapMjVisual_scale(mjVisual_scale* p):
-    cdef PyMjVisual_scale o = PyMjVisual_scale()
-    o._set(p)
-    return o
-
-cdef class PyMjvScene(object):
-    cdef mjvScene* ptr
-    
-    
-    cdef list _lights
-    cdef list _camera
-    cdef np.ndarray _translate
-    cdef np.ndarray _rotate
-    cdef np.ndarray _flags
-    
-    def __cinit__(self):
-        self.ptr = NULL
-
-
-    @property
-    def uintptr(self): return <uintptr_t>self.ptr
-
-    cdef void _set(self, mjvScene* p):
-        
-        self.ptr = p
-        
-        
-        self._lights = [WrapMjvLight(&p.lights[i]) for i in range(8)]
-        self._camera = [WrapMjvGLCamera(&p.camera[i]) for i in range(2)]
-        self._translate = _wrap_float_1d(&p.translate[0], 3)
-        self._rotate = _wrap_float_1d(&p.rotate[0], 4)
-        self._flags = _wrap_mjtByte_1d(&p.flags[0], mjNRNDFLAG)
-        
-    @property
-    def maxgeom(self): return self.ptr.maxgeom
-    @maxgeom.setter
-    def maxgeom(self, int x): self.ptr.maxgeom = x
-    @property
-    def ngeom(self): return self.ptr.ngeom
-    @ngeom.setter
-    def ngeom(self, int x): self.ptr.ngeom = x
-    @property
-    def nlight(self): return self.ptr.nlight
-    @nlight.setter
-    def nlight(self, int x): self.ptr.nlight = x
-    @property
-    def enabletransform(self): return self.ptr.enabletransform
-    @enabletransform.setter
-    def enabletransform(self, mjtByte x): self.ptr.enabletransform = x
-    @property
-    def scale(self): return self.ptr.scale
-    @scale.setter
-    def scale(self, float x): self.ptr.scale = x
-    @property
-    def stereo(self): return self.ptr.stereo
-    @stereo.setter
-    def stereo(self, int x): self.ptr.stereo = x
-    @property
-    def lights(self): return self._lights
-    @property
-    def camera(self): return self._camera
-    @property
-    def translate(self): return self._translate
-    @property
-    def rotate(self): return self._rotate
-    @property
-    def flags(self): return self._flags
-
-cdef PyMjvScene WrapMjvScene(mjvScene* p):
-    cdef PyMjvScene o = PyMjvScene()
-    o._set(p)
-    return o
-
-cdef class PyMjvPerturb(object):
-    cdef mjvPerturb* ptr
-    
-    
-    cdef np.ndarray _refpos
-    cdef np.ndarray _refquat
-    cdef np.ndarray _localpos
-    
-    def __cinit__(self):
-        self.ptr = NULL
-
-
-    @property
-    def uintptr(self): return <uintptr_t>self.ptr
-
-    cdef void _set(self, mjvPerturb* p):
-        
-        self.ptr = p
-        
-        
-        self._refpos = _wrap_mjtNum_1d(&p.refpos[0], 3)
-        self._refquat = _wrap_mjtNum_1d(&p.refquat[0], 4)
-        self._localpos = _wrap_mjtNum_1d(&p.localpos[0], 3)
-        
-    @property
-    def select(self): return self.ptr.select
-    @select.setter
-    def select(self, int x): self.ptr.select = x
-    @property
-    def active(self): return self.ptr.active
-    @active.setter
-    def active(self, int x): self.ptr.active = x
-    @property
-    def scale(self): return self.ptr.scale
-    @scale.setter
-    def scale(self, mjtNum x): self.ptr.scale = x
-    @property
-    def refpos(self): return self._refpos
-    @property
-    def refquat(self): return self._refquat
-    @property
-    def localpos(self): return self._localpos
-
-cdef PyMjvPerturb WrapMjvPerturb(mjvPerturb* p):
-    cdef PyMjvPerturb o = PyMjvPerturb()
-    o._set(p)
-    return o
-
-cdef class PyMjvGLCamera(object):
-    cdef mjvGLCamera* ptr
-    
-    
-    cdef np.ndarray _pos
-    cdef np.ndarray _forward
-    cdef np.ndarray _up
-    
-    def __cinit__(self):
-        self.ptr = NULL
-
-
-    @property
-    def uintptr(self): return <uintptr_t>self.ptr
-
-    cdef void _set(self, mjvGLCamera* p):
-        
-        self.ptr = p
-        
-        
-        self._pos = _wrap_float_1d(&p.pos[0], 3)
-        self._forward = _wrap_float_1d(&p.forward[0], 3)
-        self._up = _wrap_float_1d(&p.up[0], 3)
-        
-    @property
-    def frustum_center(self): return self.ptr.frustum_center
-    @frustum_center.setter
-    def frustum_center(self, float x): self.ptr.frustum_center = x
-    @property
-    def frustum_bottom(self): return self.ptr.frustum_bottom
-    @frustum_bottom.setter
-    def frustum_bottom(self, float x): self.ptr.frustum_bottom = x
-    @property
-    def frustum_top(self): return self.ptr.frustum_top
-    @frustum_top.setter
-    def frustum_top(self, float x): self.ptr.frustum_top = x
-    @property
-    def frustum_near(self): return self.ptr.frustum_near
-    @frustum_near.setter
-    def frustum_near(self, float x): self.ptr.frustum_near = x
-    @property
-    def frustum_far(self): return self.ptr.frustum_far
-    @frustum_far.setter
-    def frustum_far(self, float x): self.ptr.frustum_far = x
-    @property
-    def pos(self): return self._pos
-    @property
-    def forward(self): return self._forward
-    @property
-    def up(self): return self._up
-
-cdef PyMjvGLCamera WrapMjvGLCamera(mjvGLCamera* p):
-    cdef PyMjvGLCamera o = PyMjvGLCamera()
-    o._set(p)
-    return o
-
-cdef class PyMjStatistic(object):
-    cdef mjStatistic* ptr
-    
-    
-    cdef np.ndarray _center
-    
-    def __cinit__(self):
-        self.ptr = NULL
-
-
-    @property
-    def uintptr(self): return <uintptr_t>self.ptr
-
-    cdef void _set(self, mjStatistic* p):
-        
-        self.ptr = p
-        
-        
-        self._center = _wrap_mjtNum_1d(&p.center[0], 3)
-        
-    @property
-    def meaninertia(self): return self.ptr.meaninertia
-    @meaninertia.setter
-    def meaninertia(self, mjtNum x): self.ptr.meaninertia = x
-    @property
-    def meanmass(self): return self.ptr.meanmass
-    @meanmass.setter
-    def meanmass(self, mjtNum x): self.ptr.meanmass = x
-    @property
-    def meansize(self): return self.ptr.meansize
-    @meansize.setter
-    def meansize(self, mjtNum x): self.ptr.meansize = x
-    @property
-    def extent(self): return self.ptr.extent
-    @extent.setter
-    def extent(self, mjtNum x): self.ptr.extent = x
-    @property
-    def center(self): return self._center
-
-cdef PyMjStatistic WrapMjStatistic(mjStatistic* p):
-    cdef PyMjStatistic o = PyMjStatistic()
-    o._set(p)
-    return o
-
-cdef class PyMjSolverStat(object):
-    cdef mjSolverStat* ptr
-    
-    
-    
-    def __cinit__(self):
-        self.ptr = NULL
-
-
-    @property
-    def uintptr(self): return <uintptr_t>self.ptr
-
-    cdef void _set(self, mjSolverStat* p):
-        
-        self.ptr = p
-        
-        
-        
-    @property
-    def improvement(self): return self.ptr.improvement
-    @improvement.setter
-    def improvement(self, mjtNum x): self.ptr.improvement = x
-    @property
-    def gradient(self): return self.ptr.gradient
-    @gradient.setter
-    def gradient(self, mjtNum x): self.ptr.gradient = x
-    @property
-    def lineslope(self): return self.ptr.lineslope
-    @lineslope.setter
-    def lineslope(self, mjtNum x): self.ptr.lineslope = x
-    @property
-    def nactive(self): return self.ptr.nactive
-    @nactive.setter
-    def nactive(self, int x): self.ptr.nactive = x
-    @property
-    def nchange(self): return self.ptr.nchange
-    @nchange.setter
-    def nchange(self, int x): self.ptr.nchange = x
-    @property
-    def neval(self): return self.ptr.neval
-    @neval.setter
-    def neval(self, int x): self.ptr.neval = x
-    @property
-    def nupdate(self): return self.ptr.nupdate
-    @nupdate.setter
-    def nupdate(self, int x): self.ptr.nupdate = x
-
-cdef PyMjSolverStat WrapMjSolverStat(mjSolverStat* p):
-    cdef PyMjSolverStat o = PyMjSolverStat()
-    o._set(p)
-    return o
-
-cdef class PyMjVisual_map(object):
-    cdef mjVisual_map* ptr
-    
-    
-    
-    def __cinit__(self):
-        self.ptr = NULL
-
-
-    @property
-    def uintptr(self): return <uintptr_t>self.ptr
-
-    cdef void _set(self, mjVisual_map* p):
-        
-        self.ptr = p
-        
-        
-        
-    @property
-    def stiffness(self): return self.ptr.stiffness
-    @stiffness.setter
-    def stiffness(self, float x): self.ptr.stiffness = x
-    @property
-    def stiffnessrot(self): return self.ptr.stiffnessrot
-    @stiffnessrot.setter
-    def stiffnessrot(self, float x): self.ptr.stiffnessrot = x
-    @property
-    def force(self): return self.ptr.force
-    @force.setter
-    def force(self, float x): self.ptr.force = x
-    @property
-    def torque(self): return self.ptr.torque
-    @torque.setter
-    def torque(self, float x): self.ptr.torque = x
-    @property
-    def alpha(self): return self.ptr.alpha
-    @alpha.setter
-    def alpha(self, float x): self.ptr.alpha = x
-    @property
-    def fogstart(self): return self.ptr.fogstart
-    @fogstart.setter
-    def fogstart(self, float x): self.ptr.fogstart = x
-    @property
-    def fogend(self): return self.ptr.fogend
-    @fogend.setter
-    def fogend(self, float x): self.ptr.fogend = x
-    @property
-    def znear(self): return self.ptr.znear
-    @znear.setter
-    def znear(self, float x): self.ptr.znear = x
-    @property
-    def zfar(self): return self.ptr.zfar
-    @zfar.setter
-    def zfar(self, float x): self.ptr.zfar = x
-    @property
-    def shadowclip(self): return self.ptr.shadowclip
-    @shadowclip.setter
-    def shadowclip(self, float x): self.ptr.shadowclip = x
-    @property
-    def shadowscale(self): return self.ptr.shadowscale
-    @shadowscale.setter
-    def shadowscale(self, float x): self.ptr.shadowscale = x
-
-cdef PyMjVisual_map WrapMjVisual_map(mjVisual_map* p):
-    cdef PyMjVisual_map o = PyMjVisual_map()
-    o._set(p)
-    return o
-
-cdef class PyMjvOption(object):
-    cdef mjvOption* ptr
-    
-    
-    cdef np.ndarray _geomgroup
-    cdef np.ndarray _sitegroup
-    cdef np.ndarray _flags
-    
-    def __cinit__(self):
-        self.ptr = NULL
-
-
-    @property
-    def uintptr(self): return <uintptr_t>self.ptr
-
-    cdef void _set(self, mjvOption* p):
-        
-        self.ptr = p
-        
-        
-        self._geomgroup = _wrap_mjtByte_1d(&p.geomgroup[0], 5)
-        self._sitegroup = _wrap_mjtByte_1d(&p.sitegroup[0], 5)
-        self._flags = _wrap_mjtByte_1d(&p.flags[0], mjNVISFLAG)
-        
-    @property
-    def label(self): return self.ptr.label
-    @label.setter
-    def label(self, int x): self.ptr.label = x
-    @property
-    def frame(self): return self.ptr.frame
-    @frame.setter
-    def frame(self, int x): self.ptr.frame = x
-    @property
-    def geomgroup(self): return self._geomgroup
-    @property
-    def sitegroup(self): return self._sitegroup
-    @property
-    def flags(self): return self._flags
-
-cdef PyMjvOption WrapMjvOption(mjvOption* p):
-    cdef PyMjvOption o = PyMjvOption()
-    o._set(p)
-    return o
-
-cdef class PyMjTimerStat(object):
-    cdef mjTimerStat* ptr
-    
-    
-    
-    def __cinit__(self):
-        self.ptr = NULL
-
-
-    @property
-    def uintptr(self): return <uintptr_t>self.ptr
-
-    cdef void _set(self, mjTimerStat* p):
-        
-        self.ptr = p
-        
-        
-        
-    @property
-    def duration(self): return self.ptr.duration
-    @duration.setter
-    def duration(self, mjtNum x): self.ptr.duration = x
-    @property
-    def number(self): return self.ptr.number
-    @number.setter
-    def number(self, int x): self.ptr.number = x
-
-cdef PyMjTimerStat WrapMjTimerStat(mjTimerStat* p):
-    cdef PyMjTimerStat o = PyMjTimerStat()
-    o._set(p)
-    return o
-
-cdef class PyMjData(object):
-    cdef mjData* ptr
-    
-    cdef PyMjModel _model
-    
-    cdef np.ndarray _qpos
-    cdef np.ndarray _qvel
-    cdef np.ndarray _act
-    cdef np.ndarray _ctrl
-    cdef np.ndarray _qfrc_applied
-    cdef np.ndarray _xfrc_applied
-    cdef np.ndarray _qacc
-    cdef np.ndarray _act_dot
-    cdef np.ndarray _mocap_pos
-    cdef np.ndarray _mocap_quat
-    cdef np.ndarray _userdata
-    cdef np.ndarray _sensordata
-    cdef np.ndarray _xpos
-    cdef np.ndarray _xquat
-    cdef np.ndarray _xmat
-    cdef np.ndarray _xipos
-    cdef np.ndarray _ximat
-    cdef np.ndarray _xanchor
-    cdef np.ndarray _xaxis
-    cdef np.ndarray _geom_xpos
-    cdef np.ndarray _geom_xmat
-    cdef np.ndarray _site_xpos
-    cdef np.ndarray _site_xmat
-    cdef np.ndarray _cam_xpos
-    cdef np.ndarray _cam_xmat
-    cdef np.ndarray _light_xpos
-    cdef np.ndarray _light_xdir
-    cdef np.ndarray _subtree_com
-    cdef np.ndarray _cdof
-    cdef np.ndarray _cinert
-    cdef np.ndarray _ten_wrapadr
-    cdef np.ndarray _ten_wrapnum
-    cdef np.ndarray _ten_length
-    cdef np.ndarray _ten_moment
-    cdef np.ndarray _wrap_obj
-    cdef np.ndarray _wrap_xpos
-    cdef np.ndarray _actuator_length
-    cdef np.ndarray _actuator_moment
-    cdef np.ndarray _crb
-    cdef np.ndarray _qM
-    cdef np.ndarray _qLD
-    cdef np.ndarray _qLDiagInv
-    cdef np.ndarray _qLDiagSqrtInv
-    cdef tuple _contact
-    cdef np.ndarray _efc_type
-    cdef np.ndarray _efc_id
-    cdef np.ndarray _efc_J_rownnz
-    cdef np.ndarray _efc_J_rowadr
-    cdef np.ndarray _efc_J_colind
-    cdef np.ndarray _efc_JT_rownnz
-    cdef np.ndarray _efc_JT_rowadr
-    cdef np.ndarray _efc_JT_colind
-    cdef np.ndarray _efc_solref
-    cdef np.ndarray _efc_solimp
-    cdef np.ndarray _efc_margin
-    cdef np.ndarray _efc_frictionloss
-    cdef np.ndarray _efc_pos
-    cdef np.ndarray _efc_J
-    cdef np.ndarray _efc_JT
-    cdef np.ndarray _efc_diagApprox
-    cdef np.ndarray _efc_D
-    cdef np.ndarray _efc_R
-    cdef np.ndarray _efc_AR_rownnz
-    cdef np.ndarray _efc_AR_rowadr
-    cdef np.ndarray _efc_AR_colind
-    cdef np.ndarray _efc_AR
-    cdef np.ndarray _ten_velocity
-    cdef np.ndarray _actuator_velocity
-    cdef np.ndarray _cvel
-    cdef np.ndarray _cdof_dot
-    cdef np.ndarray _qfrc_bias
-    cdef np.ndarray _qfrc_passive
-    cdef np.ndarray _efc_vel
-    cdef np.ndarray _efc_aref
-    cdef np.ndarray _subtree_linvel
-    cdef np.ndarray _subtree_angmom
-    cdef np.ndarray _actuator_force
-    cdef np.ndarray _qfrc_actuator
-    cdef np.ndarray _qfrc_unc
-    cdef np.ndarray _qacc_unc
-    cdef np.ndarray _efc_b
-    cdef np.ndarray _efc_force
-    cdef np.ndarray _efc_state
-    cdef np.ndarray _qfrc_constraint
-    cdef np.ndarray _qacc_warmstart
-    cdef np.ndarray _qfrc_inverse
-    cdef np.ndarray _cacc
-    cdef np.ndarray _cfrc_int
-    cdef np.ndarray _cfrc_ext
-    cdef list _warning
-    cdef list _timer
-    cdef list _solver
-    cdef np.ndarray _solver_fwdinv
-    cdef np.ndarray _energy
-    
-    @property
-    def body_xpos(self):
-        return self._xpos
-
-    @property
-    def body_xquat(self):
-        return self._xquat
-
-    @property
-    def body_xmat(self):
-        return self._xmat
-
-    @property
-    def active_contacts_efc_pos(self):
-        return self._efc_pos[self.ne:self.nefc]
-
-    def __dealloc__(self):
-        mj_deleteData(self.ptr)
-
-
-    def get_body_xpos(self, name):
-        id = self._model.body_name2id(name)
-        return self._xpos[id]
-
-    def get_xpos(self, name):
-        raise RuntimeError("get_body_xpos should be used instead of get_xpos")
-
-    def get_body_xquat(self, name):
-        id = self._model.body_name2id(name)
-        return self._xquat[id]
-
-    def get_xquat(self, name):
-        raise RuntimeError("get_body_xquat should be used instead of get_xquat")
-
-    def get_body_xmat(self, name):
-        id = self._model.body_name2id(name)
-        return self._xmat[id].reshape((3, 3))
-
-    def get_xmat(self, name):
-        raise RuntimeError("get_body_xmat should be used instead of get_xmat")
-
-    def get_body_xipos(self, name):
-        id = self._model.body_name2id(name)
-        return self._xipos[id]
-
-    def get_xipos(self, name):
-        raise RuntimeError("get_body_xipos should be used instead of get_xipos")
-
-    def get_body_ximat(self, name):
-        id = self._model.body_name2id(name)
-        return self._ximat[id].reshape((3, 3))
-
-    def get_ximat(self, name):
-        raise RuntimeError("get_body_ximat should be used instead of get_ximat")
-
-    def get_body_jacp(self, name, np.ndarray[double, ndim=1, mode="c"] jacp = None):
-        id = self._model.body_name2id(name)
-        if jacp is None:
-            jacp = np.zeros(3 * self._model.nv)
-        cdef double * jacp_view = &jacp[0]
-        mj_jacBody(self._model.ptr, self.ptr, jacp_view, NULL, id)
-        return jacp
-
-    def get_body_jacr(self, name, np.ndarray[double, ndim=1, mode="c"] jacr = None):
-        id = self._model.body_name2id(name)
-        if jacr is None:
-            jacr = np.zeros(3 * self._model.nv)
-        cdef double * jacr_view = &jacr[0]
-        mj_jacBody(self._model.ptr, self.ptr, NULL, jacr_view, id)
-        return jacr
-
-    def get_body_xvelp(self, name):
-        id = self._model.body_name2id(name)
-        jacp = self.get_body_jacp(name).reshape((3, self._model.nv))
-        xvelp = np.dot(jacp, self.qvel)
-        return xvelp
-
-    def get_body_xvelr(self, name):
-        id = self._model.body_name2id(name)
-        jacr = self.get_body_jacr(name).reshape((3, self._model.nv))
-        xvelr = np.dot(jacr, self.qvel)
-        return xvelr
-
-    def get_joint_xanchor(self, name):
-        id = self._model.joint_name2id(name)
-        return self._xanchor[id]
-
-    def get_xanchor(self, name):
-        raise RuntimeError("get_joint_xanchor should be used instead of get_xanchor")
-
-    def get_joint_xaxis(self, name):
-        id = self._model.joint_name2id(name)
-        return self._xaxis[id]
-
-    def get_xaxis(self, name):
-        raise RuntimeError("get_joint_xaxis should be used instead of get_xaxis")
-
-    def get_geom_xpos(self, name):
-        id = self._model.geom_name2id(name)
-        return self._geom_xpos[id]
-
-    def get_geom_xmat(self, name):
-        id = self._model.geom_name2id(name)
-        return self._geom_xmat[id].reshape((3, 3))
-
-    def get_geom_jacp(self, name, np.ndarray[double, ndim=1, mode="c"] jacp = None):
-        id = self._model.geom_name2id(name)
-        if jacp is None:
-            jacp = np.zeros(3 * self._model.nv)
-        cdef double * jacp_view = &jacp[0]
-        mj_jacGeom(self._model.ptr, self.ptr, jacp_view, NULL, id)
-        return jacp
-
-    def get_geom_jacr(self, name, np.ndarray[double, ndim=1, mode="c"] jacr = None):
-        id = self._model.geom_name2id(name)
-        if jacr is None:
-            jacr = np.zeros(3 * self._model.nv)
-        cdef double * jacr_view = &jacr[0]
-        mj_jacGeom(self._model.ptr, self.ptr, NULL, jacr_view, id)
-        return jacr
-
-    def get_geom_xvelp(self, name):
-        id = self._model.geom_name2id(name)
-        jacp = self.get_geom_jacp(name).reshape((3, self._model.nv))
-        xvelp = np.dot(jacp, self.qvel)
-        return xvelp
-
-    def get_geom_xvelr(self, name):
-        id = self._model.geom_name2id(name)
-        jacr = self.get_geom_jacr(name).reshape((3, self._model.nv))
-        xvelr = np.dot(jacr, self.qvel)
-        return xvelr
-
-    def get_site_xpos(self, name):
-        id = self._model.site_name2id(name)
-        return self._site_xpos[id]
-
-    def get_site_xmat(self, name):
-        id = self._model.site_name2id(name)
-        return self._site_xmat[id].reshape((3, 3))
-
-    def get_site_jacp(self, name, np.ndarray[double, ndim=1, mode="c"] jacp = None):
-        id = self._model.site_name2id(name)
-        if jacp is None:
-            jacp = np.zeros(3 * self._model.nv)
-        cdef double * jacp_view = &jacp[0]
-        mj_jacSite(self._model.ptr, self.ptr, jacp_view, NULL, id)
-        return jacp
-
-    def get_site_jacr(self, name, np.ndarray[double, ndim=1, mode="c"] jacr = None):
-        id = self._model.site_name2id(name)
-        if jacr is None:
-            jacr = np.zeros(3 * self._model.nv)
-        cdef double * jacr_view = &jacr[0]
-        mj_jacSite(self._model.ptr, self.ptr, NULL, jacr_view, id)
-        return jacr
-
-    def get_site_xvelp(self, name):
-        id = self._model.site_name2id(name)
-        jacp = self.get_site_jacp(name).reshape((3, self._model.nv))
-        xvelp = np.dot(jacp, self.qvel)
-        return xvelp
-
-    def get_site_xvelr(self, name):
-        id = self._model.site_name2id(name)
-        jacr = self.get_site_jacr(name).reshape((3, self._model.nv))
-        xvelr = np.dot(jacr, self.qvel)
-        return xvelr
-
-    def get_camera_xpos(self, name):
-        id = self._model.camera_name2id(name)
-        return self._cam_xpos[id]
-
-    def get_cam_xpos(self, name):
-        raise RuntimeError("get_camera_xpos should be used instead of get_cam_xpos")
-
-    def get_camera_xmat(self, name):
-        id = self._model.camera_name2id(name)
-        return self._cam_xmat[id].reshape((3, 3))
-
-    def get_cam_xmat(self, name):
-        raise RuntimeError("get_camera_xmat should be used instead of get_cam_xmat")
-
-    def get_light_xpos(self, name):
-        id = self._model.light_name2id(name)
-        return self._light_xpos[id]
-
-    def get_light_xdir(self, name):
-        id = self._model.light_name2id(name)
-        return self._light_xdir[id]
-
-    def get_sensor(self, name):
-        id = self._model.sensor_name2id(name)
-        return self._sensordata[id]
-
-    def get_sensordata(self, name):
-        raise RuntimeError("get_sensor should be used instead of get_sensordata")
-
-    def get_mocap_pos(self, name):
-        body_id = self._model.body_name2id(name)
-        mocap_id = self._model.body_mocapid[body_id]
-        return self.mocap_pos[mocap_id]
-
-    def set_mocap_pos(self, name, value):
-        body_id = self._model.body_name2id(name)
-        mocap_id = self._model.body_mocapid[body_id]
-        self.mocap_pos[mocap_id] = value
-
-    def get_mocap_quat(self, name):
-        body_id = self._model.body_name2id(name)
-        mocap_id = self._model.body_mocapid[body_id]
-        return self.mocap_quat[mocap_id]
-
-    def set_mocap_quat(self, name, value):
-        body_id = self._model.body_name2id(name)
-        mocap_id = self._model.body_mocapid[body_id]
-        self.mocap_quat[mocap_id] = value
-
-    def get_joint_qpos(self, name):
-        addr = self._model.get_joint_qpos_addr(name)
-        if isinstance(addr, (int, np.int32, np.int64)):
-            return self.qpos[addr]
-        else:
-            start_i, end_i = addr
-            return self.qpos[start_i:end_i]
-
-    def set_joint_qpos(self, name, value):
-        addr = self._model.get_joint_qpos_addr(name)
-        if isinstance(addr, (int, np.int32, np.int64)):
-            self.qpos[addr] = value
-        else:
-            start_i, end_i = addr
-            value = np.array(value)
-            assert value.shape == (end_i - start_i,), (
-                "Value has incorrect shape %s: %s" % (name, value))
-            self.qpos[start_i:end_i] = value
-
-    def get_joint_qvel(self, name):
-        addr = self._model.get_joint_qvel_addr(name)
-        if isinstance(addr, (int, np.int32, np.int64)):
-            return self.qvel[addr]
-        else:
-            start_i, end_i = addr
-            return self.qvel[start_i:end_i]
-
-    def set_joint_qvel(self, name, value):
-        addr = self._model.get_joint_qvel_addr(name)
-        if isinstance(addr, (int, np.int32, np.int64)):
-            self.qvel[addr] = value
-        else:
-            start_i, end_i = addr
-            value = np.array(value)
-            assert value.shape == (end_i - start_i,), (
-                "Value has incorrect shape %s: %s" % (name, value))
-            self.qvel[start_i:end_i] = value
-
-
-    @property
-    def uintptr(self): return <uintptr_t>self.ptr
-
-    cdef void _set(self, mjData* p, PyMjModel model):
-        
-        self.ptr = p
-        self._model = model
-        
-        self._qpos = _wrap_mjtNum_1d(p.qpos, model.nq)
-        self._qvel = _wrap_mjtNum_1d(p.qvel, model.nv)
-        self._act = _wrap_mjtNum_1d(p.act, model.na)
-        self._ctrl = _wrap_mjtNum_1d(p.ctrl, model.nu)
-        self._qfrc_applied = _wrap_mjtNum_1d(p.qfrc_applied, model.nv)
-        self._xfrc_applied = _wrap_mjtNum_2d(p.xfrc_applied, model.nbody, 6)
-        self._qacc = _wrap_mjtNum_1d(p.qacc, model.nv)
-        self._act_dot = _wrap_mjtNum_1d(p.act_dot, model.na)
-        self._mocap_pos = _wrap_mjtNum_2d(p.mocap_pos, model.nmocap, 3)
-        self._mocap_quat = _wrap_mjtNum_2d(p.mocap_quat, model.nmocap, 4)
-        self._userdata = _wrap_mjtNum_1d(p.userdata, model.nuserdata)
-        self._sensordata = _wrap_mjtNum_1d(p.sensordata, model.nsensordata)
-        self._xpos = _wrap_mjtNum_2d(p.xpos, model.nbody, 3)
-        self._xquat = _wrap_mjtNum_2d(p.xquat, model.nbody, 4)
-        self._xmat = _wrap_mjtNum_2d(p.xmat, model.nbody, 9)
-        self._xipos = _wrap_mjtNum_2d(p.xipos, model.nbody, 3)
-        self._ximat = _wrap_mjtNum_2d(p.ximat, model.nbody, 9)
-        self._xanchor = _wrap_mjtNum_2d(p.xanchor, model.njnt, 3)
-        self._xaxis = _wrap_mjtNum_2d(p.xaxis, model.njnt, 3)
-        self._geom_xpos = _wrap_mjtNum_2d(p.geom_xpos, model.ngeom, 3)
-        self._geom_xmat = _wrap_mjtNum_2d(p.geom_xmat, model.ngeom, 9)
-        self._site_xpos = _wrap_mjtNum_2d(p.site_xpos, model.nsite, 3)
-        self._site_xmat = _wrap_mjtNum_2d(p.site_xmat, model.nsite, 9)
-        self._cam_xpos = _wrap_mjtNum_2d(p.cam_xpos, model.ncam, 3)
-        self._cam_xmat = _wrap_mjtNum_2d(p.cam_xmat, model.ncam, 9)
-        self._light_xpos = _wrap_mjtNum_2d(p.light_xpos, model.nlight, 3)
-        self._light_xdir = _wrap_mjtNum_2d(p.light_xdir, model.nlight, 3)
-        self._subtree_com = _wrap_mjtNum_2d(p.subtree_com, model.nbody, 3)
-        self._cdof = _wrap_mjtNum_2d(p.cdof, model.nv, 6)
-        self._cinert = _wrap_mjtNum_2d(p.cinert, model.nbody, 10)
-        self._ten_wrapadr = _wrap_int_1d(p.ten_wrapadr, model.ntendon)
-        self._ten_wrapnum = _wrap_int_1d(p.ten_wrapnum, model.ntendon)
-        self._ten_length = _wrap_mjtNum_1d(p.ten_length, model.ntendon)
-        self._ten_moment = _wrap_mjtNum_2d(p.ten_moment, model.ntendon, model.nv)
-        self._wrap_obj = _wrap_int_1d(p.wrap_obj, model.nwrap*2)
-        self._wrap_xpos = _wrap_mjtNum_2d(p.wrap_xpos, model.nwrap*2, 3)
-        self._actuator_length = _wrap_mjtNum_1d(p.actuator_length, model.nu)
-        self._actuator_moment = _wrap_mjtNum_2d(p.actuator_moment, model.nu, model.nv)
-        self._crb = _wrap_mjtNum_2d(p.crb, model.nbody, 10)
-        self._qM = _wrap_mjtNum_1d(p.qM, model.nM)
-        self._qLD = _wrap_mjtNum_1d(p.qLD, model.nM)
-        self._qLDiagInv = _wrap_mjtNum_1d(p.qLDiagInv, model.nv)
-        self._qLDiagSqrtInv = _wrap_mjtNum_1d(p.qLDiagSqrtInv, model.nv)
-        self._contact = tuple([WrapMjContact(&p.contact[i]) for i in range(model.nconmax)])
-        self._efc_type = _wrap_int_1d(p.efc_type, model.njmax)
-        self._efc_id = _wrap_int_1d(p.efc_id, model.njmax)
-        self._efc_J_rownnz = _wrap_int_1d(p.efc_J_rownnz, model.njmax)
-        self._efc_J_rowadr = _wrap_int_1d(p.efc_J_rowadr, model.njmax)
-        self._efc_J_colind = _wrap_int_2d(p.efc_J_colind, model.njmax, model.nv)
-        self._efc_JT_rownnz = _wrap_int_1d(p.efc_JT_rownnz, model.nv)
-        self._efc_JT_rowadr = _wrap_int_1d(p.efc_JT_rowadr, model.nv)
-        self._efc_JT_colind = _wrap_int_2d(p.efc_JT_colind, model.nv, model.njmax)
-        self._efc_solref = _wrap_mjtNum_2d(p.efc_solref, model.njmax, mjNREF)
-        self._efc_solimp = _wrap_mjtNum_2d(p.efc_solimp, model.njmax, mjNIMP)
-        self._efc_margin = _wrap_mjtNum_1d(p.efc_margin, model.njmax)
-        self._efc_frictionloss = _wrap_mjtNum_1d(p.efc_frictionloss, model.njmax)
-        self._efc_pos = _wrap_mjtNum_1d(p.efc_pos, model.njmax)
-        self._efc_J = _wrap_mjtNum_2d(p.efc_J, model.njmax, model.nv)
-        self._efc_JT = _wrap_mjtNum_2d(p.efc_JT, model.nv, model.njmax)
-        self._efc_diagApprox = _wrap_mjtNum_1d(p.efc_diagApprox, model.njmax)
-        self._efc_D = _wrap_mjtNum_1d(p.efc_D, model.njmax)
-        self._efc_R = _wrap_mjtNum_1d(p.efc_R, model.njmax)
-        self._efc_AR_rownnz = _wrap_int_1d(p.efc_AR_rownnz, model.njmax)
-        self._efc_AR_rowadr = _wrap_int_1d(p.efc_AR_rowadr, model.njmax)
-        self._efc_AR_colind = _wrap_int_2d(p.efc_AR_colind, model.njmax, model.njmax)
-        self._efc_AR = _wrap_mjtNum_2d(p.efc_AR, model.njmax, model.njmax)
-        self._ten_velocity = _wrap_mjtNum_1d(p.ten_velocity, model.ntendon)
-        self._actuator_velocity = _wrap_mjtNum_1d(p.actuator_velocity, model.nu)
-        self._cvel = _wrap_mjtNum_2d(p.cvel, model.nbody, 6)
-        self._cdof_dot = _wrap_mjtNum_2d(p.cdof_dot, model.nv, 6)
-        self._qfrc_bias = _wrap_mjtNum_1d(p.qfrc_bias, model.nv)
-        self._qfrc_passive = _wrap_mjtNum_1d(p.qfrc_passive, model.nv)
-        self._efc_vel = _wrap_mjtNum_1d(p.efc_vel, model.njmax)
-        self._efc_aref = _wrap_mjtNum_1d(p.efc_aref, model.njmax)
-        self._subtree_linvel = _wrap_mjtNum_2d(p.subtree_linvel, model.nbody, 3)
-        self._subtree_angmom = _wrap_mjtNum_2d(p.subtree_angmom, model.nbody, 3)
-        self._actuator_force = _wrap_mjtNum_1d(p.actuator_force, model.nu)
-        self._qfrc_actuator = _wrap_mjtNum_1d(p.qfrc_actuator, model.nv)
-        self._qfrc_unc = _wrap_mjtNum_1d(p.qfrc_unc, model.nv)
-        self._qacc_unc = _wrap_mjtNum_1d(p.qacc_unc, model.nv)
-        self._efc_b = _wrap_mjtNum_1d(p.efc_b, model.njmax)
-        self._efc_force = _wrap_mjtNum_1d(p.efc_force, model.njmax)
-        self._efc_state = _wrap_int_1d(p.efc_state, model.njmax)
-        self._qfrc_constraint = _wrap_mjtNum_1d(p.qfrc_constraint, model.nv)
-        self._qacc_warmstart = _wrap_mjtNum_1d(p.qacc_warmstart, model.nv)
-        self._qfrc_inverse = _wrap_mjtNum_1d(p.qfrc_inverse, model.nv)
-        self._cacc = _wrap_mjtNum_2d(p.cacc, model.nbody, 6)
-        self._cfrc_int = _wrap_mjtNum_2d(p.cfrc_int, model.nbody, 6)
-        self._cfrc_ext = _wrap_mjtNum_2d(p.cfrc_ext, model.nbody, 6)
-        self._warning = [WrapMjWarningStat(&p.warning[i]) for i in range(mjNWARNING)]
-        self._timer = [WrapMjTimerStat(&p.timer[i]) for i in range(mjNTIMER)]
-        self._solver = [WrapMjSolverStat(&p.solver[i]) for i in range(1000)]
-        self._solver_fwdinv = _wrap_mjtNum_1d(&p.solver_fwdinv[0], 2)
-        self._energy = _wrap_mjtNum_1d(&p.energy[0], 2)
-        
-    @property
-    def nstack(self): return self.ptr.nstack
-    @nstack.setter
-    def nstack(self, int x): self.ptr.nstack = x
-    @property
-    def nbuffer(self): return self.ptr.nbuffer
-    @nbuffer.setter
-    def nbuffer(self, int x): self.ptr.nbuffer = x
-    @property
-    def pstack(self): return self.ptr.pstack
-    @pstack.setter
-    def pstack(self, int x): self.ptr.pstack = x
-    @property
-    def maxuse_stack(self): return self.ptr.maxuse_stack
-    @maxuse_stack.setter
-    def maxuse_stack(self, int x): self.ptr.maxuse_stack = x
-    @property
-    def maxuse_con(self): return self.ptr.maxuse_con
-    @maxuse_con.setter
-    def maxuse_con(self, int x): self.ptr.maxuse_con = x
-    @property
-    def maxuse_efc(self): return self.ptr.maxuse_efc
-    @maxuse_efc.setter
-    def maxuse_efc(self, int x): self.ptr.maxuse_efc = x
-    @property
-    def solver_iter(self): return self.ptr.solver_iter
-    @solver_iter.setter
-    def solver_iter(self, int x): self.ptr.solver_iter = x
-    @property
-    def solver_nnz(self): return self.ptr.solver_nnz
-    @solver_nnz.setter
-    def solver_nnz(self, int x): self.ptr.solver_nnz = x
-    @property
-    def ne(self): return self.ptr.ne
-    @ne.setter
-    def ne(self, int x): self.ptr.ne = x
-    @property
-    def nf(self): return self.ptr.nf
-    @nf.setter
-    def nf(self, int x): self.ptr.nf = x
-    @property
-    def nefc(self): return self.ptr.nefc
-    @nefc.setter
-    def nefc(self, int x): self.ptr.nefc = x
-    @property
-    def ncon(self): return self.ptr.ncon
-    @ncon.setter
-    def ncon(self, int x): self.ptr.ncon = x
-    @property
-    def time(self): return self.ptr.time
-    @time.setter
-    def time(self, mjtNum x): self.ptr.time = x
-    @property
-    def qpos(self): return self._qpos
-    @property
-    def qvel(self): return self._qvel
-    @property
-    def act(self): return self._act
-    @property
-    def ctrl(self): return self._ctrl
-    @property
-    def qfrc_applied(self): return self._qfrc_applied
-    @property
-    def xfrc_applied(self): return self._xfrc_applied
-    @property
-    def qacc(self): return self._qacc
-    @property
-    def act_dot(self): return self._act_dot
-    @property
-    def mocap_pos(self): return self._mocap_pos
-    @property
-    def mocap_quat(self): return self._mocap_quat
-    @property
-    def userdata(self): return self._userdata
-    @property
-    def sensordata(self): return self._sensordata
-
-    @property
-    def xpos(self):
-        raise RuntimeError("body_xpos should be used instead of xpos")
-
-
-    @property
-    def xquat(self):
-        raise RuntimeError("body_xquat should be used instead of xquat")
-
-
-    @property
-    def xmat(self):
-        raise RuntimeError("body_xmat should be used instead of xmat")
-
-    @property
-    def xipos(self): return self._xipos
-    @property
-    def ximat(self): return self._ximat
-    @property
-    def xanchor(self): return self._xanchor
-    @property
-    def xaxis(self): return self._xaxis
-    @property
-    def geom_xpos(self): return self._geom_xpos
-    @property
-    def geom_xmat(self): return self._geom_xmat
-    @property
-    def site_xpos(self): return self._site_xpos
-    @property
-    def site_xmat(self): return self._site_xmat
-    @property
-    def cam_xpos(self): return self._cam_xpos
-    @property
-    def cam_xmat(self): return self._cam_xmat
-    @property
-    def light_xpos(self): return self._light_xpos
-    @property
-    def light_xdir(self): return self._light_xdir
-    @property
-    def subtree_com(self): return self._subtree_com
-    @property
-    def cdof(self): return self._cdof
-    @property
-    def cinert(self): return self._cinert
-    @property
-    def ten_wrapadr(self): return self._ten_wrapadr
-    @property
-    def ten_wrapnum(self): return self._ten_wrapnum
-    @property
-    def ten_length(self): return self._ten_length
-    @property
-    def ten_moment(self): return self._ten_moment
-    @property
-    def wrap_obj(self): return self._wrap_obj
-    @property
-    def wrap_xpos(self): return self._wrap_xpos
-    @property
-    def actuator_length(self): return self._actuator_length
-    @property
-    def actuator_moment(self): return self._actuator_moment
-    @property
-    def crb(self): return self._crb
-    @property
-    def qM(self): return self._qM
-    @property
-    def qLD(self): return self._qLD
-    @property
-    def qLDiagInv(self): return self._qLDiagInv
-    @property
-    def qLDiagSqrtInv(self): return self._qLDiagSqrtInv
-    @property
-    def contact(self): return self._contact
-    @property
-    def efc_type(self): return self._efc_type
-    @property
-    def efc_id(self): return self._efc_id
-    @property
-    def efc_J_rownnz(self): return self._efc_J_rownnz
-    @property
-    def efc_J_rowadr(self): return self._efc_J_rowadr
-    @property
-    def efc_J_colind(self): return self._efc_J_colind
-    @property
-    def efc_JT_rownnz(self): return self._efc_JT_rownnz
-    @property
-    def efc_JT_rowadr(self): return self._efc_JT_rowadr
-    @property
-    def efc_JT_colind(self): return self._efc_JT_colind
-    @property
-    def efc_solref(self): return self._efc_solref
-    @property
-    def efc_solimp(self): return self._efc_solimp
-    @property
-    def efc_margin(self): return self._efc_margin
-    @property
-    def efc_frictionloss(self): return self._efc_frictionloss
-
-    @property
-    def efc_pos(self):
-        raise RuntimeError("active_contacts_efc_pos should be used instead of efc_pos")
-
-    @property
-    def efc_J(self): return self._efc_J
-    @property
-    def efc_JT(self): return self._efc_JT
-    @property
-    def efc_diagApprox(self): return self._efc_diagApprox
-    @property
-    def efc_D(self): return self._efc_D
-    @property
-    def efc_R(self): return self._efc_R
-    @property
-    def efc_AR_rownnz(self): return self._efc_AR_rownnz
-    @property
-    def efc_AR_rowadr(self): return self._efc_AR_rowadr
-    @property
-    def efc_AR_colind(self): return self._efc_AR_colind
-    @property
-    def efc_AR(self): return self._efc_AR
-    @property
-    def ten_velocity(self): return self._ten_velocity
-    @property
-    def actuator_velocity(self): return self._actuator_velocity
-    @property
-    def cvel(self): return self._cvel
-    @property
-    def cdof_dot(self): return self._cdof_dot
-    @property
-    def qfrc_bias(self): return self._qfrc_bias
-    @property
-    def qfrc_passive(self): return self._qfrc_passive
-    @property
-    def efc_vel(self): return self._efc_vel
-    @property
-    def efc_aref(self): return self._efc_aref
-    @property
-    def subtree_linvel(self): return self._subtree_linvel
-    @property
-    def subtree_angmom(self): return self._subtree_angmom
-    @property
-    def actuator_force(self): return self._actuator_force
-    @property
-    def qfrc_actuator(self): return self._qfrc_actuator
-    @property
-    def qfrc_unc(self): return self._qfrc_unc
-    @property
-    def qacc_unc(self): return self._qacc_unc
-    @property
-    def efc_b(self): return self._efc_b
-    @property
-    def efc_force(self): return self._efc_force
-    @property
-    def efc_state(self): return self._efc_state
-    @property
-    def qfrc_constraint(self): return self._qfrc_constraint
-    @property
-    def qacc_warmstart(self): return self._qacc_warmstart
-    @property
-    def qfrc_inverse(self): return self._qfrc_inverse
-    @property
-    def cacc(self): return self._cacc
-    @property
-    def cfrc_int(self): return self._cfrc_int
-    @property
-    def cfrc_ext(self): return self._cfrc_ext
-    @property
-    def warning(self): return self._warning
-    @property
-    def timer(self): return self._timer
-    @property
-    def solver(self): return self._solver
-    @property
-    def solver_fwdinv(self): return self._solver_fwdinv
-    @property
-    def energy(self): return self._energy
-    @property
-    def body_jacp(self):
-        jacps = np.zeros((self._model.nbody, 3 * self._model.nv))
-        cdef double [:] jacp_view
-        for i, jacp in enumerate(jacps):
-            jacp_view = jacp
-            mj_jacBody(self._model.ptr, self.ptr, &jacp_view[0], NULL, i)
-        return jacps
-
-    @property
-    def body_jacr(self):
-        jacrs = np.zeros((self._model.nbody, 3 * self._model.nv))
-        cdef double [:] jacr_view
-        for i, jacr in enumerate(jacrs):
-            jacr_view = jacr
-            mj_jacBody(self._model.ptr, self.ptr, NULL, &jacr_view[0], i)
-        return jacrs
-
-    @property
-    def body_xvelp(self):
-        jacp = self.body_jacp.reshape((self._model.nbody, 3, self._model.nv))
-        xvelp = np.dot(jacp, self.qvel)
-        return xvelp
-
-    @property
-    def body_xvelr(self):
-        jacr = self.body_jacr.reshape((self._model.nbody, 3, self._model.nv))
-        xvelr = np.dot(jacr, self.qvel)
-        return xvelr
-
-    @property
-    def geom_jacp(self):
-        jacps = np.zeros((self._model.ngeom, 3 * self._model.nv))
-        cdef double [:] jacp_view
-        for i, jacp in enumerate(jacps):
-            jacp_view = jacp
-            mj_jacGeom(self._model.ptr, self.ptr, &jacp_view[0], NULL, i)
-        return jacps
-
-    @property
-    def geom_jacr(self):
-        jacrs = np.zeros((self._model.ngeom, 3 * self._model.nv))
-        cdef double [:] jacr_view
-        for i, jacr in enumerate(jacrs):
-            jacr_view = jacr
-            mj_jacGeom(self._model.ptr, self.ptr, NULL, &jacr_view[0], i)
-        return jacrs
-
-    @property
-    def geom_xvelp(self):
-        jacp = self.geom_jacp.reshape((self._model.ngeom, 3, self._model.nv))
-        xvelp = np.dot(jacp, self.qvel)
-        return xvelp
-
-    @property
-    def geom_xvelr(self):
-        jacr = self.geom_jacr.reshape((self._model.ngeom, 3, self._model.nv))
-        xvelr = np.dot(jacr, self.qvel)
-        return xvelr
-
-    @property
-    def site_jacp(self):
-        jacps = np.zeros((self._model.nsite, 3 * self._model.nv))
-        cdef double [:] jacp_view
-        for i, jacp in enumerate(jacps):
-            jacp_view = jacp
-            mj_jacSite(self._model.ptr, self.ptr, &jacp_view[0], NULL, i)
-        return jacps
-
-    @property
-    def site_jacr(self):
-        jacrs = np.zeros((self._model.nsite, 3 * self._model.nv))
-        cdef double [:] jacr_view
-        for i, jacr in enumerate(jacrs):
-            jacr_view = jacr
-            mj_jacSite(self._model.ptr, self.ptr, NULL, &jacr_view[0], i)
-        return jacrs
-
-    @property
-    def site_xvelp(self):
-        jacp = self.site_jacp.reshape((self._model.nsite, 3, self._model.nv))
-        xvelp = np.dot(jacp, self.qvel)
-        return xvelp
-
-    @property
-    def site_xvelr(self):
-        jacr = self.site_jacr.reshape((self._model.nsite, 3, self._model.nv))
-        xvelr = np.dot(jacr, self.qvel)
-        return xvelr
-
-
-cdef PyMjData WrapMjData(mjData* p, PyMjModel model):
-    cdef PyMjData o = PyMjData()
-    o._set(p, model)
-    return o
-
 cdef class PyMjVFS(object):
     cdef mjVFS* ptr
     
@@ -1566,23 +173,16 @@ cdef PyMjOption WrapMjOption(mjOption* p):
     o._set(p)
     return o
 
-cdef class PyMjvFigure(object):
-    cdef mjvFigure* ptr
+cdef class PyMjVisual(object):
+    cdef mjVisual* ptr
     
     
-    cdef np.ndarray _flg_ticklabel
-    cdef np.ndarray _gridsize
-    cdef np.ndarray _gridrgb
-    cdef np.ndarray _figurergba
-    cdef np.ndarray _legendrgba
-    cdef np.ndarray _textrgb
-    cdef np.ndarray _xlabel
-    cdef np.ndarray _title
-    cdef np.ndarray _xformat
-    cdef np.ndarray _yformat
-    cdef np.ndarray _minwidth
-    cdef np.ndarray _linepnt
-    cdef np.ndarray _linewidth
+    cdef PyMjVisual_global_ _global_
+    cdef PyMjVisual_quality _quality
+    cdef PyMjVisual_headlight _headlight
+    cdef PyMjVisual_map _map
+    cdef PyMjVisual_scale _scale
+    cdef PyMjVisual_rgba _rgba
     
     def __cinit__(self):
         self.ptr = NULL
@@ -1591,306 +191,33 @@ cdef class PyMjvFigure(object):
     @property
     def uintptr(self): return <uintptr_t>self.ptr
 
-    cdef void _set(self, mjvFigure* p):
+    cdef void _set(self, mjVisual* p):
         
         self.ptr = p
         
         
-        self._flg_ticklabel = _wrap_int_1d(&p.flg_ticklabel[0], 2)
-        self._gridsize = _wrap_int_1d(&p.gridsize[0], 2)
-        self._gridrgb = _wrap_float_1d(&p.gridrgb[0], 3)
-        self._figurergba = _wrap_float_1d(&p.figurergba[0], 4)
-        self._legendrgba = _wrap_float_1d(&p.legendrgba[0], 4)
-        self._textrgb = _wrap_float_1d(&p.textrgb[0], 3)
-        self._xlabel = _wrap_char_1d(&p.xlabel[0], 100)
-        self._title = _wrap_char_1d(&p.title[0], 100)
-        self._xformat = _wrap_char_1d(&p.xformat[0], 20)
-        self._yformat = _wrap_char_1d(&p.yformat[0], 20)
-        self._minwidth = _wrap_char_1d(&p.minwidth[0], 20)
-        self._linepnt = _wrap_int_1d(&p.linepnt[0], 100)
-        self._linewidth = _wrap_float_1d(&p.linewidth[0], 100)
+        self._global_ = WrapMjVisual_global_(&p.global_)
+        self._quality = WrapMjVisual_quality(&p.quality)
+        self._headlight = WrapMjVisual_headlight(&p.headlight)
+        self._map = WrapMjVisual_map(&p.map)
+        self._scale = WrapMjVisual_scale(&p.scale)
+        self._rgba = WrapMjVisual_rgba(&p.rgba)
         
     @property
-    def flg_legend(self): return self.ptr.flg_legend
-    @flg_legend.setter
-    def flg_legend(self, int x): self.ptr.flg_legend = x
+    def global_(self): return self._global_
     @property
-    def flg_extend(self): return self.ptr.flg_extend
-    @flg_extend.setter
-    def flg_extend(self, int x): self.ptr.flg_extend = x
+    def quality(self): return self._quality
     @property
-    def flg_barplot(self): return self.ptr.flg_barplot
-    @flg_barplot.setter
-    def flg_barplot(self, int x): self.ptr.flg_barplot = x
+    def headlight(self): return self._headlight
     @property
-    def gridwidth(self): return self.ptr.gridwidth
-    @gridwidth.setter
-    def gridwidth(self, float x): self.ptr.gridwidth = x
+    def map(self): return self._map
     @property
-    def flg_ticklabel(self): return self._flg_ticklabel
+    def scale(self): return self._scale
     @property
-    def gridsize(self): return self._gridsize
-    @property
-    def gridrgb(self): return self._gridrgb
-    @property
-    def figurergba(self): return self._figurergba
-    @property
-    def legendrgba(self): return self._legendrgba
-    @property
-    def textrgb(self): return self._textrgb
-    @property
-    def xlabel(self): return self._xlabel
-    @property
-    def title(self): return self._title
-    @property
-    def xformat(self): return self._xformat
-    @property
-    def yformat(self): return self._yformat
-    @property
-    def minwidth(self): return self._minwidth
-    @property
-    def linepnt(self): return self._linepnt
-    @property
-    def linewidth(self): return self._linewidth
+    def rgba(self): return self._rgba
 
-cdef PyMjvFigure WrapMjvFigure(mjvFigure* p):
-    cdef PyMjvFigure o = PyMjvFigure()
-    o._set(p)
-    return o
-
-cdef class PyMjrContext(object):
-    cdef mjrContext* ptr
-    
-    
-    cdef np.ndarray _textureType
-    cdef np.ndarray _texture
-    cdef np.ndarray _charWidth
-    cdef np.ndarray _charWidthBig
-    
-    def __cinit__(self):
-        self.ptr = NULL
-
-
-    @property
-    def uintptr(self): return <uintptr_t>self.ptr
-
-    cdef void _set(self, mjrContext* p):
-        
-        self.ptr = p
-        
-        
-        self._textureType = _wrap_int_1d(&p.textureType[0], 100)
-        self._texture = _wrap_unsigned_int_1d(&p.texture[0], 100)
-        self._charWidth = _wrap_int_1d(&p.charWidth[0], 127)
-        self._charWidthBig = _wrap_int_1d(&p.charWidthBig[0], 127)
-        
-    @property
-    def lineWidth(self): return self.ptr.lineWidth
-    @lineWidth.setter
-    def lineWidth(self, float x): self.ptr.lineWidth = x
-    @property
-    def shadowClip(self): return self.ptr.shadowClip
-    @shadowClip.setter
-    def shadowClip(self, float x): self.ptr.shadowClip = x
-    @property
-    def shadowScale(self): return self.ptr.shadowScale
-    @shadowScale.setter
-    def shadowScale(self, float x): self.ptr.shadowScale = x
-    @property
-    def shadowSize(self): return self.ptr.shadowSize
-    @shadowSize.setter
-    def shadowSize(self, int x): self.ptr.shadowSize = x
-    @property
-    def offWidth(self): return self.ptr.offWidth
-    @offWidth.setter
-    def offWidth(self, int x): self.ptr.offWidth = x
-    @property
-    def offHeight(self): return self.ptr.offHeight
-    @offHeight.setter
-    def offHeight(self, int x): self.ptr.offHeight = x
-    @property
-    def offSamples(self): return self.ptr.offSamples
-    @offSamples.setter
-    def offSamples(self, int x): self.ptr.offSamples = x
-    @property
-    def offFBO(self): return self.ptr.offFBO
-    @offFBO.setter
-    def offFBO(self, unsigned int x): self.ptr.offFBO = x
-    @property
-    def offFBO_r(self): return self.ptr.offFBO_r
-    @offFBO_r.setter
-    def offFBO_r(self, unsigned int x): self.ptr.offFBO_r = x
-    @property
-    def offColor(self): return self.ptr.offColor
-    @offColor.setter
-    def offColor(self, unsigned int x): self.ptr.offColor = x
-    @property
-    def offColor_r(self): return self.ptr.offColor_r
-    @offColor_r.setter
-    def offColor_r(self, unsigned int x): self.ptr.offColor_r = x
-    @property
-    def offDepthStencil(self): return self.ptr.offDepthStencil
-    @offDepthStencil.setter
-    def offDepthStencil(self, unsigned int x): self.ptr.offDepthStencil = x
-    @property
-    def offDepthStencil_r(self): return self.ptr.offDepthStencil_r
-    @offDepthStencil_r.setter
-    def offDepthStencil_r(self, unsigned int x): self.ptr.offDepthStencil_r = x
-    @property
-    def shadowFBO(self): return self.ptr.shadowFBO
-    @shadowFBO.setter
-    def shadowFBO(self, unsigned int x): self.ptr.shadowFBO = x
-    @property
-    def shadowTex(self): return self.ptr.shadowTex
-    @shadowTex.setter
-    def shadowTex(self, unsigned int x): self.ptr.shadowTex = x
-    @property
-    def ntexture(self): return self.ptr.ntexture
-    @ntexture.setter
-    def ntexture(self, int x): self.ptr.ntexture = x
-    @property
-    def basePlane(self): return self.ptr.basePlane
-    @basePlane.setter
-    def basePlane(self, unsigned int x): self.ptr.basePlane = x
-    @property
-    def baseMesh(self): return self.ptr.baseMesh
-    @baseMesh.setter
-    def baseMesh(self, unsigned int x): self.ptr.baseMesh = x
-    @property
-    def baseHField(self): return self.ptr.baseHField
-    @baseHField.setter
-    def baseHField(self, unsigned int x): self.ptr.baseHField = x
-    @property
-    def baseBuiltin(self): return self.ptr.baseBuiltin
-    @baseBuiltin.setter
-    def baseBuiltin(self, unsigned int x): self.ptr.baseBuiltin = x
-    @property
-    def baseFontNormal(self): return self.ptr.baseFontNormal
-    @baseFontNormal.setter
-    def baseFontNormal(self, unsigned int x): self.ptr.baseFontNormal = x
-    @property
-    def baseFontShadow(self): return self.ptr.baseFontShadow
-    @baseFontShadow.setter
-    def baseFontShadow(self, unsigned int x): self.ptr.baseFontShadow = x
-    @property
-    def baseFontBig(self): return self.ptr.baseFontBig
-    @baseFontBig.setter
-    def baseFontBig(self, unsigned int x): self.ptr.baseFontBig = x
-    @property
-    def rangePlane(self): return self.ptr.rangePlane
-    @rangePlane.setter
-    def rangePlane(self, int x): self.ptr.rangePlane = x
-    @property
-    def rangeMesh(self): return self.ptr.rangeMesh
-    @rangeMesh.setter
-    def rangeMesh(self, int x): self.ptr.rangeMesh = x
-    @property
-    def rangeHField(self): return self.ptr.rangeHField
-    @rangeHField.setter
-    def rangeHField(self, int x): self.ptr.rangeHField = x
-    @property
-    def rangeBuiltin(self): return self.ptr.rangeBuiltin
-    @rangeBuiltin.setter
-    def rangeBuiltin(self, int x): self.ptr.rangeBuiltin = x
-    @property
-    def rangeFont(self): return self.ptr.rangeFont
-    @rangeFont.setter
-    def rangeFont(self, int x): self.ptr.rangeFont = x
-    @property
-    def charHeight(self): return self.ptr.charHeight
-    @charHeight.setter
-    def charHeight(self, int x): self.ptr.charHeight = x
-    @property
-    def charHeightBig(self): return self.ptr.charHeightBig
-    @charHeightBig.setter
-    def charHeightBig(self, int x): self.ptr.charHeightBig = x
-    @property
-    def glewInitialized(self): return self.ptr.glewInitialized
-    @glewInitialized.setter
-    def glewInitialized(self, int x): self.ptr.glewInitialized = x
-    @property
-    def windowAvailable(self): return self.ptr.windowAvailable
-    @windowAvailable.setter
-    def windowAvailable(self, int x): self.ptr.windowAvailable = x
-    @property
-    def windowSamples(self): return self.ptr.windowSamples
-    @windowSamples.setter
-    def windowSamples(self, int x): self.ptr.windowSamples = x
-    @property
-    def windowStereo(self): return self.ptr.windowStereo
-    @windowStereo.setter
-    def windowStereo(self, int x): self.ptr.windowStereo = x
-    @property
-    def windowDoublebuffer(self): return self.ptr.windowDoublebuffer
-    @windowDoublebuffer.setter
-    def windowDoublebuffer(self, int x): self.ptr.windowDoublebuffer = x
-    @property
-    def currentBuffer(self): return self.ptr.currentBuffer
-    @currentBuffer.setter
-    def currentBuffer(self, int x): self.ptr.currentBuffer = x
-    @property
-    def textureType(self): return self._textureType
-    @property
-    def texture(self): return self._texture
-    @property
-    def charWidth(self): return self._charWidth
-    @property
-    def charWidthBig(self): return self._charWidthBig
-
-cdef PyMjrContext WrapMjrContext(mjrContext* p):
-    cdef PyMjrContext o = PyMjrContext()
-    o._set(p)
-    return o
-
-cdef class PyMjvCamera(object):
-    cdef mjvCamera* ptr
-    
-    
-    cdef np.ndarray _lookat
-    
-    def __cinit__(self):
-        self.ptr = NULL
-
-
-    @property
-    def uintptr(self): return <uintptr_t>self.ptr
-
-    cdef void _set(self, mjvCamera* p):
-        
-        self.ptr = p
-        
-        
-        self._lookat = _wrap_mjtNum_1d(&p.lookat[0], 3)
-        
-    @property
-    def type(self): return self.ptr.type
-    @type.setter
-    def type(self, int x): self.ptr.type = x
-    @property
-    def fixedcamid(self): return self.ptr.fixedcamid
-    @fixedcamid.setter
-    def fixedcamid(self, int x): self.ptr.fixedcamid = x
-    @property
-    def trackbodyid(self): return self.ptr.trackbodyid
-    @trackbodyid.setter
-    def trackbodyid(self, int x): self.ptr.trackbodyid = x
-    @property
-    def distance(self): return self.ptr.distance
-    @distance.setter
-    def distance(self, mjtNum x): self.ptr.distance = x
-    @property
-    def azimuth(self): return self.ptr.azimuth
-    @azimuth.setter
-    def azimuth(self, mjtNum x): self.ptr.azimuth = x
-    @property
-    def elevation(self): return self.ptr.elevation
-    @elevation.setter
-    def elevation(self, mjtNum x): self.ptr.elevation = x
-    @property
-    def lookat(self): return self._lookat
-
-cdef PyMjvCamera WrapMjvCamera(mjvCamera* p):
-    cdef PyMjvCamera o = PyMjvCamera()
+cdef PyMjVisual WrapMjVisual(mjVisual* p):
+    cdef PyMjVisual o = PyMjVisual()
     o._set(p)
     return o
 
@@ -1942,86 +269,6 @@ cdef PyMjVisual_global_ WrapMjVisual_global_(mjVisual_global_* p):
     o._set(p)
     return o
 
-cdef class PyMjVisual(object):
-    cdef mjVisual* ptr
-    
-    
-    cdef PyMjVisual_global_ _global_
-    cdef PyMjVisual_quality _quality
-    cdef PyMjVisual_headlight _headlight
-    cdef PyMjVisual_map _map
-    cdef PyMjVisual_scale _scale
-    cdef PyMjVisual_rgba _rgba
-    
-    def __cinit__(self):
-        self.ptr = NULL
-
-
-    @property
-    def uintptr(self): return <uintptr_t>self.ptr
-
-    cdef void _set(self, mjVisual* p):
-        
-        self.ptr = p
-        
-        
-        self._global_ = WrapMjVisual_global_(&p.global_)
-        self._quality = WrapMjVisual_quality(&p.quality)
-        self._headlight = WrapMjVisual_headlight(&p.headlight)
-        self._map = WrapMjVisual_map(&p.map)
-        self._scale = WrapMjVisual_scale(&p.scale)
-        self._rgba = WrapMjVisual_rgba(&p.rgba)
-        
-    @property
-    def global_(self): return self._global_
-    @property
-    def quality(self): return self._quality
-    @property
-    def headlight(self): return self._headlight
-    @property
-    def map(self): return self._map
-    @property
-    def scale(self): return self._scale
-    @property
-    def rgba(self): return self._rgba
-
-cdef PyMjVisual WrapMjVisual(mjVisual* p):
-    cdef PyMjVisual o = PyMjVisual()
-    o._set(p)
-    return o
-
-cdef class PyMjWarningStat(object):
-    cdef mjWarningStat* ptr
-    
-    
-    
-    def __cinit__(self):
-        self.ptr = NULL
-
-
-    @property
-    def uintptr(self): return <uintptr_t>self.ptr
-
-    cdef void _set(self, mjWarningStat* p):
-        
-        self.ptr = p
-        
-        
-        
-    @property
-    def lastinfo(self): return self.ptr.lastinfo
-    @lastinfo.setter
-    def lastinfo(self, int x): self.ptr.lastinfo = x
-    @property
-    def number(self): return self.ptr.number
-    @number.setter
-    def number(self, int x): self.ptr.number = x
-
-cdef PyMjWarningStat WrapMjWarningStat(mjWarningStat* p):
-    cdef PyMjWarningStat o = PyMjWarningStat()
-    o._set(p)
-    return o
-
 cdef class PyMjVisual_quality(object):
     cdef mjVisual_quality* ptr
     
@@ -2070,16 +317,13 @@ cdef PyMjVisual_quality WrapMjVisual_quality(mjVisual_quality* p):
     o._set(p)
     return o
 
-cdef class PyMjContact(object):
-    cdef mjContact* ptr
+cdef class PyMjVisual_headlight(object):
+    cdef mjVisual_headlight* ptr
     
     
-    cdef np.ndarray _pos
-    cdef np.ndarray _frame
-    cdef np.ndarray _friction
-    cdef np.ndarray _solref
-    cdef np.ndarray _solimp
-    cdef np.ndarray _H
+    cdef np.ndarray _ambient
+    cdef np.ndarray _diffuse
+    cdef np.ndarray _specular
     
     def __cinit__(self):
         self.ptr = NULL
@@ -2088,65 +332,320 @@ cdef class PyMjContact(object):
     @property
     def uintptr(self): return <uintptr_t>self.ptr
 
-    cdef void _set(self, mjContact* p):
+    cdef void _set(self, mjVisual_headlight* p):
         
         self.ptr = p
         
         
-        self._pos = _wrap_mjtNum_1d(&p.pos[0], 3)
-        self._frame = _wrap_mjtNum_1d(&p.frame[0], 9)
-        self._friction = _wrap_mjtNum_1d(&p.friction[0], 5)
-        self._solref = _wrap_mjtNum_1d(&p.solref[0], 2)
-        self._solimp = _wrap_mjtNum_1d(&p.solimp[0], 3)
-        self._H = _wrap_mjtNum_1d(&p.H[0], 36)
+        self._ambient = _wrap_float_1d(&p.ambient[0], 3)
+        self._diffuse = _wrap_float_1d(&p.diffuse[0], 3)
+        self._specular = _wrap_float_1d(&p.specular[0], 3)
         
     @property
-    def dist(self): return self.ptr.dist
-    @dist.setter
-    def dist(self, mjtNum x): self.ptr.dist = x
+    def active(self): return self.ptr.active
+    @active.setter
+    def active(self, int x): self.ptr.active = x
     @property
-    def includemargin(self): return self.ptr.includemargin
-    @includemargin.setter
-    def includemargin(self, mjtNum x): self.ptr.includemargin = x
+    def ambient(self): return self._ambient
     @property
-    def mu(self): return self.ptr.mu
-    @mu.setter
-    def mu(self, mjtNum x): self.ptr.mu = x
+    def diffuse(self): return self._diffuse
     @property
-    def dim(self): return self.ptr.dim
-    @dim.setter
-    def dim(self, int x): self.ptr.dim = x
-    @property
-    def geom1(self): return self.ptr.geom1
-    @geom1.setter
-    def geom1(self, int x): self.ptr.geom1 = x
-    @property
-    def geom2(self): return self.ptr.geom2
-    @geom2.setter
-    def geom2(self, int x): self.ptr.geom2 = x
-    @property
-    def exclude(self): return self.ptr.exclude
-    @exclude.setter
-    def exclude(self, int x): self.ptr.exclude = x
-    @property
-    def efc_address(self): return self.ptr.efc_address
-    @efc_address.setter
-    def efc_address(self, int x): self.ptr.efc_address = x
-    @property
-    def pos(self): return self._pos
-    @property
-    def frame(self): return self._frame
-    @property
-    def friction(self): return self._friction
-    @property
-    def solref(self): return self._solref
-    @property
-    def solimp(self): return self._solimp
-    @property
-    def H(self): return self._H
+    def specular(self): return self._specular
 
-cdef PyMjContact WrapMjContact(mjContact* p):
-    cdef PyMjContact o = PyMjContact()
+cdef PyMjVisual_headlight WrapMjVisual_headlight(mjVisual_headlight* p):
+    cdef PyMjVisual_headlight o = PyMjVisual_headlight()
+    o._set(p)
+    return o
+
+cdef class PyMjVisual_map(object):
+    cdef mjVisual_map* ptr
+    
+    
+    
+    def __cinit__(self):
+        self.ptr = NULL
+
+
+    @property
+    def uintptr(self): return <uintptr_t>self.ptr
+
+    cdef void _set(self, mjVisual_map* p):
+        
+        self.ptr = p
+        
+        
+        
+    @property
+    def stiffness(self): return self.ptr.stiffness
+    @stiffness.setter
+    def stiffness(self, float x): self.ptr.stiffness = x
+    @property
+    def stiffnessrot(self): return self.ptr.stiffnessrot
+    @stiffnessrot.setter
+    def stiffnessrot(self, float x): self.ptr.stiffnessrot = x
+    @property
+    def force(self): return self.ptr.force
+    @force.setter
+    def force(self, float x): self.ptr.force = x
+    @property
+    def torque(self): return self.ptr.torque
+    @torque.setter
+    def torque(self, float x): self.ptr.torque = x
+    @property
+    def alpha(self): return self.ptr.alpha
+    @alpha.setter
+    def alpha(self, float x): self.ptr.alpha = x
+    @property
+    def fogstart(self): return self.ptr.fogstart
+    @fogstart.setter
+    def fogstart(self, float x): self.ptr.fogstart = x
+    @property
+    def fogend(self): return self.ptr.fogend
+    @fogend.setter
+    def fogend(self, float x): self.ptr.fogend = x
+    @property
+    def znear(self): return self.ptr.znear
+    @znear.setter
+    def znear(self, float x): self.ptr.znear = x
+    @property
+    def zfar(self): return self.ptr.zfar
+    @zfar.setter
+    def zfar(self, float x): self.ptr.zfar = x
+    @property
+    def shadowclip(self): return self.ptr.shadowclip
+    @shadowclip.setter
+    def shadowclip(self, float x): self.ptr.shadowclip = x
+    @property
+    def shadowscale(self): return self.ptr.shadowscale
+    @shadowscale.setter
+    def shadowscale(self, float x): self.ptr.shadowscale = x
+
+cdef PyMjVisual_map WrapMjVisual_map(mjVisual_map* p):
+    cdef PyMjVisual_map o = PyMjVisual_map()
+    o._set(p)
+    return o
+
+cdef class PyMjVisual_scale(object):
+    cdef mjVisual_scale* ptr
+    
+    
+    
+    def __cinit__(self):
+        self.ptr = NULL
+
+
+    @property
+    def uintptr(self): return <uintptr_t>self.ptr
+
+    cdef void _set(self, mjVisual_scale* p):
+        
+        self.ptr = p
+        
+        
+        
+    @property
+    def forcewidth(self): return self.ptr.forcewidth
+    @forcewidth.setter
+    def forcewidth(self, float x): self.ptr.forcewidth = x
+    @property
+    def contactwidth(self): return self.ptr.contactwidth
+    @contactwidth.setter
+    def contactwidth(self, float x): self.ptr.contactwidth = x
+    @property
+    def contactheight(self): return self.ptr.contactheight
+    @contactheight.setter
+    def contactheight(self, float x): self.ptr.contactheight = x
+    @property
+    def connect(self): return self.ptr.connect
+    @connect.setter
+    def connect(self, float x): self.ptr.connect = x
+    @property
+    def com(self): return self.ptr.com
+    @com.setter
+    def com(self, float x): self.ptr.com = x
+    @property
+    def camera(self): return self.ptr.camera
+    @camera.setter
+    def camera(self, float x): self.ptr.camera = x
+    @property
+    def light(self): return self.ptr.light
+    @light.setter
+    def light(self, float x): self.ptr.light = x
+    @property
+    def selectpoint(self): return self.ptr.selectpoint
+    @selectpoint.setter
+    def selectpoint(self, float x): self.ptr.selectpoint = x
+    @property
+    def jointlength(self): return self.ptr.jointlength
+    @jointlength.setter
+    def jointlength(self, float x): self.ptr.jointlength = x
+    @property
+    def jointwidth(self): return self.ptr.jointwidth
+    @jointwidth.setter
+    def jointwidth(self, float x): self.ptr.jointwidth = x
+    @property
+    def actuatorlength(self): return self.ptr.actuatorlength
+    @actuatorlength.setter
+    def actuatorlength(self, float x): self.ptr.actuatorlength = x
+    @property
+    def actuatorwidth(self): return self.ptr.actuatorwidth
+    @actuatorwidth.setter
+    def actuatorwidth(self, float x): self.ptr.actuatorwidth = x
+    @property
+    def framelength(self): return self.ptr.framelength
+    @framelength.setter
+    def framelength(self, float x): self.ptr.framelength = x
+    @property
+    def framewidth(self): return self.ptr.framewidth
+    @framewidth.setter
+    def framewidth(self, float x): self.ptr.framewidth = x
+    @property
+    def constraint(self): return self.ptr.constraint
+    @constraint.setter
+    def constraint(self, float x): self.ptr.constraint = x
+    @property
+    def slidercrank(self): return self.ptr.slidercrank
+    @slidercrank.setter
+    def slidercrank(self, float x): self.ptr.slidercrank = x
+
+cdef PyMjVisual_scale WrapMjVisual_scale(mjVisual_scale* p):
+    cdef PyMjVisual_scale o = PyMjVisual_scale()
+    o._set(p)
+    return o
+
+cdef class PyMjVisual_rgba(object):
+    cdef mjVisual_rgba* ptr
+    
+    
+    cdef np.ndarray _fog
+    cdef np.ndarray _force
+    cdef np.ndarray _inertia
+    cdef np.ndarray _joint
+    cdef np.ndarray _actuator
+    cdef np.ndarray _com
+    cdef np.ndarray _camera
+    cdef np.ndarray _light
+    cdef np.ndarray _selectpoint
+    cdef np.ndarray _connect
+    cdef np.ndarray _contactpoint
+    cdef np.ndarray _contactforce
+    cdef np.ndarray _contactfriction
+    cdef np.ndarray _contacttorque
+    cdef np.ndarray _constraint
+    cdef np.ndarray _slidercrank
+    cdef np.ndarray _crankbroken
+    
+    def __cinit__(self):
+        self.ptr = NULL
+
+
+    @property
+    def uintptr(self): return <uintptr_t>self.ptr
+
+    cdef void _set(self, mjVisual_rgba* p):
+        
+        self.ptr = p
+        
+        
+        self._fog = _wrap_float_1d(&p.fog[0], 4)
+        self._force = _wrap_float_1d(&p.force[0], 4)
+        self._inertia = _wrap_float_1d(&p.inertia[0], 4)
+        self._joint = _wrap_float_1d(&p.joint[0], 4)
+        self._actuator = _wrap_float_1d(&p.actuator[0], 4)
+        self._com = _wrap_float_1d(&p.com[0], 4)
+        self._camera = _wrap_float_1d(&p.camera[0], 4)
+        self._light = _wrap_float_1d(&p.light[0], 4)
+        self._selectpoint = _wrap_float_1d(&p.selectpoint[0], 4)
+        self._connect = _wrap_float_1d(&p.connect[0], 4)
+        self._contactpoint = _wrap_float_1d(&p.contactpoint[0], 4)
+        self._contactforce = _wrap_float_1d(&p.contactforce[0], 4)
+        self._contactfriction = _wrap_float_1d(&p.contactfriction[0], 4)
+        self._contacttorque = _wrap_float_1d(&p.contacttorque[0], 4)
+        self._constraint = _wrap_float_1d(&p.constraint[0], 4)
+        self._slidercrank = _wrap_float_1d(&p.slidercrank[0], 4)
+        self._crankbroken = _wrap_float_1d(&p.crankbroken[0], 4)
+        
+    @property
+    def fog(self): return self._fog
+    @property
+    def force(self): return self._force
+    @property
+    def inertia(self): return self._inertia
+    @property
+    def joint(self): return self._joint
+    @property
+    def actuator(self): return self._actuator
+    @property
+    def com(self): return self._com
+    @property
+    def camera(self): return self._camera
+    @property
+    def light(self): return self._light
+    @property
+    def selectpoint(self): return self._selectpoint
+    @property
+    def connect(self): return self._connect
+    @property
+    def contactpoint(self): return self._contactpoint
+    @property
+    def contactforce(self): return self._contactforce
+    @property
+    def contactfriction(self): return self._contactfriction
+    @property
+    def contacttorque(self): return self._contacttorque
+    @property
+    def constraint(self): return self._constraint
+    @property
+    def slidercrank(self): return self._slidercrank
+    @property
+    def crankbroken(self): return self._crankbroken
+
+cdef PyMjVisual_rgba WrapMjVisual_rgba(mjVisual_rgba* p):
+    cdef PyMjVisual_rgba o = PyMjVisual_rgba()
+    o._set(p)
+    return o
+
+cdef class PyMjStatistic(object):
+    cdef mjStatistic* ptr
+    
+    
+    cdef np.ndarray _center
+    
+    def __cinit__(self):
+        self.ptr = NULL
+
+
+    @property
+    def uintptr(self): return <uintptr_t>self.ptr
+
+    cdef void _set(self, mjStatistic* p):
+        
+        self.ptr = p
+        
+        
+        self._center = _wrap_mjtNum_1d(&p.center[0], 3)
+        
+    @property
+    def meaninertia(self): return self.ptr.meaninertia
+    @meaninertia.setter
+    def meaninertia(self, mjtNum x): self.ptr.meaninertia = x
+    @property
+    def meanmass(self): return self.ptr.meanmass
+    @meanmass.setter
+    def meanmass(self, mjtNum x): self.ptr.meanmass = x
+    @property
+    def meansize(self): return self.ptr.meansize
+    @meansize.setter
+    def meansize(self, mjtNum x): self.ptr.meansize = x
+    @property
+    def extent(self): return self.ptr.extent
+    @extent.setter
+    def extent(self, mjtNum x): self.ptr.extent = x
+    @property
+    def center(self): return self._center
+
+cdef PyMjStatistic WrapMjStatistic(mjStatistic* p):
+    cdef PyMjStatistic o = PyMjStatistic()
     o._set(p)
     return o
 
@@ -2469,6 +968,19 @@ cdef class PyMjModel(object):
         if name not in self._sensor_name2id:
             raise ValueError("No \"sensor\" with name %s exists. Available \"sensor\" names = %s." % (name, self.sensor_names))
         return self._sensor_name2id[name]
+    cdef public tuple userdata_names
+    cdef public dict _userdata_id2name
+    cdef public dict _userdata_name2id
+
+    def userdata_id2name(self, id):
+        if id not in self._userdata_id2name:
+            raise ValueError("No userdata with id %d exists." % id)
+        return self._userdata_id2name[id]
+
+    def userdata_name2id(self, name):
+        if name not in self._userdata_name2id:
+            raise ValueError("No \"userdata\" with name %s exists. Available \"userdata\" names = %s." % (name, self.userdata_names))
+        return self._userdata_name2id[name]
 
     cdef inline tuple _extract_mj_names(self, mjModel* p, int*name_adr, int n, mjtObj obj_type):
         cdef char *name
@@ -2506,6 +1018,17 @@ cdef class PyMjModel(object):
             with wrap_mujoco_warning():
                 mj_saveModel(self.ptr, filename.encode(), NULL, 0)
             return open(filename, 'rb').read()
+
+    def set_userdata_names(self, userdata_names):
+        assert isinstance(userdata_names, (list, tuple)), 'bad userdata names'
+        assert len(userdata_names) <= self.nuserdata, 'insufficient userdata'
+        self.userdata_names = tuple(userdata_names)
+        self._userdata_id2name = dict()
+        self._userdata_name2id = dict()
+        for i, name in enumerate(userdata_names):
+            assert isinstance(name, str), 'names must all be strings'
+            self._userdata_id2name[i] = name
+            self._userdata_name2id[name] = i
 
     def __dealloc__(self):
         mj_deleteModel(self.ptr)
@@ -2572,6 +1095,9 @@ cdef class PyMjModel(object):
         self.camera_names, self._camera_name2id, self._camera_id2name = self._extract_mj_names(p, p.name_camadr, p.ncam, mjtObj.mjOBJ_CAMERA)
         self.actuator_names, self._actuator_name2id, self._actuator_id2name = self._extract_mj_names(p, p.name_actuatoradr, p.nu, mjtObj.mjOBJ_ACTUATOR)
         self.sensor_names, self._sensor_name2id, self._sensor_id2name = self._extract_mj_names(p, p.name_sensoradr, p.nsensor, mjtObj.mjOBJ_SENSOR)
+        self.userdata_names = tuple()
+        self._userdata_name2id = dict()
+        self._userdata_id2name = dict()
 
         self.ptr = p
         
@@ -3476,16 +2002,16 @@ cdef PyMjModel WrapMjModel(mjModel* p):
     o._set(p)
     return o
 
-cdef class PyMjvLight(object):
-    cdef mjvLight* ptr
+cdef class PyMjContact(object):
+    cdef mjContact* ptr
     
     
     cdef np.ndarray _pos
-    cdef np.ndarray _dir
-    cdef np.ndarray _attenuation
-    cdef np.ndarray _ambient
-    cdef np.ndarray _diffuse
-    cdef np.ndarray _specular
+    cdef np.ndarray _frame
+    cdef np.ndarray _friction
+    cdef np.ndarray _solref
+    cdef np.ndarray _solimp
+    cdef np.ndarray _H
     
     def __cinit__(self):
         self.ptr = NULL
@@ -3494,145 +2020,1145 @@ cdef class PyMjvLight(object):
     @property
     def uintptr(self): return <uintptr_t>self.ptr
 
-    cdef void _set(self, mjvLight* p):
+    cdef void _set(self, mjContact* p):
+        
+        self.ptr = p
+        
+        
+        self._pos = _wrap_mjtNum_1d(&p.pos[0], 3)
+        self._frame = _wrap_mjtNum_1d(&p.frame[0], 9)
+        self._friction = _wrap_mjtNum_1d(&p.friction[0], 5)
+        self._solref = _wrap_mjtNum_1d(&p.solref[0], 2)
+        self._solimp = _wrap_mjtNum_1d(&p.solimp[0], 3)
+        self._H = _wrap_mjtNum_1d(&p.H[0], 36)
+        
+    @property
+    def dist(self): return self.ptr.dist
+    @dist.setter
+    def dist(self, mjtNum x): self.ptr.dist = x
+    @property
+    def includemargin(self): return self.ptr.includemargin
+    @includemargin.setter
+    def includemargin(self, mjtNum x): self.ptr.includemargin = x
+    @property
+    def mu(self): return self.ptr.mu
+    @mu.setter
+    def mu(self, mjtNum x): self.ptr.mu = x
+    @property
+    def dim(self): return self.ptr.dim
+    @dim.setter
+    def dim(self, int x): self.ptr.dim = x
+    @property
+    def geom1(self): return self.ptr.geom1
+    @geom1.setter
+    def geom1(self, int x): self.ptr.geom1 = x
+    @property
+    def geom2(self): return self.ptr.geom2
+    @geom2.setter
+    def geom2(self, int x): self.ptr.geom2 = x
+    @property
+    def exclude(self): return self.ptr.exclude
+    @exclude.setter
+    def exclude(self, int x): self.ptr.exclude = x
+    @property
+    def efc_address(self): return self.ptr.efc_address
+    @efc_address.setter
+    def efc_address(self, int x): self.ptr.efc_address = x
+    @property
+    def pos(self): return self._pos
+    @property
+    def frame(self): return self._frame
+    @property
+    def friction(self): return self._friction
+    @property
+    def solref(self): return self._solref
+    @property
+    def solimp(self): return self._solimp
+    @property
+    def H(self): return self._H
+
+cdef PyMjContact WrapMjContact(mjContact* p):
+    cdef PyMjContact o = PyMjContact()
+    o._set(p)
+    return o
+
+cdef class PyMjWarningStat(object):
+    cdef mjWarningStat* ptr
+    
+    
+    
+    def __cinit__(self):
+        self.ptr = NULL
+
+
+    @property
+    def uintptr(self): return <uintptr_t>self.ptr
+
+    cdef void _set(self, mjWarningStat* p):
+        
+        self.ptr = p
+        
+        
+        
+    @property
+    def lastinfo(self): return self.ptr.lastinfo
+    @lastinfo.setter
+    def lastinfo(self, int x): self.ptr.lastinfo = x
+    @property
+    def number(self): return self.ptr.number
+    @number.setter
+    def number(self, int x): self.ptr.number = x
+
+cdef PyMjWarningStat WrapMjWarningStat(mjWarningStat* p):
+    cdef PyMjWarningStat o = PyMjWarningStat()
+    o._set(p)
+    return o
+
+cdef class PyMjTimerStat(object):
+    cdef mjTimerStat* ptr
+    
+    
+    
+    def __cinit__(self):
+        self.ptr = NULL
+
+
+    @property
+    def uintptr(self): return <uintptr_t>self.ptr
+
+    cdef void _set(self, mjTimerStat* p):
+        
+        self.ptr = p
+        
+        
+        
+    @property
+    def duration(self): return self.ptr.duration
+    @duration.setter
+    def duration(self, mjtNum x): self.ptr.duration = x
+    @property
+    def number(self): return self.ptr.number
+    @number.setter
+    def number(self, int x): self.ptr.number = x
+
+cdef PyMjTimerStat WrapMjTimerStat(mjTimerStat* p):
+    cdef PyMjTimerStat o = PyMjTimerStat()
+    o._set(p)
+    return o
+
+cdef class PyMjSolverStat(object):
+    cdef mjSolverStat* ptr
+    
+    
+    
+    def __cinit__(self):
+        self.ptr = NULL
+
+
+    @property
+    def uintptr(self): return <uintptr_t>self.ptr
+
+    cdef void _set(self, mjSolverStat* p):
+        
+        self.ptr = p
+        
+        
+        
+    @property
+    def improvement(self): return self.ptr.improvement
+    @improvement.setter
+    def improvement(self, mjtNum x): self.ptr.improvement = x
+    @property
+    def gradient(self): return self.ptr.gradient
+    @gradient.setter
+    def gradient(self, mjtNum x): self.ptr.gradient = x
+    @property
+    def lineslope(self): return self.ptr.lineslope
+    @lineslope.setter
+    def lineslope(self, mjtNum x): self.ptr.lineslope = x
+    @property
+    def nactive(self): return self.ptr.nactive
+    @nactive.setter
+    def nactive(self, int x): self.ptr.nactive = x
+    @property
+    def nchange(self): return self.ptr.nchange
+    @nchange.setter
+    def nchange(self, int x): self.ptr.nchange = x
+    @property
+    def neval(self): return self.ptr.neval
+    @neval.setter
+    def neval(self, int x): self.ptr.neval = x
+    @property
+    def nupdate(self): return self.ptr.nupdate
+    @nupdate.setter
+    def nupdate(self, int x): self.ptr.nupdate = x
+
+cdef PyMjSolverStat WrapMjSolverStat(mjSolverStat* p):
+    cdef PyMjSolverStat o = PyMjSolverStat()
+    o._set(p)
+    return o
+
+cdef class PyMjData(object):
+    cdef mjData* ptr
+    
+    cdef PyMjModel _model
+    
+    cdef np.ndarray _qpos
+    cdef np.ndarray _qvel
+    cdef np.ndarray _act
+    cdef np.ndarray _ctrl
+    cdef np.ndarray _qfrc_applied
+    cdef np.ndarray _xfrc_applied
+    cdef np.ndarray _qacc
+    cdef np.ndarray _act_dot
+    cdef np.ndarray _mocap_pos
+    cdef np.ndarray _mocap_quat
+    cdef np.ndarray _userdata
+    cdef np.ndarray _sensordata
+    cdef np.ndarray _xpos
+    cdef np.ndarray _xquat
+    cdef np.ndarray _xmat
+    cdef np.ndarray _xipos
+    cdef np.ndarray _ximat
+    cdef np.ndarray _xanchor
+    cdef np.ndarray _xaxis
+    cdef np.ndarray _geom_xpos
+    cdef np.ndarray _geom_xmat
+    cdef np.ndarray _site_xpos
+    cdef np.ndarray _site_xmat
+    cdef np.ndarray _cam_xpos
+    cdef np.ndarray _cam_xmat
+    cdef np.ndarray _light_xpos
+    cdef np.ndarray _light_xdir
+    cdef np.ndarray _subtree_com
+    cdef np.ndarray _cdof
+    cdef np.ndarray _cinert
+    cdef np.ndarray _ten_wrapadr
+    cdef np.ndarray _ten_wrapnum
+    cdef np.ndarray _ten_length
+    cdef np.ndarray _ten_moment
+    cdef np.ndarray _wrap_obj
+    cdef np.ndarray _wrap_xpos
+    cdef np.ndarray _actuator_length
+    cdef np.ndarray _actuator_moment
+    cdef np.ndarray _crb
+    cdef np.ndarray _qM
+    cdef np.ndarray _qLD
+    cdef np.ndarray _qLDiagInv
+    cdef np.ndarray _qLDiagSqrtInv
+    cdef tuple _contact
+    cdef np.ndarray _efc_type
+    cdef np.ndarray _efc_id
+    cdef np.ndarray _efc_J_rownnz
+    cdef np.ndarray _efc_J_rowadr
+    cdef np.ndarray _efc_J_colind
+    cdef np.ndarray _efc_JT_rownnz
+    cdef np.ndarray _efc_JT_rowadr
+    cdef np.ndarray _efc_JT_colind
+    cdef np.ndarray _efc_solref
+    cdef np.ndarray _efc_solimp
+    cdef np.ndarray _efc_margin
+    cdef np.ndarray _efc_frictionloss
+    cdef np.ndarray _efc_pos
+    cdef np.ndarray _efc_J
+    cdef np.ndarray _efc_JT
+    cdef np.ndarray _efc_diagApprox
+    cdef np.ndarray _efc_D
+    cdef np.ndarray _efc_R
+    cdef np.ndarray _efc_AR_rownnz
+    cdef np.ndarray _efc_AR_rowadr
+    cdef np.ndarray _efc_AR_colind
+    cdef np.ndarray _efc_AR
+    cdef np.ndarray _ten_velocity
+    cdef np.ndarray _actuator_velocity
+    cdef np.ndarray _cvel
+    cdef np.ndarray _cdof_dot
+    cdef np.ndarray _qfrc_bias
+    cdef np.ndarray _qfrc_passive
+    cdef np.ndarray _efc_vel
+    cdef np.ndarray _efc_aref
+    cdef np.ndarray _subtree_linvel
+    cdef np.ndarray _subtree_angmom
+    cdef np.ndarray _actuator_force
+    cdef np.ndarray _qfrc_actuator
+    cdef np.ndarray _qfrc_unc
+    cdef np.ndarray _qacc_unc
+    cdef np.ndarray _efc_b
+    cdef np.ndarray _efc_force
+    cdef np.ndarray _efc_state
+    cdef np.ndarray _qfrc_constraint
+    cdef np.ndarray _qacc_warmstart
+    cdef np.ndarray _qfrc_inverse
+    cdef np.ndarray _cacc
+    cdef np.ndarray _cfrc_int
+    cdef np.ndarray _cfrc_ext
+    cdef list _warning
+    cdef list _timer
+    cdef list _solver
+    cdef np.ndarray _solver_fwdinv
+    cdef np.ndarray _energy
+    
+    @property
+    def body_xpos(self):
+        return self._xpos
+
+    @property
+    def body_xquat(self):
+        return self._xquat
+
+    @property
+    def body_xmat(self):
+        return self._xmat
+
+    @property
+    def active_contacts_efc_pos(self):
+        return self._efc_pos[self.ne:self.nefc]
+
+    def __dealloc__(self):
+        mj_deleteData(self.ptr)
+
+
+    def get_body_xpos(self, name):
+        id = self._model.body_name2id(name)
+        return self._xpos[id]
+
+    def get_xpos(self, name):
+        raise RuntimeError("get_body_xpos should be used instead of get_xpos")
+
+    def get_body_xquat(self, name):
+        id = self._model.body_name2id(name)
+        return self._xquat[id]
+
+    def get_xquat(self, name):
+        raise RuntimeError("get_body_xquat should be used instead of get_xquat")
+
+    def get_body_xmat(self, name):
+        id = self._model.body_name2id(name)
+        return self._xmat[id].reshape((3, 3))
+
+    def get_xmat(self, name):
+        raise RuntimeError("get_body_xmat should be used instead of get_xmat")
+
+    def get_body_xipos(self, name):
+        id = self._model.body_name2id(name)
+        return self._xipos[id]
+
+    def get_xipos(self, name):
+        raise RuntimeError("get_body_xipos should be used instead of get_xipos")
+
+    def get_body_ximat(self, name):
+        id = self._model.body_name2id(name)
+        return self._ximat[id].reshape((3, 3))
+
+    def get_ximat(self, name):
+        raise RuntimeError("get_body_ximat should be used instead of get_ximat")
+
+    def get_body_jacp(self, name, np.ndarray[double, ndim=1, mode="c"] jacp = None):
+        id = self._model.body_name2id(name)
+        if jacp is None:
+            jacp = np.zeros(3 * self._model.nv)
+        cdef double * jacp_view = &jacp[0]
+        mj_jacBody(self._model.ptr, self.ptr, jacp_view, NULL, id)
+        return jacp
+
+    def get_body_jacr(self, name, np.ndarray[double, ndim=1, mode="c"] jacr = None):
+        id = self._model.body_name2id(name)
+        if jacr is None:
+            jacr = np.zeros(3 * self._model.nv)
+        cdef double * jacr_view = &jacr[0]
+        mj_jacBody(self._model.ptr, self.ptr, NULL, jacr_view, id)
+        return jacr
+
+    def get_body_xvelp(self, name):
+        id = self._model.body_name2id(name)
+        jacp = self.get_body_jacp(name).reshape((3, self._model.nv))
+        xvelp = np.dot(jacp, self.qvel)
+        return xvelp
+
+    def get_body_xvelr(self, name):
+        id = self._model.body_name2id(name)
+        jacr = self.get_body_jacr(name).reshape((3, self._model.nv))
+        xvelr = np.dot(jacr, self.qvel)
+        return xvelr
+
+    def get_joint_xanchor(self, name):
+        id = self._model.joint_name2id(name)
+        return self._xanchor[id]
+
+    def get_xanchor(self, name):
+        raise RuntimeError("get_joint_xanchor should be used instead of get_xanchor")
+
+    def get_joint_xaxis(self, name):
+        id = self._model.joint_name2id(name)
+        return self._xaxis[id]
+
+    def get_xaxis(self, name):
+        raise RuntimeError("get_joint_xaxis should be used instead of get_xaxis")
+
+    def get_geom_xpos(self, name):
+        id = self._model.geom_name2id(name)
+        return self._geom_xpos[id]
+
+    def get_geom_xmat(self, name):
+        id = self._model.geom_name2id(name)
+        return self._geom_xmat[id].reshape((3, 3))
+
+    def get_geom_jacp(self, name, np.ndarray[double, ndim=1, mode="c"] jacp = None):
+        id = self._model.geom_name2id(name)
+        if jacp is None:
+            jacp = np.zeros(3 * self._model.nv)
+        cdef double * jacp_view = &jacp[0]
+        mj_jacGeom(self._model.ptr, self.ptr, jacp_view, NULL, id)
+        return jacp
+
+    def get_geom_jacr(self, name, np.ndarray[double, ndim=1, mode="c"] jacr = None):
+        id = self._model.geom_name2id(name)
+        if jacr is None:
+            jacr = np.zeros(3 * self._model.nv)
+        cdef double * jacr_view = &jacr[0]
+        mj_jacGeom(self._model.ptr, self.ptr, NULL, jacr_view, id)
+        return jacr
+
+    def get_geom_xvelp(self, name):
+        id = self._model.geom_name2id(name)
+        jacp = self.get_geom_jacp(name).reshape((3, self._model.nv))
+        xvelp = np.dot(jacp, self.qvel)
+        return xvelp
+
+    def get_geom_xvelr(self, name):
+        id = self._model.geom_name2id(name)
+        jacr = self.get_geom_jacr(name).reshape((3, self._model.nv))
+        xvelr = np.dot(jacr, self.qvel)
+        return xvelr
+
+    def get_site_xpos(self, name):
+        id = self._model.site_name2id(name)
+        return self._site_xpos[id]
+
+    def get_site_xmat(self, name):
+        id = self._model.site_name2id(name)
+        return self._site_xmat[id].reshape((3, 3))
+
+    def get_site_jacp(self, name, np.ndarray[double, ndim=1, mode="c"] jacp = None):
+        id = self._model.site_name2id(name)
+        if jacp is None:
+            jacp = np.zeros(3 * self._model.nv)
+        cdef double * jacp_view = &jacp[0]
+        mj_jacSite(self._model.ptr, self.ptr, jacp_view, NULL, id)
+        return jacp
+
+    def get_site_jacr(self, name, np.ndarray[double, ndim=1, mode="c"] jacr = None):
+        id = self._model.site_name2id(name)
+        if jacr is None:
+            jacr = np.zeros(3 * self._model.nv)
+        cdef double * jacr_view = &jacr[0]
+        mj_jacSite(self._model.ptr, self.ptr, NULL, jacr_view, id)
+        return jacr
+
+    def get_site_xvelp(self, name):
+        id = self._model.site_name2id(name)
+        jacp = self.get_site_jacp(name).reshape((3, self._model.nv))
+        xvelp = np.dot(jacp, self.qvel)
+        return xvelp
+
+    def get_site_xvelr(self, name):
+        id = self._model.site_name2id(name)
+        jacr = self.get_site_jacr(name).reshape((3, self._model.nv))
+        xvelr = np.dot(jacr, self.qvel)
+        return xvelr
+
+    def get_camera_xpos(self, name):
+        id = self._model.camera_name2id(name)
+        return self._cam_xpos[id]
+
+    def get_cam_xpos(self, name):
+        raise RuntimeError("get_camera_xpos should be used instead of get_cam_xpos")
+
+    def get_camera_xmat(self, name):
+        id = self._model.camera_name2id(name)
+        return self._cam_xmat[id].reshape((3, 3))
+
+    def get_cam_xmat(self, name):
+        raise RuntimeError("get_camera_xmat should be used instead of get_cam_xmat")
+
+    def get_light_xpos(self, name):
+        id = self._model.light_name2id(name)
+        return self._light_xpos[id]
+
+    def get_light_xdir(self, name):
+        id = self._model.light_name2id(name)
+        return self._light_xdir[id]
+
+    def get_sensor(self, name):
+        id = self._model.sensor_name2id(name)
+        return self._sensordata[id]
+
+    def get_sensordata(self, name):
+        raise RuntimeError("get_sensor should be used instead of get_sensordata")
+
+    def get_mocap_pos(self, name):
+        body_id = self._model.body_name2id(name)
+        mocap_id = self._model.body_mocapid[body_id]
+        return self.mocap_pos[mocap_id]
+
+    def set_mocap_pos(self, name, value):
+        body_id = self._model.body_name2id(name)
+        mocap_id = self._model.body_mocapid[body_id]
+        self.mocap_pos[mocap_id] = value
+
+    def get_mocap_quat(self, name):
+        body_id = self._model.body_name2id(name)
+        mocap_id = self._model.body_mocapid[body_id]
+        return self.mocap_quat[mocap_id]
+
+    def set_mocap_quat(self, name, value):
+        body_id = self._model.body_name2id(name)
+        mocap_id = self._model.body_mocapid[body_id]
+        self.mocap_quat[mocap_id] = value
+
+    def get_joint_qpos(self, name):
+        addr = self._model.get_joint_qpos_addr(name)
+        if isinstance(addr, (int, np.int32, np.int64)):
+            return self.qpos[addr]
+        else:
+            start_i, end_i = addr
+            return self.qpos[start_i:end_i]
+
+    def set_joint_qpos(self, name, value):
+        addr = self._model.get_joint_qpos_addr(name)
+        if isinstance(addr, (int, np.int32, np.int64)):
+            self.qpos[addr] = value
+        else:
+            start_i, end_i = addr
+            value = np.array(value)
+            assert value.shape == (end_i - start_i,), (
+                "Value has incorrect shape %s: %s" % (name, value))
+            self.qpos[start_i:end_i] = value
+
+    def get_joint_qvel(self, name):
+        addr = self._model.get_joint_qvel_addr(name)
+        if isinstance(addr, (int, np.int32, np.int64)):
+            return self.qvel[addr]
+        else:
+            start_i, end_i = addr
+            return self.qvel[start_i:end_i]
+
+    def set_joint_qvel(self, name, value):
+        addr = self._model.get_joint_qvel_addr(name)
+        if isinstance(addr, (int, np.int32, np.int64)):
+            self.qvel[addr] = value
+        else:
+            start_i, end_i = addr
+            value = np.array(value)
+            assert value.shape == (end_i - start_i,), (
+                "Value has incorrect shape %s: %s" % (name, value))
+            self.qvel[start_i:end_i] = value
+
+
+    @property
+    def uintptr(self): return <uintptr_t>self.ptr
+
+    cdef void _set(self, mjData* p, PyMjModel model):
+        
+        self.ptr = p
+        self._model = model
+        
+        self._qpos = _wrap_mjtNum_1d(p.qpos, model.nq)
+        self._qvel = _wrap_mjtNum_1d(p.qvel, model.nv)
+        self._act = _wrap_mjtNum_1d(p.act, model.na)
+        self._ctrl = _wrap_mjtNum_1d(p.ctrl, model.nu)
+        self._qfrc_applied = _wrap_mjtNum_1d(p.qfrc_applied, model.nv)
+        self._xfrc_applied = _wrap_mjtNum_2d(p.xfrc_applied, model.nbody, 6)
+        self._qacc = _wrap_mjtNum_1d(p.qacc, model.nv)
+        self._act_dot = _wrap_mjtNum_1d(p.act_dot, model.na)
+        self._mocap_pos = _wrap_mjtNum_2d(p.mocap_pos, model.nmocap, 3)
+        self._mocap_quat = _wrap_mjtNum_2d(p.mocap_quat, model.nmocap, 4)
+        self._userdata = _wrap_mjtNum_1d(p.userdata, model.nuserdata)
+        self._sensordata = _wrap_mjtNum_1d(p.sensordata, model.nsensordata)
+        self._xpos = _wrap_mjtNum_2d(p.xpos, model.nbody, 3)
+        self._xquat = _wrap_mjtNum_2d(p.xquat, model.nbody, 4)
+        self._xmat = _wrap_mjtNum_2d(p.xmat, model.nbody, 9)
+        self._xipos = _wrap_mjtNum_2d(p.xipos, model.nbody, 3)
+        self._ximat = _wrap_mjtNum_2d(p.ximat, model.nbody, 9)
+        self._xanchor = _wrap_mjtNum_2d(p.xanchor, model.njnt, 3)
+        self._xaxis = _wrap_mjtNum_2d(p.xaxis, model.njnt, 3)
+        self._geom_xpos = _wrap_mjtNum_2d(p.geom_xpos, model.ngeom, 3)
+        self._geom_xmat = _wrap_mjtNum_2d(p.geom_xmat, model.ngeom, 9)
+        self._site_xpos = _wrap_mjtNum_2d(p.site_xpos, model.nsite, 3)
+        self._site_xmat = _wrap_mjtNum_2d(p.site_xmat, model.nsite, 9)
+        self._cam_xpos = _wrap_mjtNum_2d(p.cam_xpos, model.ncam, 3)
+        self._cam_xmat = _wrap_mjtNum_2d(p.cam_xmat, model.ncam, 9)
+        self._light_xpos = _wrap_mjtNum_2d(p.light_xpos, model.nlight, 3)
+        self._light_xdir = _wrap_mjtNum_2d(p.light_xdir, model.nlight, 3)
+        self._subtree_com = _wrap_mjtNum_2d(p.subtree_com, model.nbody, 3)
+        self._cdof = _wrap_mjtNum_2d(p.cdof, model.nv, 6)
+        self._cinert = _wrap_mjtNum_2d(p.cinert, model.nbody, 10)
+        self._ten_wrapadr = _wrap_int_1d(p.ten_wrapadr, model.ntendon)
+        self._ten_wrapnum = _wrap_int_1d(p.ten_wrapnum, model.ntendon)
+        self._ten_length = _wrap_mjtNum_1d(p.ten_length, model.ntendon)
+        self._ten_moment = _wrap_mjtNum_2d(p.ten_moment, model.ntendon, model.nv)
+        self._wrap_obj = _wrap_int_1d(p.wrap_obj, model.nwrap*2)
+        self._wrap_xpos = _wrap_mjtNum_2d(p.wrap_xpos, model.nwrap*2, 3)
+        self._actuator_length = _wrap_mjtNum_1d(p.actuator_length, model.nu)
+        self._actuator_moment = _wrap_mjtNum_2d(p.actuator_moment, model.nu, model.nv)
+        self._crb = _wrap_mjtNum_2d(p.crb, model.nbody, 10)
+        self._qM = _wrap_mjtNum_1d(p.qM, model.nM)
+        self._qLD = _wrap_mjtNum_1d(p.qLD, model.nM)
+        self._qLDiagInv = _wrap_mjtNum_1d(p.qLDiagInv, model.nv)
+        self._qLDiagSqrtInv = _wrap_mjtNum_1d(p.qLDiagSqrtInv, model.nv)
+        self._contact = tuple([WrapMjContact(&p.contact[i]) for i in range(model.nconmax)])
+        self._efc_type = _wrap_int_1d(p.efc_type, model.njmax)
+        self._efc_id = _wrap_int_1d(p.efc_id, model.njmax)
+        self._efc_J_rownnz = _wrap_int_1d(p.efc_J_rownnz, model.njmax)
+        self._efc_J_rowadr = _wrap_int_1d(p.efc_J_rowadr, model.njmax)
+        self._efc_J_colind = _wrap_int_2d(p.efc_J_colind, model.njmax, model.nv)
+        self._efc_JT_rownnz = _wrap_int_1d(p.efc_JT_rownnz, model.nv)
+        self._efc_JT_rowadr = _wrap_int_1d(p.efc_JT_rowadr, model.nv)
+        self._efc_JT_colind = _wrap_int_2d(p.efc_JT_colind, model.nv, model.njmax)
+        self._efc_solref = _wrap_mjtNum_2d(p.efc_solref, model.njmax, mjNREF)
+        self._efc_solimp = _wrap_mjtNum_2d(p.efc_solimp, model.njmax, mjNIMP)
+        self._efc_margin = _wrap_mjtNum_1d(p.efc_margin, model.njmax)
+        self._efc_frictionloss = _wrap_mjtNum_1d(p.efc_frictionloss, model.njmax)
+        self._efc_pos = _wrap_mjtNum_1d(p.efc_pos, model.njmax)
+        self._efc_J = _wrap_mjtNum_2d(p.efc_J, model.njmax, model.nv)
+        self._efc_JT = _wrap_mjtNum_2d(p.efc_JT, model.nv, model.njmax)
+        self._efc_diagApprox = _wrap_mjtNum_1d(p.efc_diagApprox, model.njmax)
+        self._efc_D = _wrap_mjtNum_1d(p.efc_D, model.njmax)
+        self._efc_R = _wrap_mjtNum_1d(p.efc_R, model.njmax)
+        self._efc_AR_rownnz = _wrap_int_1d(p.efc_AR_rownnz, model.njmax)
+        self._efc_AR_rowadr = _wrap_int_1d(p.efc_AR_rowadr, model.njmax)
+        self._efc_AR_colind = _wrap_int_2d(p.efc_AR_colind, model.njmax, model.njmax)
+        self._efc_AR = _wrap_mjtNum_2d(p.efc_AR, model.njmax, model.njmax)
+        self._ten_velocity = _wrap_mjtNum_1d(p.ten_velocity, model.ntendon)
+        self._actuator_velocity = _wrap_mjtNum_1d(p.actuator_velocity, model.nu)
+        self._cvel = _wrap_mjtNum_2d(p.cvel, model.nbody, 6)
+        self._cdof_dot = _wrap_mjtNum_2d(p.cdof_dot, model.nv, 6)
+        self._qfrc_bias = _wrap_mjtNum_1d(p.qfrc_bias, model.nv)
+        self._qfrc_passive = _wrap_mjtNum_1d(p.qfrc_passive, model.nv)
+        self._efc_vel = _wrap_mjtNum_1d(p.efc_vel, model.njmax)
+        self._efc_aref = _wrap_mjtNum_1d(p.efc_aref, model.njmax)
+        self._subtree_linvel = _wrap_mjtNum_2d(p.subtree_linvel, model.nbody, 3)
+        self._subtree_angmom = _wrap_mjtNum_2d(p.subtree_angmom, model.nbody, 3)
+        self._actuator_force = _wrap_mjtNum_1d(p.actuator_force, model.nu)
+        self._qfrc_actuator = _wrap_mjtNum_1d(p.qfrc_actuator, model.nv)
+        self._qfrc_unc = _wrap_mjtNum_1d(p.qfrc_unc, model.nv)
+        self._qacc_unc = _wrap_mjtNum_1d(p.qacc_unc, model.nv)
+        self._efc_b = _wrap_mjtNum_1d(p.efc_b, model.njmax)
+        self._efc_force = _wrap_mjtNum_1d(p.efc_force, model.njmax)
+        self._efc_state = _wrap_int_1d(p.efc_state, model.njmax)
+        self._qfrc_constraint = _wrap_mjtNum_1d(p.qfrc_constraint, model.nv)
+        self._qacc_warmstart = _wrap_mjtNum_1d(p.qacc_warmstart, model.nv)
+        self._qfrc_inverse = _wrap_mjtNum_1d(p.qfrc_inverse, model.nv)
+        self._cacc = _wrap_mjtNum_2d(p.cacc, model.nbody, 6)
+        self._cfrc_int = _wrap_mjtNum_2d(p.cfrc_int, model.nbody, 6)
+        self._cfrc_ext = _wrap_mjtNum_2d(p.cfrc_ext, model.nbody, 6)
+        self._warning = [WrapMjWarningStat(&p.warning[i]) for i in range(mjNWARNING)]
+        self._timer = [WrapMjTimerStat(&p.timer[i]) for i in range(mjNTIMER)]
+        self._solver = [WrapMjSolverStat(&p.solver[i]) for i in range(1000)]
+        self._solver_fwdinv = _wrap_mjtNum_1d(&p.solver_fwdinv[0], 2)
+        self._energy = _wrap_mjtNum_1d(&p.energy[0], 2)
+        
+    @property
+    def nstack(self): return self.ptr.nstack
+    @nstack.setter
+    def nstack(self, int x): self.ptr.nstack = x
+    @property
+    def nbuffer(self): return self.ptr.nbuffer
+    @nbuffer.setter
+    def nbuffer(self, int x): self.ptr.nbuffer = x
+    @property
+    def pstack(self): return self.ptr.pstack
+    @pstack.setter
+    def pstack(self, int x): self.ptr.pstack = x
+    @property
+    def maxuse_stack(self): return self.ptr.maxuse_stack
+    @maxuse_stack.setter
+    def maxuse_stack(self, int x): self.ptr.maxuse_stack = x
+    @property
+    def maxuse_con(self): return self.ptr.maxuse_con
+    @maxuse_con.setter
+    def maxuse_con(self, int x): self.ptr.maxuse_con = x
+    @property
+    def maxuse_efc(self): return self.ptr.maxuse_efc
+    @maxuse_efc.setter
+    def maxuse_efc(self, int x): self.ptr.maxuse_efc = x
+    @property
+    def solver_iter(self): return self.ptr.solver_iter
+    @solver_iter.setter
+    def solver_iter(self, int x): self.ptr.solver_iter = x
+    @property
+    def solver_nnz(self): return self.ptr.solver_nnz
+    @solver_nnz.setter
+    def solver_nnz(self, int x): self.ptr.solver_nnz = x
+    @property
+    def ne(self): return self.ptr.ne
+    @ne.setter
+    def ne(self, int x): self.ptr.ne = x
+    @property
+    def nf(self): return self.ptr.nf
+    @nf.setter
+    def nf(self, int x): self.ptr.nf = x
+    @property
+    def nefc(self): return self.ptr.nefc
+    @nefc.setter
+    def nefc(self, int x): self.ptr.nefc = x
+    @property
+    def ncon(self): return self.ptr.ncon
+    @ncon.setter
+    def ncon(self, int x): self.ptr.ncon = x
+    @property
+    def time(self): return self.ptr.time
+    @time.setter
+    def time(self, mjtNum x): self.ptr.time = x
+    @property
+    def qpos(self): return self._qpos
+    @property
+    def qvel(self): return self._qvel
+    @property
+    def act(self): return self._act
+    @property
+    def ctrl(self): return self._ctrl
+    @property
+    def qfrc_applied(self): return self._qfrc_applied
+    @property
+    def xfrc_applied(self): return self._xfrc_applied
+    @property
+    def qacc(self): return self._qacc
+    @property
+    def act_dot(self): return self._act_dot
+    @property
+    def mocap_pos(self): return self._mocap_pos
+    @property
+    def mocap_quat(self): return self._mocap_quat
+    @property
+    def userdata(self): return self._userdata
+    @property
+    def sensordata(self): return self._sensordata
+
+    @property
+    def xpos(self):
+        raise RuntimeError("body_xpos should be used instead of xpos")
+
+
+    @property
+    def xquat(self):
+        raise RuntimeError("body_xquat should be used instead of xquat")
+
+
+    @property
+    def xmat(self):
+        raise RuntimeError("body_xmat should be used instead of xmat")
+
+    @property
+    def xipos(self): return self._xipos
+    @property
+    def ximat(self): return self._ximat
+    @property
+    def xanchor(self): return self._xanchor
+    @property
+    def xaxis(self): return self._xaxis
+    @property
+    def geom_xpos(self): return self._geom_xpos
+    @property
+    def geom_xmat(self): return self._geom_xmat
+    @property
+    def site_xpos(self): return self._site_xpos
+    @property
+    def site_xmat(self): return self._site_xmat
+    @property
+    def cam_xpos(self): return self._cam_xpos
+    @property
+    def cam_xmat(self): return self._cam_xmat
+    @property
+    def light_xpos(self): return self._light_xpos
+    @property
+    def light_xdir(self): return self._light_xdir
+    @property
+    def subtree_com(self): return self._subtree_com
+    @property
+    def cdof(self): return self._cdof
+    @property
+    def cinert(self): return self._cinert
+    @property
+    def ten_wrapadr(self): return self._ten_wrapadr
+    @property
+    def ten_wrapnum(self): return self._ten_wrapnum
+    @property
+    def ten_length(self): return self._ten_length
+    @property
+    def ten_moment(self): return self._ten_moment
+    @property
+    def wrap_obj(self): return self._wrap_obj
+    @property
+    def wrap_xpos(self): return self._wrap_xpos
+    @property
+    def actuator_length(self): return self._actuator_length
+    @property
+    def actuator_moment(self): return self._actuator_moment
+    @property
+    def crb(self): return self._crb
+    @property
+    def qM(self): return self._qM
+    @property
+    def qLD(self): return self._qLD
+    @property
+    def qLDiagInv(self): return self._qLDiagInv
+    @property
+    def qLDiagSqrtInv(self): return self._qLDiagSqrtInv
+    @property
+    def contact(self): return self._contact
+    @property
+    def efc_type(self): return self._efc_type
+    @property
+    def efc_id(self): return self._efc_id
+    @property
+    def efc_J_rownnz(self): return self._efc_J_rownnz
+    @property
+    def efc_J_rowadr(self): return self._efc_J_rowadr
+    @property
+    def efc_J_colind(self): return self._efc_J_colind
+    @property
+    def efc_JT_rownnz(self): return self._efc_JT_rownnz
+    @property
+    def efc_JT_rowadr(self): return self._efc_JT_rowadr
+    @property
+    def efc_JT_colind(self): return self._efc_JT_colind
+    @property
+    def efc_solref(self): return self._efc_solref
+    @property
+    def efc_solimp(self): return self._efc_solimp
+    @property
+    def efc_margin(self): return self._efc_margin
+    @property
+    def efc_frictionloss(self): return self._efc_frictionloss
+
+    @property
+    def efc_pos(self):
+        raise RuntimeError("active_contacts_efc_pos should be used instead of efc_pos")
+
+    @property
+    def efc_J(self): return self._efc_J
+    @property
+    def efc_JT(self): return self._efc_JT
+    @property
+    def efc_diagApprox(self): return self._efc_diagApprox
+    @property
+    def efc_D(self): return self._efc_D
+    @property
+    def efc_R(self): return self._efc_R
+    @property
+    def efc_AR_rownnz(self): return self._efc_AR_rownnz
+    @property
+    def efc_AR_rowadr(self): return self._efc_AR_rowadr
+    @property
+    def efc_AR_colind(self): return self._efc_AR_colind
+    @property
+    def efc_AR(self): return self._efc_AR
+    @property
+    def ten_velocity(self): return self._ten_velocity
+    @property
+    def actuator_velocity(self): return self._actuator_velocity
+    @property
+    def cvel(self): return self._cvel
+    @property
+    def cdof_dot(self): return self._cdof_dot
+    @property
+    def qfrc_bias(self): return self._qfrc_bias
+    @property
+    def qfrc_passive(self): return self._qfrc_passive
+    @property
+    def efc_vel(self): return self._efc_vel
+    @property
+    def efc_aref(self): return self._efc_aref
+    @property
+    def subtree_linvel(self): return self._subtree_linvel
+    @property
+    def subtree_angmom(self): return self._subtree_angmom
+    @property
+    def actuator_force(self): return self._actuator_force
+    @property
+    def qfrc_actuator(self): return self._qfrc_actuator
+    @property
+    def qfrc_unc(self): return self._qfrc_unc
+    @property
+    def qacc_unc(self): return self._qacc_unc
+    @property
+    def efc_b(self): return self._efc_b
+    @property
+    def efc_force(self): return self._efc_force
+    @property
+    def efc_state(self): return self._efc_state
+    @property
+    def qfrc_constraint(self): return self._qfrc_constraint
+    @property
+    def qacc_warmstart(self): return self._qacc_warmstart
+    @property
+    def qfrc_inverse(self): return self._qfrc_inverse
+    @property
+    def cacc(self): return self._cacc
+    @property
+    def cfrc_int(self): return self._cfrc_int
+    @property
+    def cfrc_ext(self): return self._cfrc_ext
+    @property
+    def warning(self): return self._warning
+    @property
+    def timer(self): return self._timer
+    @property
+    def solver(self): return self._solver
+    @property
+    def solver_fwdinv(self): return self._solver_fwdinv
+    @property
+    def energy(self): return self._energy
+    @property
+    def body_jacp(self):
+        jacps = np.zeros((self._model.nbody, 3 * self._model.nv))
+        cdef double [:] jacp_view
+        for i, jacp in enumerate(jacps):
+            jacp_view = jacp
+            mj_jacBody(self._model.ptr, self.ptr, &jacp_view[0], NULL, i)
+        return jacps
+
+    @property
+    def body_jacr(self):
+        jacrs = np.zeros((self._model.nbody, 3 * self._model.nv))
+        cdef double [:] jacr_view
+        for i, jacr in enumerate(jacrs):
+            jacr_view = jacr
+            mj_jacBody(self._model.ptr, self.ptr, NULL, &jacr_view[0], i)
+        return jacrs
+
+    @property
+    def body_xvelp(self):
+        jacp = self.body_jacp.reshape((self._model.nbody, 3, self._model.nv))
+        xvelp = np.dot(jacp, self.qvel)
+        return xvelp
+
+    @property
+    def body_xvelr(self):
+        jacr = self.body_jacr.reshape((self._model.nbody, 3, self._model.nv))
+        xvelr = np.dot(jacr, self.qvel)
+        return xvelr
+
+    @property
+    def geom_jacp(self):
+        jacps = np.zeros((self._model.ngeom, 3 * self._model.nv))
+        cdef double [:] jacp_view
+        for i, jacp in enumerate(jacps):
+            jacp_view = jacp
+            mj_jacGeom(self._model.ptr, self.ptr, &jacp_view[0], NULL, i)
+        return jacps
+
+    @property
+    def geom_jacr(self):
+        jacrs = np.zeros((self._model.ngeom, 3 * self._model.nv))
+        cdef double [:] jacr_view
+        for i, jacr in enumerate(jacrs):
+            jacr_view = jacr
+            mj_jacGeom(self._model.ptr, self.ptr, NULL, &jacr_view[0], i)
+        return jacrs
+
+    @property
+    def geom_xvelp(self):
+        jacp = self.geom_jacp.reshape((self._model.ngeom, 3, self._model.nv))
+        xvelp = np.dot(jacp, self.qvel)
+        return xvelp
+
+    @property
+    def geom_xvelr(self):
+        jacr = self.geom_jacr.reshape((self._model.ngeom, 3, self._model.nv))
+        xvelr = np.dot(jacr, self.qvel)
+        return xvelr
+
+    @property
+    def site_jacp(self):
+        jacps = np.zeros((self._model.nsite, 3 * self._model.nv))
+        cdef double [:] jacp_view
+        for i, jacp in enumerate(jacps):
+            jacp_view = jacp
+            mj_jacSite(self._model.ptr, self.ptr, &jacp_view[0], NULL, i)
+        return jacps
+
+    @property
+    def site_jacr(self):
+        jacrs = np.zeros((self._model.nsite, 3 * self._model.nv))
+        cdef double [:] jacr_view
+        for i, jacr in enumerate(jacrs):
+            jacr_view = jacr
+            mj_jacSite(self._model.ptr, self.ptr, NULL, &jacr_view[0], i)
+        return jacrs
+
+    @property
+    def site_xvelp(self):
+        jacp = self.site_jacp.reshape((self._model.nsite, 3, self._model.nv))
+        xvelp = np.dot(jacp, self.qvel)
+        return xvelp
+
+    @property
+    def site_xvelr(self):
+        jacr = self.site_jacr.reshape((self._model.nsite, 3, self._model.nv))
+        xvelr = np.dot(jacr, self.qvel)
+        return xvelr
+
+
+cdef PyMjData WrapMjData(mjData* p, PyMjModel model):
+    cdef PyMjData o = PyMjData()
+    o._set(p, model)
+    return o
+
+cdef class PyMjvPerturb(object):
+    cdef mjvPerturb* ptr
+    
+    
+    cdef np.ndarray _refpos
+    cdef np.ndarray _refquat
+    cdef np.ndarray _localpos
+    
+    def __cinit__(self):
+        self.ptr = NULL
+
+
+    @property
+    def uintptr(self): return <uintptr_t>self.ptr
+
+    cdef void _set(self, mjvPerturb* p):
+        
+        self.ptr = p
+        
+        
+        self._refpos = _wrap_mjtNum_1d(&p.refpos[0], 3)
+        self._refquat = _wrap_mjtNum_1d(&p.refquat[0], 4)
+        self._localpos = _wrap_mjtNum_1d(&p.localpos[0], 3)
+        
+    @property
+    def select(self): return self.ptr.select
+    @select.setter
+    def select(self, int x): self.ptr.select = x
+    @property
+    def active(self): return self.ptr.active
+    @active.setter
+    def active(self, int x): self.ptr.active = x
+    @property
+    def scale(self): return self.ptr.scale
+    @scale.setter
+    def scale(self, mjtNum x): self.ptr.scale = x
+    @property
+    def refpos(self): return self._refpos
+    @property
+    def refquat(self): return self._refquat
+    @property
+    def localpos(self): return self._localpos
+
+cdef PyMjvPerturb WrapMjvPerturb(mjvPerturb* p):
+    cdef PyMjvPerturb o = PyMjvPerturb()
+    o._set(p)
+    return o
+
+cdef class PyMjvCamera(object):
+    cdef mjvCamera* ptr
+    
+    
+    cdef np.ndarray _lookat
+    
+    def __cinit__(self):
+        self.ptr = NULL
+
+
+    @property
+    def uintptr(self): return <uintptr_t>self.ptr
+
+    cdef void _set(self, mjvCamera* p):
+        
+        self.ptr = p
+        
+        
+        self._lookat = _wrap_mjtNum_1d(&p.lookat[0], 3)
+        
+    @property
+    def type(self): return self.ptr.type
+    @type.setter
+    def type(self, int x): self.ptr.type = x
+    @property
+    def fixedcamid(self): return self.ptr.fixedcamid
+    @fixedcamid.setter
+    def fixedcamid(self, int x): self.ptr.fixedcamid = x
+    @property
+    def trackbodyid(self): return self.ptr.trackbodyid
+    @trackbodyid.setter
+    def trackbodyid(self, int x): self.ptr.trackbodyid = x
+    @property
+    def distance(self): return self.ptr.distance
+    @distance.setter
+    def distance(self, mjtNum x): self.ptr.distance = x
+    @property
+    def azimuth(self): return self.ptr.azimuth
+    @azimuth.setter
+    def azimuth(self, mjtNum x): self.ptr.azimuth = x
+    @property
+    def elevation(self): return self.ptr.elevation
+    @elevation.setter
+    def elevation(self, mjtNum x): self.ptr.elevation = x
+    @property
+    def lookat(self): return self._lookat
+
+cdef PyMjvCamera WrapMjvCamera(mjvCamera* p):
+    cdef PyMjvCamera o = PyMjvCamera()
+    o._set(p)
+    return o
+
+cdef class PyMjvGLCamera(object):
+    cdef mjvGLCamera* ptr
+    
+    
+    cdef np.ndarray _pos
+    cdef np.ndarray _forward
+    cdef np.ndarray _up
+    
+    def __cinit__(self):
+        self.ptr = NULL
+
+
+    @property
+    def uintptr(self): return <uintptr_t>self.ptr
+
+    cdef void _set(self, mjvGLCamera* p):
         
         self.ptr = p
         
         
         self._pos = _wrap_float_1d(&p.pos[0], 3)
-        self._dir = _wrap_float_1d(&p.dir[0], 3)
-        self._attenuation = _wrap_float_1d(&p.attenuation[0], 3)
-        self._ambient = _wrap_float_1d(&p.ambient[0], 3)
-        self._diffuse = _wrap_float_1d(&p.diffuse[0], 3)
-        self._specular = _wrap_float_1d(&p.specular[0], 3)
+        self._forward = _wrap_float_1d(&p.forward[0], 3)
+        self._up = _wrap_float_1d(&p.up[0], 3)
         
     @property
-    def cutoff(self): return self.ptr.cutoff
-    @cutoff.setter
-    def cutoff(self, float x): self.ptr.cutoff = x
+    def frustum_center(self): return self.ptr.frustum_center
+    @frustum_center.setter
+    def frustum_center(self, float x): self.ptr.frustum_center = x
     @property
-    def exponent(self): return self.ptr.exponent
-    @exponent.setter
-    def exponent(self, float x): self.ptr.exponent = x
+    def frustum_bottom(self): return self.ptr.frustum_bottom
+    @frustum_bottom.setter
+    def frustum_bottom(self, float x): self.ptr.frustum_bottom = x
     @property
-    def headlight(self): return self.ptr.headlight
-    @headlight.setter
-    def headlight(self, mjtByte x): self.ptr.headlight = x
+    def frustum_top(self): return self.ptr.frustum_top
+    @frustum_top.setter
+    def frustum_top(self, float x): self.ptr.frustum_top = x
     @property
-    def directional(self): return self.ptr.directional
-    @directional.setter
-    def directional(self, mjtByte x): self.ptr.directional = x
+    def frustum_near(self): return self.ptr.frustum_near
+    @frustum_near.setter
+    def frustum_near(self, float x): self.ptr.frustum_near = x
     @property
-    def castshadow(self): return self.ptr.castshadow
-    @castshadow.setter
-    def castshadow(self, mjtByte x): self.ptr.castshadow = x
+    def frustum_far(self): return self.ptr.frustum_far
+    @frustum_far.setter
+    def frustum_far(self, float x): self.ptr.frustum_far = x
     @property
     def pos(self): return self._pos
     @property
-    def dir(self): return self._dir
+    def forward(self): return self._forward
     @property
-    def attenuation(self): return self._attenuation
-    @property
-    def ambient(self): return self._ambient
-    @property
-    def diffuse(self): return self._diffuse
-    @property
-    def specular(self): return self._specular
+    def up(self): return self._up
 
-cdef PyMjvLight WrapMjvLight(mjvLight* p):
-    cdef PyMjvLight o = PyMjvLight()
-    o._set(p)
-    return o
-
-cdef class PyMjVisual_rgba(object):
-    cdef mjVisual_rgba* ptr
-    
-    
-    cdef np.ndarray _fog
-    cdef np.ndarray _force
-    cdef np.ndarray _inertia
-    cdef np.ndarray _joint
-    cdef np.ndarray _actuator
-    cdef np.ndarray _com
-    cdef np.ndarray _camera
-    cdef np.ndarray _light
-    cdef np.ndarray _selectpoint
-    cdef np.ndarray _connect
-    cdef np.ndarray _contactpoint
-    cdef np.ndarray _contactforce
-    cdef np.ndarray _contactfriction
-    cdef np.ndarray _contacttorque
-    cdef np.ndarray _constraint
-    cdef np.ndarray _slidercrank
-    cdef np.ndarray _crankbroken
-    
-    def __cinit__(self):
-        self.ptr = NULL
-
-
-    @property
-    def uintptr(self): return <uintptr_t>self.ptr
-
-    cdef void _set(self, mjVisual_rgba* p):
-        
-        self.ptr = p
-        
-        
-        self._fog = _wrap_float_1d(&p.fog[0], 4)
-        self._force = _wrap_float_1d(&p.force[0], 4)
-        self._inertia = _wrap_float_1d(&p.inertia[0], 4)
-        self._joint = _wrap_float_1d(&p.joint[0], 4)
-        self._actuator = _wrap_float_1d(&p.actuator[0], 4)
-        self._com = _wrap_float_1d(&p.com[0], 4)
-        self._camera = _wrap_float_1d(&p.camera[0], 4)
-        self._light = _wrap_float_1d(&p.light[0], 4)
-        self._selectpoint = _wrap_float_1d(&p.selectpoint[0], 4)
-        self._connect = _wrap_float_1d(&p.connect[0], 4)
-        self._contactpoint = _wrap_float_1d(&p.contactpoint[0], 4)
-        self._contactforce = _wrap_float_1d(&p.contactforce[0], 4)
-        self._contactfriction = _wrap_float_1d(&p.contactfriction[0], 4)
-        self._contacttorque = _wrap_float_1d(&p.contacttorque[0], 4)
-        self._constraint = _wrap_float_1d(&p.constraint[0], 4)
-        self._slidercrank = _wrap_float_1d(&p.slidercrank[0], 4)
-        self._crankbroken = _wrap_float_1d(&p.crankbroken[0], 4)
-        
-    @property
-    def fog(self): return self._fog
-    @property
-    def force(self): return self._force
-    @property
-    def inertia(self): return self._inertia
-    @property
-    def joint(self): return self._joint
-    @property
-    def actuator(self): return self._actuator
-    @property
-    def com(self): return self._com
-    @property
-    def camera(self): return self._camera
-    @property
-    def light(self): return self._light
-    @property
-    def selectpoint(self): return self._selectpoint
-    @property
-    def connect(self): return self._connect
-    @property
-    def contactpoint(self): return self._contactpoint
-    @property
-    def contactforce(self): return self._contactforce
-    @property
-    def contactfriction(self): return self._contactfriction
-    @property
-    def contacttorque(self): return self._contacttorque
-    @property
-    def constraint(self): return self._constraint
-    @property
-    def slidercrank(self): return self._slidercrank
-    @property
-    def crankbroken(self): return self._crankbroken
-
-cdef PyMjVisual_rgba WrapMjVisual_rgba(mjVisual_rgba* p):
-    cdef PyMjVisual_rgba o = PyMjVisual_rgba()
+cdef PyMjvGLCamera WrapMjvGLCamera(mjvGLCamera* p):
+    cdef PyMjvGLCamera o = PyMjvGLCamera()
     o._set(p)
     return o
 
@@ -3737,6 +3263,507 @@ cdef class PyMjvGeom(object):
 
 cdef PyMjvGeom WrapMjvGeom(mjvGeom* p):
     cdef PyMjvGeom o = PyMjvGeom()
+    o._set(p)
+    return o
+
+cdef class PyMjvLight(object):
+    cdef mjvLight* ptr
+    
+    
+    cdef np.ndarray _pos
+    cdef np.ndarray _dir
+    cdef np.ndarray _attenuation
+    cdef np.ndarray _ambient
+    cdef np.ndarray _diffuse
+    cdef np.ndarray _specular
+    
+    def __cinit__(self):
+        self.ptr = NULL
+
+
+    @property
+    def uintptr(self): return <uintptr_t>self.ptr
+
+    cdef void _set(self, mjvLight* p):
+        
+        self.ptr = p
+        
+        
+        self._pos = _wrap_float_1d(&p.pos[0], 3)
+        self._dir = _wrap_float_1d(&p.dir[0], 3)
+        self._attenuation = _wrap_float_1d(&p.attenuation[0], 3)
+        self._ambient = _wrap_float_1d(&p.ambient[0], 3)
+        self._diffuse = _wrap_float_1d(&p.diffuse[0], 3)
+        self._specular = _wrap_float_1d(&p.specular[0], 3)
+        
+    @property
+    def cutoff(self): return self.ptr.cutoff
+    @cutoff.setter
+    def cutoff(self, float x): self.ptr.cutoff = x
+    @property
+    def exponent(self): return self.ptr.exponent
+    @exponent.setter
+    def exponent(self, float x): self.ptr.exponent = x
+    @property
+    def headlight(self): return self.ptr.headlight
+    @headlight.setter
+    def headlight(self, mjtByte x): self.ptr.headlight = x
+    @property
+    def directional(self): return self.ptr.directional
+    @directional.setter
+    def directional(self, mjtByte x): self.ptr.directional = x
+    @property
+    def castshadow(self): return self.ptr.castshadow
+    @castshadow.setter
+    def castshadow(self, mjtByte x): self.ptr.castshadow = x
+    @property
+    def pos(self): return self._pos
+    @property
+    def dir(self): return self._dir
+    @property
+    def attenuation(self): return self._attenuation
+    @property
+    def ambient(self): return self._ambient
+    @property
+    def diffuse(self): return self._diffuse
+    @property
+    def specular(self): return self._specular
+
+cdef PyMjvLight WrapMjvLight(mjvLight* p):
+    cdef PyMjvLight o = PyMjvLight()
+    o._set(p)
+    return o
+
+cdef class PyMjvOption(object):
+    cdef mjvOption* ptr
+    
+    
+    cdef np.ndarray _geomgroup
+    cdef np.ndarray _sitegroup
+    cdef np.ndarray _flags
+    
+    def __cinit__(self):
+        self.ptr = NULL
+
+
+    @property
+    def uintptr(self): return <uintptr_t>self.ptr
+
+    cdef void _set(self, mjvOption* p):
+        
+        self.ptr = p
+        
+        
+        self._geomgroup = _wrap_mjtByte_1d(&p.geomgroup[0], 5)
+        self._sitegroup = _wrap_mjtByte_1d(&p.sitegroup[0], 5)
+        self._flags = _wrap_mjtByte_1d(&p.flags[0], mjNVISFLAG)
+        
+    @property
+    def label(self): return self.ptr.label
+    @label.setter
+    def label(self, int x): self.ptr.label = x
+    @property
+    def frame(self): return self.ptr.frame
+    @frame.setter
+    def frame(self, int x): self.ptr.frame = x
+    @property
+    def geomgroup(self): return self._geomgroup
+    @property
+    def sitegroup(self): return self._sitegroup
+    @property
+    def flags(self): return self._flags
+
+cdef PyMjvOption WrapMjvOption(mjvOption* p):
+    cdef PyMjvOption o = PyMjvOption()
+    o._set(p)
+    return o
+
+cdef class PyMjvScene(object):
+    cdef mjvScene* ptr
+    
+    
+    cdef list _lights
+    cdef list _camera
+    cdef np.ndarray _translate
+    cdef np.ndarray _rotate
+    cdef np.ndarray _flags
+    
+    def __cinit__(self):
+        self.ptr = NULL
+
+
+    @property
+    def uintptr(self): return <uintptr_t>self.ptr
+
+    cdef void _set(self, mjvScene* p):
+        
+        self.ptr = p
+        
+        
+        self._lights = [WrapMjvLight(&p.lights[i]) for i in range(8)]
+        self._camera = [WrapMjvGLCamera(&p.camera[i]) for i in range(2)]
+        self._translate = _wrap_float_1d(&p.translate[0], 3)
+        self._rotate = _wrap_float_1d(&p.rotate[0], 4)
+        self._flags = _wrap_mjtByte_1d(&p.flags[0], mjNRNDFLAG)
+        
+    @property
+    def maxgeom(self): return self.ptr.maxgeom
+    @maxgeom.setter
+    def maxgeom(self, int x): self.ptr.maxgeom = x
+    @property
+    def ngeom(self): return self.ptr.ngeom
+    @ngeom.setter
+    def ngeom(self, int x): self.ptr.ngeom = x
+    @property
+    def nlight(self): return self.ptr.nlight
+    @nlight.setter
+    def nlight(self, int x): self.ptr.nlight = x
+    @property
+    def enabletransform(self): return self.ptr.enabletransform
+    @enabletransform.setter
+    def enabletransform(self, mjtByte x): self.ptr.enabletransform = x
+    @property
+    def scale(self): return self.ptr.scale
+    @scale.setter
+    def scale(self, float x): self.ptr.scale = x
+    @property
+    def stereo(self): return self.ptr.stereo
+    @stereo.setter
+    def stereo(self, int x): self.ptr.stereo = x
+    @property
+    def lights(self): return self._lights
+    @property
+    def camera(self): return self._camera
+    @property
+    def translate(self): return self._translate
+    @property
+    def rotate(self): return self._rotate
+    @property
+    def flags(self): return self._flags
+
+cdef PyMjvScene WrapMjvScene(mjvScene* p):
+    cdef PyMjvScene o = PyMjvScene()
+    o._set(p)
+    return o
+
+cdef class PyMjvFigure(object):
+    cdef mjvFigure* ptr
+    
+    
+    cdef np.ndarray _flg_ticklabel
+    cdef np.ndarray _gridsize
+    cdef np.ndarray _gridrgb
+    cdef np.ndarray _figurergba
+    cdef np.ndarray _legendrgba
+    cdef np.ndarray _textrgb
+    cdef np.ndarray _xlabel
+    cdef np.ndarray _title
+    cdef np.ndarray _xformat
+    cdef np.ndarray _yformat
+    cdef np.ndarray _minwidth
+    cdef np.ndarray _linepnt
+    cdef np.ndarray _linewidth
+    
+    def __cinit__(self):
+        self.ptr = NULL
+
+
+    @property
+    def uintptr(self): return <uintptr_t>self.ptr
+
+    cdef void _set(self, mjvFigure* p):
+        
+        self.ptr = p
+        
+        
+        self._flg_ticklabel = _wrap_int_1d(&p.flg_ticklabel[0], 2)
+        self._gridsize = _wrap_int_1d(&p.gridsize[0], 2)
+        self._gridrgb = _wrap_float_1d(&p.gridrgb[0], 3)
+        self._figurergba = _wrap_float_1d(&p.figurergba[0], 4)
+        self._legendrgba = _wrap_float_1d(&p.legendrgba[0], 4)
+        self._textrgb = _wrap_float_1d(&p.textrgb[0], 3)
+        self._xlabel = _wrap_char_1d(&p.xlabel[0], 100)
+        self._title = _wrap_char_1d(&p.title[0], 100)
+        self._xformat = _wrap_char_1d(&p.xformat[0], 20)
+        self._yformat = _wrap_char_1d(&p.yformat[0], 20)
+        self._minwidth = _wrap_char_1d(&p.minwidth[0], 20)
+        self._linepnt = _wrap_int_1d(&p.linepnt[0], 100)
+        self._linewidth = _wrap_float_1d(&p.linewidth[0], 100)
+        
+    @property
+    def flg_legend(self): return self.ptr.flg_legend
+    @flg_legend.setter
+    def flg_legend(self, int x): self.ptr.flg_legend = x
+    @property
+    def flg_extend(self): return self.ptr.flg_extend
+    @flg_extend.setter
+    def flg_extend(self, int x): self.ptr.flg_extend = x
+    @property
+    def flg_barplot(self): return self.ptr.flg_barplot
+    @flg_barplot.setter
+    def flg_barplot(self, int x): self.ptr.flg_barplot = x
+    @property
+    def gridwidth(self): return self.ptr.gridwidth
+    @gridwidth.setter
+    def gridwidth(self, float x): self.ptr.gridwidth = x
+    @property
+    def flg_ticklabel(self): return self._flg_ticklabel
+    @property
+    def gridsize(self): return self._gridsize
+    @property
+    def gridrgb(self): return self._gridrgb
+    @property
+    def figurergba(self): return self._figurergba
+    @property
+    def legendrgba(self): return self._legendrgba
+    @property
+    def textrgb(self): return self._textrgb
+    @property
+    def xlabel(self): return self._xlabel
+    @property
+    def title(self): return self._title
+    @property
+    def xformat(self): return self._xformat
+    @property
+    def yformat(self): return self._yformat
+    @property
+    def minwidth(self): return self._minwidth
+    @property
+    def linepnt(self): return self._linepnt
+    @property
+    def linewidth(self): return self._linewidth
+
+cdef PyMjvFigure WrapMjvFigure(mjvFigure* p):
+    cdef PyMjvFigure o = PyMjvFigure()
+    o._set(p)
+    return o
+
+cdef class PyMjrRect(object):
+    cdef mjrRect* ptr
+    
+    
+    
+    def __cinit__(self):
+        self.ptr = <mjrRect*> PyMem_Malloc(sizeof(mjrRect))
+        if not self.ptr:
+            raise MemoryError()
+
+    def __dealloc__(self):
+        PyMem_Free(self.ptr)
+
+
+    @property
+    def uintptr(self): return <uintptr_t>self.ptr
+
+    cdef void _set(self, mjrRect* p):
+        
+        self.ptr = p
+        
+        
+        
+    @property
+    def left(self): return self.ptr.left
+    @left.setter
+    def left(self, int x): self.ptr.left = x
+    @property
+    def bottom(self): return self.ptr.bottom
+    @bottom.setter
+    def bottom(self, int x): self.ptr.bottom = x
+    @property
+    def width(self): return self.ptr.width
+    @width.setter
+    def width(self, int x): self.ptr.width = x
+    @property
+    def height(self): return self.ptr.height
+    @height.setter
+    def height(self, int x): self.ptr.height = x
+
+cdef PyMjrRect WrapMjrRect(mjrRect* p):
+    cdef PyMjrRect o = PyMjrRect()
+    o._set(p)
+    return o
+
+cdef class PyMjrContext(object):
+    cdef mjrContext* ptr
+    
+    
+    cdef np.ndarray _textureType
+    cdef np.ndarray _texture
+    cdef np.ndarray _charWidth
+    cdef np.ndarray _charWidthBig
+    
+    def __cinit__(self):
+        self.ptr = NULL
+
+
+    @property
+    def uintptr(self): return <uintptr_t>self.ptr
+
+    cdef void _set(self, mjrContext* p):
+        
+        self.ptr = p
+        
+        
+        self._textureType = _wrap_int_1d(&p.textureType[0], 100)
+        self._texture = _wrap_unsigned_int_1d(&p.texture[0], 100)
+        self._charWidth = _wrap_int_1d(&p.charWidth[0], 127)
+        self._charWidthBig = _wrap_int_1d(&p.charWidthBig[0], 127)
+        
+    @property
+    def lineWidth(self): return self.ptr.lineWidth
+    @lineWidth.setter
+    def lineWidth(self, float x): self.ptr.lineWidth = x
+    @property
+    def shadowClip(self): return self.ptr.shadowClip
+    @shadowClip.setter
+    def shadowClip(self, float x): self.ptr.shadowClip = x
+    @property
+    def shadowScale(self): return self.ptr.shadowScale
+    @shadowScale.setter
+    def shadowScale(self, float x): self.ptr.shadowScale = x
+    @property
+    def shadowSize(self): return self.ptr.shadowSize
+    @shadowSize.setter
+    def shadowSize(self, int x): self.ptr.shadowSize = x
+    @property
+    def offWidth(self): return self.ptr.offWidth
+    @offWidth.setter
+    def offWidth(self, int x): self.ptr.offWidth = x
+    @property
+    def offHeight(self): return self.ptr.offHeight
+    @offHeight.setter
+    def offHeight(self, int x): self.ptr.offHeight = x
+    @property
+    def offSamples(self): return self.ptr.offSamples
+    @offSamples.setter
+    def offSamples(self, int x): self.ptr.offSamples = x
+    @property
+    def offFBO(self): return self.ptr.offFBO
+    @offFBO.setter
+    def offFBO(self, unsigned int x): self.ptr.offFBO = x
+    @property
+    def offFBO_r(self): return self.ptr.offFBO_r
+    @offFBO_r.setter
+    def offFBO_r(self, unsigned int x): self.ptr.offFBO_r = x
+    @property
+    def offColor(self): return self.ptr.offColor
+    @offColor.setter
+    def offColor(self, unsigned int x): self.ptr.offColor = x
+    @property
+    def offColor_r(self): return self.ptr.offColor_r
+    @offColor_r.setter
+    def offColor_r(self, unsigned int x): self.ptr.offColor_r = x
+    @property
+    def offDepthStencil(self): return self.ptr.offDepthStencil
+    @offDepthStencil.setter
+    def offDepthStencil(self, unsigned int x): self.ptr.offDepthStencil = x
+    @property
+    def offDepthStencil_r(self): return self.ptr.offDepthStencil_r
+    @offDepthStencil_r.setter
+    def offDepthStencil_r(self, unsigned int x): self.ptr.offDepthStencil_r = x
+    @property
+    def shadowFBO(self): return self.ptr.shadowFBO
+    @shadowFBO.setter
+    def shadowFBO(self, unsigned int x): self.ptr.shadowFBO = x
+    @property
+    def shadowTex(self): return self.ptr.shadowTex
+    @shadowTex.setter
+    def shadowTex(self, unsigned int x): self.ptr.shadowTex = x
+    @property
+    def ntexture(self): return self.ptr.ntexture
+    @ntexture.setter
+    def ntexture(self, int x): self.ptr.ntexture = x
+    @property
+    def basePlane(self): return self.ptr.basePlane
+    @basePlane.setter
+    def basePlane(self, unsigned int x): self.ptr.basePlane = x
+    @property
+    def baseMesh(self): return self.ptr.baseMesh
+    @baseMesh.setter
+    def baseMesh(self, unsigned int x): self.ptr.baseMesh = x
+    @property
+    def baseHField(self): return self.ptr.baseHField
+    @baseHField.setter
+    def baseHField(self, unsigned int x): self.ptr.baseHField = x
+    @property
+    def baseBuiltin(self): return self.ptr.baseBuiltin
+    @baseBuiltin.setter
+    def baseBuiltin(self, unsigned int x): self.ptr.baseBuiltin = x
+    @property
+    def baseFontNormal(self): return self.ptr.baseFontNormal
+    @baseFontNormal.setter
+    def baseFontNormal(self, unsigned int x): self.ptr.baseFontNormal = x
+    @property
+    def baseFontShadow(self): return self.ptr.baseFontShadow
+    @baseFontShadow.setter
+    def baseFontShadow(self, unsigned int x): self.ptr.baseFontShadow = x
+    @property
+    def baseFontBig(self): return self.ptr.baseFontBig
+    @baseFontBig.setter
+    def baseFontBig(self, unsigned int x): self.ptr.baseFontBig = x
+    @property
+    def rangePlane(self): return self.ptr.rangePlane
+    @rangePlane.setter
+    def rangePlane(self, int x): self.ptr.rangePlane = x
+    @property
+    def rangeMesh(self): return self.ptr.rangeMesh
+    @rangeMesh.setter
+    def rangeMesh(self, int x): self.ptr.rangeMesh = x
+    @property
+    def rangeHField(self): return self.ptr.rangeHField
+    @rangeHField.setter
+    def rangeHField(self, int x): self.ptr.rangeHField = x
+    @property
+    def rangeBuiltin(self): return self.ptr.rangeBuiltin
+    @rangeBuiltin.setter
+    def rangeBuiltin(self, int x): self.ptr.rangeBuiltin = x
+    @property
+    def rangeFont(self): return self.ptr.rangeFont
+    @rangeFont.setter
+    def rangeFont(self, int x): self.ptr.rangeFont = x
+    @property
+    def charHeight(self): return self.ptr.charHeight
+    @charHeight.setter
+    def charHeight(self, int x): self.ptr.charHeight = x
+    @property
+    def charHeightBig(self): return self.ptr.charHeightBig
+    @charHeightBig.setter
+    def charHeightBig(self, int x): self.ptr.charHeightBig = x
+    @property
+    def glewInitialized(self): return self.ptr.glewInitialized
+    @glewInitialized.setter
+    def glewInitialized(self, int x): self.ptr.glewInitialized = x
+    @property
+    def windowAvailable(self): return self.ptr.windowAvailable
+    @windowAvailable.setter
+    def windowAvailable(self, int x): self.ptr.windowAvailable = x
+    @property
+    def windowSamples(self): return self.ptr.windowSamples
+    @windowSamples.setter
+    def windowSamples(self, int x): self.ptr.windowSamples = x
+    @property
+    def windowStereo(self): return self.ptr.windowStereo
+    @windowStereo.setter
+    def windowStereo(self, int x): self.ptr.windowStereo = x
+    @property
+    def windowDoublebuffer(self): return self.ptr.windowDoublebuffer
+    @windowDoublebuffer.setter
+    def windowDoublebuffer(self, int x): self.ptr.windowDoublebuffer = x
+    @property
+    def currentBuffer(self): return self.ptr.currentBuffer
+    @currentBuffer.setter
+    def currentBuffer(self, int x): self.ptr.currentBuffer = x
+    @property
+    def textureType(self): return self._textureType
+    @property
+    def texture(self): return self._texture
+    @property
+    def charWidth(self): return self._charWidth
+    @property
+    def charWidthBig(self): return self._charWidthBig
+
+cdef PyMjrContext WrapMjrContext(mjrContext* p):
+    cdef PyMjrContext o = PyMjrContext()
     o._set(p)
     return o
 
