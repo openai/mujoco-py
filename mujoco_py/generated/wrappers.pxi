@@ -2496,6 +2496,10 @@ cdef class PyMjData(object):
     def get_sensordata(self, name):
         raise RuntimeError("get_sensor should be used instead of get_sensordata")
 
+    def get_userdata(self, name):
+        id = self._model.userdata_name2id(name)
+        return self._userdata[id]
+
     def get_mocap_pos(self, name):
         body_id = self._model.body_name2id(name)
         mocap_id = self._model.body_mocapid[body_id]

@@ -742,6 +742,7 @@ def main():
             extra += _add_named_access_methods('light', 'light_xpos', 'xpos')
             extra += _add_named_access_methods('light', 'light_xdir', 'xdir')
             extra += _add_named_access_methods('sensor', 'sensordata', None)
+            extra += _add_named_access_methods('userdata', 'userdata', None)
 
             for pose_type in ('pos', 'quat'):
                 extra += """
