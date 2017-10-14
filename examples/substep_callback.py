@@ -32,16 +32,16 @@ MODEL_XML = """
 """
 
 fn = '''
-    #define MIN(a, b) (a < b ? a : b)
+    #define SQUARE(a) (a * a)
     void fun(const mjModel* m, mjData* d) {
-        for (int i = 0; i < d->ncon; i++) {
-            pen_sum += MIN(d->contact[i].dist, 0);
+        for (int i = d->ne; i < d->nefc; i++) {
+            pos_sum += SQUARE(d->efc_pos[i]);
         }
     }
 '''
 
 sim = MjSim(load_model_from_xml(MODEL_XML), nsubsteps=50,
-            substep_callback=fn, userdata_names=['pen_sum'])
+            substep_callback=fn, userdata_names=['pos_sum'])
 t = 0
 while t < 10:
     t += 1
@@ -52,4 +52,4 @@ while t < 10:
     assert sim.data.ncon == 0, 'No contacts should be detected here'
     # verify that contacts (and penetrations) are visible to substep_callback
     if t > 1:
-        assert sim.data.get_struct_dict('pen_sum') < 0  # detected penetrations
+        assert sim.data.get_userdata('pos_sum') > 0  # detected collision
