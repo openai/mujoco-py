@@ -2,3 +2,4 @@ glfw>=1.4.0
 numpy>=1.11
 Cython>=0.25.2
 imageio>=2.1.2
+cffi>=1.10

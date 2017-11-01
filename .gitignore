@@ -49,3 +49,5 @@ tmp*
 cymj.c
 **/.git
 .eggs/
+*.c
+*.so

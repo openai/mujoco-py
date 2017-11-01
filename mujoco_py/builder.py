@@ -1,5 +1,5 @@
 import distutils
-import imp
+import glob
 import os
 import shutil
 import subprocess
@@ -8,9 +8,13 @@ from distutils.core import Extension
 from distutils.dist import Distribution
 from distutils.sysconfig import customize_compiler
 from os.path import abspath, dirname, exists, join, getmtime
+from random import choice
 from shutil import move
+from string import ascii_lowercase
+from importlib.machinery import ExtensionFileLoader
 
 import numpy as np
+from cffi import FFI
 from Cython.Build import cythonize
 from Cython.Distutils.old_build_ext import old_build_ext as build_ext
 
@@ -31,7 +35,7 @@ def get_nvidia_lib_dir():
         return None
     root = os.path.abspath(os.sep)
     major_version = nvidia_version.split('.')[0]
-    for nvidia_lib_dir in [join(root, 'usr', 'local', 'nvidia', 'lib64'), 
+    for nvidia_lib_dir in [join(root, 'usr', 'local', 'nvidia', 'lib64'),
                            join(root, 'usr', 'lib', 'nvidia-' + major_version)]:
         if exists(nvidia_lib_dir):
             return nvidia_lib_dir
@@ -74,8 +78,13 @@ The easy solution is to `import mujoco_py` _before_ `import glfw`.
     cext_so_path = builder.get_so_file_path()
     if not exists(cext_so_path):
         cext_so_path = builder.build()
-    mod = imp.load_dynamic("cymj", cext_so_path)
-    return mod
+    return load_dynamic_ext('cymj', cext_so_path)
+
+
+def load_dynamic_ext(name, path):
+    ''' Load compiled shared object and return as python module. '''
+    loader = ExtensionFileLoader(name, path)
+    return loader.load_module()
 
 
 class custom_build_ext(build_ext):
@@ -98,6 +107,7 @@ class custom_build_ext(build_ext):
 
 
 def fix_shared_library(so_file, name, library_path):
+    ''' Used to fixup shared libraries on Linux '''
     ldd_output = subprocess.check_output(
         ['ldd', so_file]).decode('utf-8')
 
@@ -110,6 +120,44 @@ def fix_shared_library(so_file, name, library_path):
         ['patchelf', '--add-needed',
          library_path,
          so_file])
+
+
+def manually_link_libraries(mjpro_path, raw_cext_dll_path):
+    ''' Used to fix mujoco library linking on Mac '''
+    root, ext = os.path.splitext(raw_cext_dll_path)
+    final_cext_dll_path = root + '_final' + ext
+
+    # If someone else already built the final DLL, don't bother
+    # recreating it here, even though this should still be idempotent.
+    if (exists(final_cext_dll_path) and
+            getmtime(final_cext_dll_path) >= getmtime(raw_cext_dll_path)):
+        return final_cext_dll_path
+
+    tmp_final_cext_dll_path = final_cext_dll_path + '~'
+    shutil.copyfile(raw_cext_dll_path, tmp_final_cext_dll_path)
+
+    mj_bin_path = join(mjpro_path, 'bin')
+
+    # Fix the rpath of the generated library -- i lost the Stackoverflow
+    # reference here
+    from_mujoco_path = '@executable_path/libmujoco150.dylib'
+    to_mujoco_path = '%s/libmujoco150.dylib' % mj_bin_path
+    subprocess.check_call(['install_name_tool',
+                           '-change',
+                           from_mujoco_path,
+                           to_mujoco_path,
+                           tmp_final_cext_dll_path])
+
+    from_glfw_path = 'libglfw.3.dylib'
+    to_glfw_path = os.path.join(mj_bin_path, 'libglfw.3.dylib')
+    subprocess.check_call(['install_name_tool',
+                           '-change',
+                           from_glfw_path,
+                           to_glfw_path,
+                           tmp_final_cext_dll_path])
+
+    os.rename(tmp_final_cext_dll_path, final_cext_dll_path)
+    return final_cext_dll_path
 
 
 class MujocoExtensionBuilder():
@@ -231,43 +279,7 @@ class MacExtensionBuilder(MujocoExtensionBuilder):
 
         so_file_path = super()._build_impl()
         del os.environ['CC']
-        return self.manually_link_libraries(so_file_path)
-
-    def manually_link_libraries(self, raw_cext_dll_path):
-        root, ext = os.path.splitext(raw_cext_dll_path)
-        final_cext_dll_path = root + '_final' + ext
-
-        # If someone else already built the final DLL, don't bother
-        # recreating it here, even though this should still be idempotent.
-        if (exists(final_cext_dll_path) and
-                getmtime(final_cext_dll_path) >= getmtime(raw_cext_dll_path)):
-            return final_cext_dll_path
-
-        tmp_final_cext_dll_path = final_cext_dll_path + '~'
-        shutil.copyfile(raw_cext_dll_path, tmp_final_cext_dll_path)
-
-        mj_bin_path = join(self.mjpro_path, 'bin')
-
-        # Fix the rpath of the generated library -- i lost the Stackoverflow
-        # reference here
-        from_mujoco_path = '@executable_path/libmujoco150.dylib'
-        to_mujoco_path = '%s/libmujoco150.dylib' % mj_bin_path
-        subprocess.check_call(['install_name_tool',
-                               '-change',
-                               from_mujoco_path,
-                               to_mujoco_path,
-                               tmp_final_cext_dll_path])
-
-        from_glfw_path = 'libglfw.3.dylib'
-        to_glfw_path = os.path.join(mj_bin_path, 'libglfw.3.dylib')
-        subprocess.check_call(['install_name_tool',
-                               '-change',
-                               from_glfw_path,
-                               to_glfw_path,
-                               tmp_final_cext_dll_path])
-
-        os.rename(tmp_final_cext_dll_path, final_cext_dll_path)
-        return final_cext_dll_path
+        return manually_link_libraries(self.mjpro_path, so_file_path)
 
 
 class MujocoException(Exception):
@@ -309,6 +321,118 @@ class ignore_mujoco_warnings:
 
     def __exit__(self, type, value, traceback):
         cymj.set_warning_callback(self.prev_user_warning)
+
+
+def build_fn_cleanup(name):
+    '''
+    Cleanup files generated by building callback.
+    Set the MUJOCO_PY_DEBUG_FN_BUILDER environment variable to disable cleanup.
+    '''
+    if not os.environ.get('MUJOCO_PY_DEBUG_FN_BUILDER', False):
+        for f in glob.glob(name + '*'):
+            try:
+                os.remove(f)
+            except PermissionError as e:
+                # This happens trying to remove libraries on appveyor
+                print('Error removing {}, continuing anyway: {}'.format(f, e))
+
+
+def build_callback_fn(function_string, userdata_names=[]):
+    '''
+    Builds a C callback function and returns a function pointer int.
+
+        function_string : str
+            This is a string of the C function to be compiled
+        userdata_names : list or tuple
+            This is an optional list to defince convenience names
+
+    We compile and link and load the function, and return a function pointer.
+    See `MjSim.set_substep_callback()` for an example use of these callbacks.
+
+    The callback function should match the signature:
+        void fun(const mjModel *m, mjData *d);
+
+    Here's an example function_string:
+        ```
+        """
+        #include <stdio.h>
+        void fun(const mjModel* m, mjData* d) {
+            printf("hello");
+        }
+        """
+        ```
+
+    Input and output for the function pass through userdata in the data struct:
+        ```
+        """
+        void fun(const mjModel* m, mjData* d) {
+            d->userdata[0] += 1;
+        }
+        """
+        ```
+
+    `userdata_names` is expected to match the model where the callback is used.
+    These can bet set on a model with:
+        `model.set_userdata_names([...])`
+
+    If `userdata_names` is supplied, convenience `#define`s are added for each.
+    For example:
+        `userdata_names = ['my_sum']`
+    Will get gerenerated into the extra line:
+        `#define my_sum d->userdata[0]`
+    And prepended to the top of the function before compilation.
+    Here's an example that takes advantage of this:
+        ```
+        """
+        void fun(const mjModel* m, mjData* d) {
+            for (int i = 0; i < m->nu; i++) {
+                my_sum += d->ctrl[i];
+            }
+        }
+        """
+        ```
+    Note these are just C `#define`s and are limited in how they can be used.
+
+    After compilation, the built library containing the function is loaded
+    into memory and all of the files (including the library) are deleted.
+    To retain these for debugging set the `MUJOCO_PY_DEBUG_FN_BUILDER` envvar.
+
+    To save time compiling, these function pointers may be re-used by many
+    different consumers.  They are thread-safe and don't acquire the GIL.
+
+    See the file `tests/test_substep.py` for additional examples,
+    including an example which iterates over contacts to compute penetrations.
+    '''
+    assert isinstance(userdata_names, (list, tuple)), \
+        'invalid userdata_names: {}'.format(userdata_names)
+    ffibuilder = FFI()
+    ffibuilder.cdef('extern uintptr_t __fun;')
+    name = '_fn_' + ''.join(choice(ascii_lowercase) for _ in range(15))
+    source_string = '#include <mujoco.h>\n'
+    # Add defines for each userdata to make setting them easier
+    for i, name in enumerate(userdata_names):
+        source_string += '#define {} d->userdata[{}]\n'.format(name, i)
+    source_string += function_string
+    source_string += '\nuintptr_t __fun = (uintptr_t) fun;'
+    # Link against mujoco so we can call mujoco functions from within callback
+    ffibuilder.set_source(name, source_string,
+                          include_dirs=[join(mjpro_path, 'include')],
+                          library_dirs=[join(mjpro_path, 'bin')],
+                          libraries=['mujoco150'])
+    # Catch compilation exceptions so we can cleanup partial files in that case
+    try:
+        library_path = ffibuilder.compile(verbose=True)
+    except Exception as e:
+        build_fn_cleanup(name)
+        raise e
+    # On Mac the MuJoCo library is linked strangely, so we have to fix it here
+    if sys.platform == 'darwin':
+        fixed_library_path = manually_link_libraries(mjpro_path, library_path)
+        move(fixed_library_path, library_path)  # Overwrite with fixed library
+    module = load_dynamic_ext(name, library_path)
+    # Now that the module is loaded into memory, we can actually delete it
+    build_fn_cleanup(name)
+    return module.lib.__fun
 
 
 mjpro_path, key_path = discover_mujoco()

@@ -112,6 +112,9 @@ cdef class MjRenderContext(object):
         rect.width = width
         rect.height = height
 
+        if self.sim.render_callback is not None:
+            self.sim.render_callback(self.sim, self)
+
         # Sometimes buffers are too small.
         if width > self._con.offWidth or height > self._con.offHeight:
             new_width = max(width, self._model_ptr.vis.global_.offwidth)

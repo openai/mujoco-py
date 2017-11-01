@@ -164,5 +164,3 @@ def load_model_from_mjb(bytes mjb_bytes):
     if model == NULL:
         raise Exception('%s\nFailed to load MJB')
     return WrapMjModel(model)
-
-
