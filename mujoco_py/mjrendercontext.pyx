@@ -77,14 +77,6 @@ cdef class MjRenderContext(object):
 
     def _set_mujoco_buffers(self):
         mjr_makeContext(self._model_ptr, &self._con, mjFONTSCALE_150)
-        if self.offscreen:
-            mjr_setBuffer(mjFB_OFFSCREEN, &self._con);
-            if self._con.currentBuffer != mjFB_OFFSCREEN:
-                raise RuntimeError('Offscreen rendering not supported')
-        else:
-            mjr_setBuffer(mjFB_WINDOW, &self._con);
-            if self._con.currentBuffer != mjFB_WINDOW:
-                raise RuntimeError('Window rendering not supported')
         self.con = WrapMjrContext(&self._con)
 
     def _setup_opengl_context(self, offscreen, device_id):
@@ -133,13 +125,14 @@ cdef class MjRenderContext(object):
                 self.cam.type = const.CAMERA_FIXED
             self.cam.fixedcamid = camera_id
 
-        if self.offscreen: 
-            mjr_setBuffer(const.FB_OFFSCREEN, &self._con) 
-            if self._con.currentBuffer != const.FB_OFFSCREEN: 
-                print("Warning: offscreen rendering not supported, using default/window framebuffer\n");
+        if self.offscreen:
+            mjr_setBuffer(mjFB_OFFSCREEN, &self._con);
+            if self._con.currentBuffer != mjFB_OFFSCREEN:
+                raise RuntimeError('Offscreen rendering not supported')
         else:
-            mjr_setBuffer(const.FB_WINDOW, &self._con) 
-            assert self._con.currentBuffer == const.FB_WINDOW 
+            mjr_setBuffer(mjFB_WINDOW, &self._con);
+            if self._con.currentBuffer != mjFB_WINDOW:
+                raise RuntimeError('Window rendering not supported')
 
         self.opengl_context.set_buffer_size(width, height)
 
