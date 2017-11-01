@@ -57,7 +57,7 @@ cdef class MjSim(object):
     # User defined state.
     cdef readonly dict udd_state
     # User defined dynamics callback
-    cdef readonly object _udd_callback
+    cdef public object udd_callback
     # Allows to store extra information in MjSim.
     cdef readonly dict extras
     # Function pointer for substep callback, stored as uintptr
@@ -175,16 +175,6 @@ cdef class MjSim(object):
         elif not render_context.offscreen and self._render_context_window is None:
             self._render_context_window = render_context
 
-    @property
-    def udd_callback(self):
-        return self._udd_callback
-
-    @udd_callback.setter
-    def udd_callback(self, value):
-        self._udd_callback = value
-        self.udd_state = None
-        self.step_udd()
-
     cpdef substep_callback(self):
         if self.substep_callback_ptr:
             (<mjfGeneric>self.substep_callback_ptr)(self.model.ptr, self.data.ptr)
@@ -216,11 +206,11 @@ cdef class MjSim(object):
             raise TypeError('invalid: {}'.format(type(substep_callback)))
 
     def step_udd(self):
-        if self._udd_callback is None:
+        if self.udd_callback is None:
             self.udd_state = {}
         else:
             schema_example = self.udd_state
-            self.udd_state = self._udd_callback(self)
+            self.udd_state = self.udd_callback(self)
             # Check to make sure the udd_state has consistent keys and dimension across steps
             if schema_example is not None:
                 keys = set(schema_example.keys()) | set(self.udd_state.keys())
