@@ -133,6 +133,14 @@ cdef class MjRenderContext(object):
                 self.cam.type = const.CAMERA_FIXED
             self.cam.fixedcamid = camera_id
 
+        if self.offscreen: 
+            mjr_setBuffer(const.FB_OFFSCREEN, &self._con) 
+            if self._con.currentBuffer != const.FB_OFFSCREEN: 
+                print("Warning: offscreen rendering not supported, using default/window framebuffer\n");
+        else:
+            mjr_setBuffer(const.FB_WINDOW, &self._con) 
+            assert self._con.currentBuffer == const.FB_WINDOW 
+
         self.opengl_context.set_buffer_size(width, height)
 
         mjv_updateScene(self._model_ptr, self._data_ptr, &self._vopt,
