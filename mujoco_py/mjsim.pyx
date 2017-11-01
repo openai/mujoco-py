@@ -82,7 +82,7 @@ cdef class MjSim(object):
         self.render_contexts = []
         self._render_context_offscreen = None
         self._render_context_window = None
-        self.udd_state = None
+        self.udd_state = {}
         self.udd_callback = udd_callback
         self.render_callback = render_callback
         self.extras = {}
