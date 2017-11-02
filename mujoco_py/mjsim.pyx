@@ -105,7 +105,7 @@ cdef class MjSim(object):
         with wrap_mujoco_warning():
             mj_forward(self.model.ptr, self.data.ptr)
 
-    def step(self):
+    def step(self, with_udd=True):
         """
         Advances the simulation by calling ``mj_step``.
 
@@ -113,7 +113,8 @@ cdef class MjSim(object):
         :meth:`.forward` before :meth:`.step` if their ``udd_callback`` requires access to MuJoCo state
         set during the forward dynamics.
         """
-        self.step_udd()
+        if with_udd:
+            self.step_udd()
 
         with wrap_mujoco_warning():
             for _ in range(self.nsubsteps):
