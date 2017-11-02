@@ -120,7 +120,7 @@ cdef class MjSim(object):
                 self.substep_callback()
                 mj_step(self.model.ptr, self.data.ptr)
 
-    def render(self, width=None, height=None, *, camera_name=None, depth=False,
+    def render(self, height=None, width=None, *, camera_name=None, depth=False,
                mode='offscreen', device_id=-1):
         """
         Renders view from a camera and returns image as an `numpy.ndarray`.
