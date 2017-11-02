@@ -56,6 +56,9 @@ cdef class MjSim(object):
     cdef public int nsubsteps
     # User defined state.
     cdef readonly dict udd_state
+    # Contains copy of one instance of udd_state.
+    # Used to ensure that every time udd_state follows the pattern.
+    cdef readonly dict _schema_example
     # User defined dynamics callback
     cdef public object udd_callback
     # Allows to store extra information in MjSim.
@@ -82,7 +85,8 @@ cdef class MjSim(object):
         self.render_contexts = []
         self._render_context_offscreen = None
         self._render_context_window = None
-        self.udd_state = None
+        self.udd_state = {}
+        self._schema_example = {}
         self.udd_callback = udd_callback
         self.render_callback = render_callback
         self.extras = {}
@@ -95,8 +99,8 @@ cdef class MjSim(object):
         with wrap_mujoco_warning():
             mj_resetData(self.model.ptr, self.data.ptr)
 
-        self.udd_state = None
-        self.step_udd()
+        self.udd_state = {}
+        self._schema_example = {}
 
     def forward(self):
         """
@@ -105,7 +109,7 @@ cdef class MjSim(object):
         with wrap_mujoco_warning():
             mj_forward(self.model.ptr, self.data.ptr)
 
-    def step(self):
+    def step(self, with_udd=True):
         """
         Advances the simulation by calling ``mj_step``.
 
@@ -113,7 +117,8 @@ cdef class MjSim(object):
         :meth:`.forward` before :meth:`.step` if their ``udd_callback`` requires access to MuJoCo state
         set during the forward dynamics.
         """
-        self.step_udd()
+        if with_udd and self.udd_callback is not None:
+            self.step_udd()
 
         with wrap_mujoco_warning():
             for _ in range(self.nsubsteps):
@@ -206,25 +211,23 @@ cdef class MjSim(object):
             raise TypeError('invalid: {}'.format(type(substep_callback)))
 
     def step_udd(self):
-        if self.udd_callback is None:
-            self.udd_state = {}
-        else:
-            schema_example = self.udd_state
-            self.udd_state = self.udd_callback(self)
-            # Check to make sure the udd_state has consistent keys and dimension across steps
-            if schema_example is not None:
-                keys = set(schema_example.keys()) | set(self.udd_state.keys())
-                for key in keys:
-                    assert key in schema_example, "Keys cannot be added to udd_state between steps."
-                    assert key in self.udd_state, "Keys cannot be dropped from udd_state between steps."
-                    if isinstance(schema_example[key], Number):
-                        assert isinstance(self.udd_state[key], Number), \
-                            "Every value in udd_state must be either a number or a numpy array"
-                    else:
-                        assert isinstance(self.udd_state[key], np.ndarray), \
-                            "Every value in udd_state must be either a number or a numpy array"
-                        assert self.udd_state[key].shape == schema_example[key].shape, \
-                            "Numpy array values in udd_state must keep the same dimension across steps."
+        if len(self.udd_state) > 0 and len(self._schema_example) == 0:
+            self._schema_example = copy.deepcopy(self.udd_state)
+        self.udd_state = self.udd_callback(self)
+        # Check to make sure the udd_state has consistent keys and dimension across steps
+        keys = set(self._schema_example.keys()) | set(self.udd_state.keys())
+        if len(self._schema_example) > 0:
+            for key in keys:
+                assert key in self._schema_example, "Keys cannot be added to udd_state between steps."
+                assert key in self.udd_state, "Keys cannot be dropped from udd_state between steps."
+                if isinstance(self._schema_example[key], Number):
+                    assert isinstance(self.udd_state[key], Number), \
+                        "Every value in udd_state must be either a number or a numpy array"
+                else:
+                    assert isinstance(self.udd_state[key], np.ndarray), \
+                        "Every value in udd_state must be either a number or a numpy array"
+                    assert self.udd_state[key].shape == self._schema_example[key].shape, \
+                        "Numpy array values in udd_state must keep the same dimension across steps."
 
     def get_state(self):
         """ Returns a copy of the simulator state. """
