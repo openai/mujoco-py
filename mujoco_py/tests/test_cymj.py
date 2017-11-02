@@ -4,7 +4,7 @@ from numbers import Number
 from io import BytesIO, StringIO
 import numpy as np
 from numpy.testing import assert_array_equal, assert_array_almost_equal
-from mujoco_py import (MjSim, load_model_from_xml,
+from mujoco_py import (MjSim, MjSimPool, load_model_from_xml,
                        load_model_from_path, MjSimState,
                        ignore_mujoco_warnings,
                        load_model_from_mjb)
@@ -620,6 +620,18 @@ def test_viewercontext():
                         rgba=np.ones(4),
                         label="mark")
 
+
+
+@pytest.mark.requires_rendering
+def test_many_sims_rendering():
+    model = load_model_from_xml(BASIC_MODEL_XML)
+    sims = [MjSim(model) for _ in range(5)]
+    pool = MjSimPool(sims)
+    pool.forward()
+    for sim in sims:
+        img, depth = sim.render(200, 200, depth=True)
+        assert img.shape == (200, 200, 3)
+        compare_imgs(img, 'test_rendering.freecam.png')
 
 def test_xml_from_path():
     model = load_model_from_path("mujoco_py/tests/test.xml")
