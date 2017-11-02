@@ -34,7 +34,7 @@ for p in packages:
 
 setup(
     name='mujoco-py',
-    version=__version__,  # noqa
+    version=__version__ + "_beta",  # noqa
     author='OpenAI Robotics Team',
     author_email='robotics@openai.com',
     url='https://github.com/openai/mujoco-py',
