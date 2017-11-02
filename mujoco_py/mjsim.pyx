@@ -117,7 +117,7 @@ cdef class MjSim(object):
         :meth:`.forward` before :meth:`.step` if their ``udd_callback`` requires access to MuJoCo state
         set during the forward dynamics.
         """
-        if with_udd and self.udd_callback is not None:
+        if with_udd:
             self.step_udd()
 
         with wrap_mujoco_warning():
@@ -211,6 +211,8 @@ cdef class MjSim(object):
             raise TypeError('invalid: {}'.format(type(substep_callback)))
 
     def step_udd(self):
+        if self.udd_callback is None:
+            return
         if len(self.udd_state) > 0 and len(self._schema_example) == 0:
             self._schema_example = copy.deepcopy(self.udd_state)
         self.udd_state = self.udd_callback(self)
