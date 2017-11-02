@@ -148,6 +148,36 @@ def test_mj_sim_buffers():
     with pytest.raises(AssertionError):
         sim.step()
 
+def test_mj_sim_pool_buffers():
+    model = load_model_from_xml(BASIC_MODEL_XML)
+
+    foo = 10
+
+    def udd_callback(sim):
+        return {"foo": foo}
+
+    sims = [MjSim(model, udd_callback=udd_callback) for _ in range(2)]
+    sim_pool = MjSimPool(sims, nsubsteps=2)
+
+    for i in range(len(sim_pool.sims)):
+        assert(sim_pool.sims[i].udd_state is not None)
+        assert(sim_pool.sims[i].udd_state["foo"] == 10)
+
+    foo = 11
+    sim_pool.step()
+    for i in range(len(sim_pool.sims)):
+        assert(sim_pool.sims[i].udd_state is not None)
+        assert(sim_pool.sims[i].udd_state["foo"] == 11)
+
+
+def test_mj_sim_pool_basics():
+    model = load_model_from_xml(BASIC_MODEL_XML)
+    sims = [MjSim(model) for _ in range(2)]
+    sim_pool = MjSimPool(sims, nsubsteps=2)
+
+    sim_pool.reset()
+    sim_pool.step()
+    sim_pool.forward()
 
 def test_data_attribute_getters():
     model = load_model_from_xml(BASIC_MODEL_XML)
