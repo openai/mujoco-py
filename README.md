@@ -78,6 +78,7 @@ A number of examples demonstrating some advanced features of `mujoco-py` can be 
 - [`markers_demo.py`](./examples/markers_demo.py): shows how to add visualization-only geoms to the viewer
 - [`serialize_model.py`](./examples/serialize_model.py): shows how to save and restore a model
 - [`setting_state.py`](./examples/setting_state.py):  shows how to reset the simulation to a given state
+- [`simpool.py`](./examples/simpool.py): shows how `MjSimPool` can be used to run a number of simulations in parallel
 - [`tosser.py`](./examples/tosser.py): shows a simple actuated object sorting robot application
 
 See the [full documentation](https://openai.github.io/mujoco-py/build/html/index.html) for advanced usage.
