@@ -158,6 +158,7 @@ def test_mj_sim_pool_buffers():
 
     sims = [MjSim(model, udd_callback=udd_callback) for _ in range(2)]
     sim_pool = MjSimPool(sims, nsubsteps=2)
+    sim_pool.step()
 
     for i in range(len(sim_pool.sims)):
         assert(sim_pool.sims[i].udd_state is not None)
