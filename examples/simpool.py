@@ -25,7 +25,6 @@ MODEL_XML = """
 
 model = load_model_from_xml(MODEL_XML)
 pool = MjSimPool([MjSim(model) for _ in range(20)])
-
 for i, sim in enumerate(pool.sims):
     sim.data.qpos[:] = 0.0
     sim.data.qvel[:] = 0.0

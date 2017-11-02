@@ -621,7 +621,6 @@ def test_viewercontext():
                         label="mark")
 
 
-
 @pytest.mark.requires_rendering
 def test_many_sims_rendering():
     model = load_model_from_xml(BASIC_MODEL_XML)
@@ -632,6 +631,7 @@ def test_many_sims_rendering():
         img, depth = sim.render(200, 200, depth=True)
         assert img.shape == (200, 200, 3)
         compare_imgs(img, 'test_rendering.freecam.png')
+
 
 def test_xml_from_path():
     model = load_model_from_path("mujoco_py/tests/test.xml")
