@@ -69,6 +69,36 @@ Add the path to the mujoco bin directory to your dynamic loader:
 
 This is particularly useful on Ubuntu 14.04, which does not have a GLFW package.
 
+### Locating the MuJoCo Pro binaries and MuJoCo Pro license key
+
+`mujoco-py` assumes your MuJoCo binaries and MuJoCo license key are located at
+`~/.mujoco/mjpro150` and `/.mujoco/mjkey.txt` respectively.
+
+If this is not the case for you installation, you may override this default by
+specifying environment variables. This is particularly useful in cloud, cluster,
+and Docker environments.
+
+    export MUJOCO_PY_MUJOCO_PATH=/path/to/your/.mujoco/or/equivalent
+
+`MUJOCO_PY_MUJOCO_PATH` specifies an alternative path to the directory that is
+usually `~/.mujoco`. If this environment variable is set and non-empty, it is
+used as the directory prefix for `mjpro150` and `mjkey.txt`,
+replacing `~/.mujoco`.
+
+    export MUJOCO_LICENSE_PATH=/path/to/your/mujoco/pro/license
+
+`MUJOCO_LICENSE_PATH` provides an alternative path to the MuJoCo Pro key. If set
+and non-empty, this environment variable overrides the path to the file
+containing the MuJoCo Pro license key, including any alternative path induced by
+`MUJOCO_PY_MUJOCO_PATH`.
+
+    export MUJOCO_PY_MJPRO_PATH=/path/to/your/mjpro150
+
+`MUJOCO_PY_MJPRO_PATH` provides and alternative path to the `mjpro150`
+directory. If set and non-empty, this environment variable overrides the path
+to the `mjpro150` directory, including any alternative path induced by
+`MUJOCO_PY_MUJOCO_PATH`.
+
 ## Usage Examples
 
 A number of examples demonstrating some advanced features of `mujoco-py` can be found in [`examples/`](/./examples/). These include:
