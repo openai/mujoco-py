@@ -410,8 +410,8 @@ def build_callback_fn(function_string, userdata_names=[]):
     name = '_fn_' + ''.join(choice(ascii_lowercase) for _ in range(15))
     source_string = '#include <mujoco.h>\n'
     # Add defines for each userdata to make setting them easier
-    for i, name in enumerate(userdata_names):
-        source_string += '#define {} d->userdata[{}]\n'.format(name, i)
+    for i, data_name in enumerate(userdata_names):
+        source_string += '#define {} d->userdata[{}]\n'.format(data_name, i)
     source_string += function_string
     source_string += '\nuintptr_t __fun = (uintptr_t) fun;'
     # Link against mujoco so we can call mujoco functions from within callback
