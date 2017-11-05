@@ -53,7 +53,7 @@ print(sim.data.qpos)
 
 See the [full documentation](https://openai.github.io/mujoco-py/build/html/index.html) for advanced usage.
 
-### Missing GLFW
+#### Troubleshooting: Missing GLFW
 
 A common error when installing is:
 
@@ -68,6 +68,20 @@ Add the path to the mujoco bin directory to your dynamic loader:
     LD_LIBRARY_PATH=$HOME/.mujoco/mjpro150/bin pip install mujoco-py
 
 This is particularly useful on Ubuntu 14.04, which does not have a GLFW package.
+
+#### Troubleshooting: "Invalid activation key" when using Conda environments or virtualenv
+When installing, an error commonly occurs if the user is using a virutalenv or conda environment:
+
+    ���[��� �[V: not found
+    sh: 2: Syntax error: "(" unexpected
+    ERROR: Invalid activation key
+Installation can still be completed by cloning the repo and installing from it directly:
+```
+git clone git@github.com:openai/mujoco-py.git
+python3 setup.py install
+python3
+import mujoco_py
+```
 
 ## Usage Examples
 
