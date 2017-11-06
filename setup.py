@@ -35,7 +35,7 @@ for p in packages:
 # XXX: temporary beta.
 setup(
     name='mujoco-py',
-    version=__version__ + "beta,  # noqa
+    version=__version__ + "beta",  # noqa
     author='OpenAI Robotics Team',
     author_email='robotics@openai.com',
     url='https://github.com/openai/mujoco-py',
