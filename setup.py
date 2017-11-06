@@ -32,9 +32,10 @@ packages = find_packages()
 for p in packages:
     assert p == 'mujoco_py' or p.startswith('mujoco_py.')
 
+# XXX: temporary beta.
 setup(
     name='mujoco-py',
-    version=__version__,  # noqa
+    version=__version__ + "beta,  # noqa
     author='OpenAI Robotics Team',
     author_email='robotics@openai.com',
     url='https://github.com/openai/mujoco-py',
