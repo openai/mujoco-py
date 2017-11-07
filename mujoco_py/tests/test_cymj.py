@@ -114,7 +114,7 @@ def test_mj_sim_buffers():
         return d
 
     sim = MjSim(model, nsubsteps=2, udd_callback=udd_callback)
-
+    sim.step_udd()
     assert(sim.udd_state is not None)
     assert(sim.udd_state["foo"] == foo)
     assert(sim.udd_state["foo_2"].shape[0] == 2)
@@ -158,6 +158,8 @@ def test_mj_sim_pool_buffers():
         return {"foo": foo}
 
     sims = [MjSim(model, udd_callback=udd_callback) for _ in range(2)]
+    for sim in sims:
+        sim.step_udd()
     sim_pool = MjSimPool(sims, nsubsteps=2)
 
     for i in range(len(sim_pool.sims)):
@@ -260,6 +262,7 @@ def test_sim_state():
         return d
 
     sim = MjSim(model, nsubsteps=2, udd_callback=udd_callback)
+    sim.step_udd()
 
     state = sim.get_state()
     assert np.array_equal(state.time, sim.data.time)
