@@ -246,9 +246,9 @@ class LinuxGPUExtensionBuilder(MujocoExtensionBuilder):
     def _build_impl(self):
         so_file_path = super()._build_impl()
         fix_shared_library(so_file_path, 'libOpenGL.so',
-                           join('/usr/lib/x86_64-linux-gnu/', 'libOpenGL.so.0'))
+                           join(get_nvidia_lib_dir(), 'libOpenGL.so.0'))
         fix_shared_library(so_file_path, 'libEGL.so',
-                           join('/usr/lib/x86_64-linux-gnu/', 'libEGL.so.1'))
+                           join(get_nvidia_lib_dir(), 'libEGL.so.1'))
         return so_file_path
 
 
