@@ -88,6 +88,30 @@ def load_dynamic_ext(name, path):
     return loader.load_module()
 
 
+def get_marker_file_path(obj):
+    return '%s.meta' % obj
+
+
+def should_compile(obj, src):
+    if not os.path.isfile(obj):
+        return True
+    marker_file_path = get_marker_file_path(obj)
+    if not os.path.isfile(marker_file_path):
+        return True
+    src_modification_time = '%f' % os.stat(src).st_mtime
+    with open(marker_file_path, 'r') as marker_file:
+        last_src_modification_time = marker_file.read()
+        if last_src_modification_time == src_modification_time:
+            return False
+    return True
+
+
+def save_marker(obj, src):
+    marker_file_path = get_marker_file_path(obj)
+    with open(marker_file_path, 'w') as marker_file:
+        marker_file.write('%f' % os.stat(src).st_mtime)
+
+
 def caching_compile(self, sources, output_dir=None, macros=None, include_dirs=None,
                     debug=0, extra_preargs=None, extra_postargs=None, depends=None):
     macros, objects, extra_postargs, pp_opts, build = self._setup_compile(
@@ -95,15 +119,15 @@ def caching_compile(self, sources, output_dir=None, macros=None, include_dirs=No
     cc_args = self._get_cc_args(pp_opts, debug, extra_preargs)
 
     for obj in objects:
-        if os.path.isfile(obj):
-            print('%s already exists, skipping.' % obj)
-        else:
-            print('Need to recompile: %s' % obj)
-            try:
-                src, ext = build[obj]
-            except KeyError:
-                continue
+        try:
+            src, ext = build[obj]
+        except KeyError:
+            continue
+        if should_compile(obj, src):
             self._compile(obj, src, ext, cc_args, extra_postargs, pp_opts)
+            save_marker(obj, src)
+        else:
+            print('%s up to date, skipping.' % obj)
     return objects
                 
 
