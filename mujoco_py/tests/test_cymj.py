@@ -114,7 +114,7 @@ def test_mj_sim_buffers():
         return d
 
     sim = MjSim(model, nsubsteps=2, udd_callback=udd_callback)
-
+    sim.step_udd()
     assert(sim.udd_state is not None)
     assert(sim.udd_state["foo"] == foo)
     assert(sim.udd_state["foo_2"].shape[0] == 2)

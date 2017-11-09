@@ -176,16 +176,6 @@ cdef class MjSim(object):
         elif not render_context.offscreen and self._render_context_window is None:
             self._render_context_window = render_context
 
-    @property
-    def udd_callback(self):
-        return self._udd_callback
-
-    @udd_callback.setter
-    def udd_callback(self, value):
-        self._udd_callback = value
-        self.udd_state = None
-        self.step_udd()
-
     cpdef substep_callback(self):
         if self.substep_callback_ptr:
             (<mjfGeneric>self.substep_callback_ptr)(self.model.ptr, self.data.ptr)
