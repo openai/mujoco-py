@@ -4,6 +4,7 @@ import os
 import shutil
 import subprocess
 import sys
+import types
 from distutils.core import Extension
 from distutils.dist import Distribution
 from distutils.sysconfig import customize_compiler
@@ -87,6 +88,55 @@ def load_dynamic_ext(name, path):
     return loader.load_module()
 
 
+def get_marker_file_path(obj):
+    return '%s.meta' % obj
+
+
+def should_compile(obj, src):
+    if not os.path.isfile(obj):
+        return True
+    marker_file_path = get_marker_file_path(obj)
+    if not os.path.isfile(marker_file_path):
+        return True
+    src_modification_time = '%f' % os.stat(src).st_mtime
+    with open(marker_file_path, 'r') as marker_file:
+        last_src_modification_time = marker_file.read()
+        if last_src_modification_time == src_modification_time:
+            return False
+    return True
+
+
+def save_marker(obj, src):
+    marker_file_path = get_marker_file_path(obj)
+    with open(marker_file_path, 'w') as marker_file:
+        marker_file.write('%f' % os.stat(src).st_mtime)
+
+
+def caching_compile(self, sources, output_dir=None, macros=None, include_dirs=None,
+                    debug=0, extra_preargs=None, extra_postargs=None, depends=None):
+    macros, objects, extra_postargs, pp_opts, build = self._setup_compile(
+        output_dir, macros, include_dirs, sources, depends, extra_postargs)
+    cc_args = self._get_cc_args(pp_opts, debug, extra_preargs)
+
+    for obj in objects:
+        try:
+            src, ext = build[obj]
+        except KeyError:
+            continue
+        if should_compile(obj, src):
+            self._compile(obj, src, ext, cc_args, extra_postargs, pp_opts)
+            save_marker(obj, src)
+        else:
+            print('%s up to date, skipping.' % obj)
+    return objects
+                
+
+def enable_compiler_caching(compiler):
+    ''' Patch 'compile' in UnixCCompiler in order to ignore existing artifacts. '''
+    if compiler.compiler_type == 'unix':
+        compiler.compile = types.MethodType(caching_compile, compiler) 
+
+
 class custom_build_ext(build_ext):
     """
     Custom build_ext to suppress the "-Wstrict-prototypes" warning.
@@ -98,6 +148,7 @@ class custom_build_ext(build_ext):
 
     def build_extensions(self):
         customize_compiler(self.compiler)
+        enable_compiler_caching(self.compiler)
 
         try:
             self.compiler.compiler_so.remove("-Wstrict-prototypes")
@@ -189,6 +240,9 @@ class MujocoExtensionBuilder():
         move(built_so_file_path, new_so_file_path)
         return new_so_file_path
 
+    def build_base(self):
+        return self.__class__.__name__
+
     def _build_impl(self):
         dist = Distribution({
             "script_name": None,
@@ -201,7 +255,7 @@ class MujocoExtensionBuilder():
         # following the convention of cython's pyxbuild and naming
         # base directory "_pyxbld"
         build.build_base = join(self.CYMJ_DIR_PATH, 'generated',
-                                '_pyxbld_%s' % self.__class__.__name__)
+                                '_pyxbld_%s' % self.build_base())
         dist.parse_command_line()
         obj_build_ext = dist.get_command_obj("build_ext")
         dist.run_commands()
@@ -222,7 +276,16 @@ class WindowsExtensionBuilder(MujocoExtensionBuilder):
         self.extension.sources.append(self.CYMJ_DIR_PATH + "/gl/dummyshim.c")
 
 
-class LinuxCPUExtensionBuilder(MujocoExtensionBuilder):
+class LinuxExtensionBuilder(MujocoExtensionBuilder):
+
+    def __init__(self, mjpro_path):
+        super().__init__(mjpro_path)
+
+    def build_base(self):
+        return LinuxExtensionBuilder.__name__
+
+
+class LinuxCPUExtensionBuilder(LinuxExtensionBuilder):
 
     def __init__(self, mjpro_path):
         super().__init__(mjpro_path)
@@ -233,7 +296,7 @@ class LinuxCPUExtensionBuilder(MujocoExtensionBuilder):
         self.extension.runtime_library_dirs = [join(mjpro_path, 'bin')]
 
 
-class LinuxGPUExtensionBuilder(MujocoExtensionBuilder):
+class LinuxGPUExtensionBuilder(LinuxExtensionBuilder):
 
     def __init__(self, mjpro_path):
         super().__init__(mjpro_path)
