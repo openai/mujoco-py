@@ -229,7 +229,7 @@ class LinuxCPUExtensionBuilder(MujocoExtensionBuilder):
 
         self.extension.sources.append(
             join(self.CYMJ_DIR_PATH, "gl", "osmesashim.c"))
-        self.extension.libraries.extend(['glew', 'GL', 'OSMesa'])
+        self.extension.libraries.extend(['OSMesa', 'glewosmesa'])
         self.extension.runtime_library_dirs = [join(mjpro_path, 'bin')]
 
 
@@ -240,8 +240,9 @@ class LinuxGPUExtensionBuilder(MujocoExtensionBuilder):
 
         self.extension.sources.append(self.CYMJ_DIR_PATH + "/gl/eglshim.c")
         self.extension.include_dirs.append(self.CYMJ_DIR_PATH + '/vendor/egl')
-        self.extension.libraries.extend(['glew', 'GL'])
+        self.extension.libraries.extend(['OpenGL', 'EGL', 'GL', 'glewegl'])
         self.extension.runtime_library_dirs = [join(mjpro_path, 'bin')]
+        self.extension.library_dirs += [get_nvidia_lib_dir()]
 
     def _build_impl(self):
         so_file_path = super()._build_impl()
