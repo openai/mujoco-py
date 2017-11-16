@@ -289,6 +289,8 @@ class MjViewer(MjViewerBasic):
             self.sim.data.solver_iter + 1))
         step = round(self.sim.data.time / self.sim.model.opt.timestep)
         self.add_overlay(const.GRID_BOTTOMRIGHT, "Step", str(step))
+        self.add_overlay(const.GRID_BOTTOMRIGHT, "timestep", str(self.sim.model.opt.timestep))
+        self.add_overlay(const.GRID_BOTTOMRIGHT, "n_substeps", str(self.sim.nsubsteps))
         self.add_overlay(const.GRID_TOPLEFT, "Toggle geomgroup visibility", "0-4")
 
     def key_callback(self, window, key, scancode, action, mods):
