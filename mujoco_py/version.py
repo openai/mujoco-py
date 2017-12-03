@@ -1,6 +1,6 @@
 __all__ = ['__version__', 'get_version']
 
-version_info = (1, 50, 1, 33)
+version_info = (1, 50, 1, 34)
 # format:
 # ('mujoco_major', 'mujoco_minor', 'mujoco_py_major', 'mujoco_py_minor')
 

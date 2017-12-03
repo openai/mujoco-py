@@ -55,7 +55,7 @@ cdef class MjSim(object):
     # Number of substeps when calling .step
     cdef public int nsubsteps
     # User defined state.
-    cdef readonly dict udd_state
+    cdef public dict udd_state
     # User defined dynamics callback
     cdef readonly object _udd_callback
     # Allows to store extra information in MjSim.
