@@ -371,6 +371,16 @@ def get_funcs(fname):
                         "np.ndarray[np.float64_t, mode=\"c\", ndim=1] " + var_name)
                     c_args_string.append("&%s[0]" % var_name)
                     continue
+                if data_type == "mjtByte":
+                    py_args_string.append("np.uint8_t " + var_name)
+                    c_args_string.append(var_name)
+                    continue
+                if data_type == "mjtByte*":
+                    py_args_string.append(
+                        "np.ndarray[np.uint8_t, mode=\"c\", ndim=1] " + var_name
+                    )
+                    c_args_string.append("&%s[0]" % var_name)
+                    continue
                 if data_type[:2] == "mj" and data_type[-1] == "*":
                     py_args_string.append(
                         "PyMj" + data_type[2:-1] + " " + var_name)
@@ -384,6 +394,15 @@ def get_funcs(fname):
                 if data_type in "int":
                     py_args_string.append("int " + var_name)
                     c_args_string.append(var_name)
+                    continue
+                if data_type in "int*":
+                    if func_name not in ["mj_ray"]:
+                        skip = True
+                        break
+                    else:
+                        py_args_string.append(
+                            "np.ndarray[int, mode=\"c\", ndim=1] " + var_name)
+                        c_args_string.append("&%s[0]" % var_name)
                     continue
                 # XXX
                 skip = True
