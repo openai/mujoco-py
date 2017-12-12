@@ -396,6 +396,7 @@ def get_funcs(fname):
                     c_args_string.append(var_name)
                     continue
                 if data_type in "int*":
+                    # Skip function with unknown element size
                     if func_name not in ["mj_ray"]:
                         skip = True
                         break
