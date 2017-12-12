@@ -399,10 +399,9 @@ def get_funcs(fname):
                     if func_name not in ["mj_ray"]:
                         skip = True
                         break
-                    else:
-                        py_args_string.append(
-                            "np.ndarray[int, mode=\"c\", ndim=1] " + var_name)
-                        c_args_string.append("&%s[0]" % var_name)
+                    py_args_string.append(
+                        "np.ndarray[int, mode=\"c\", ndim=1] " + var_name)
+                    c_args_string.append("&%s[0]" % var_name)
                     continue
                 # XXX
                 skip = True
