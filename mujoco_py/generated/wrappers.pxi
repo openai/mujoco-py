@@ -4126,6 +4126,9 @@ def _mj_setTotalmass(PyMjModel m, float newmass):
 def _mj_version():
     return mj_version()
 
+def _mj_ray(PyMjModel m, PyMjData d, np.ndarray[np.float64_t, mode="c", ndim=1] pnt, np.ndarray[np.float64_t, mode="c", ndim=1] vec, np.ndarray[np.uint8_t, mode="c", ndim=1] geomgroup, np.uint8_t flg_static, int bodyexclude, np.ndarray[int, mode="c", ndim=1] geomid):
+    return mj_ray(m.ptr, d.ptr, &pnt[0], &vec[0], &geomgroup[0], flg_static, bodyexclude, &geomid[0])
+
 def _mj_rayHfield(PyMjModel m, PyMjData d, int geomid, np.ndarray[np.float64_t, mode="c", ndim=1] pnt, np.ndarray[np.float64_t, mode="c", ndim=1] vec):
     return mj_rayHfield(m.ptr, d.ptr, geomid, &pnt[0], &vec[0])
 
