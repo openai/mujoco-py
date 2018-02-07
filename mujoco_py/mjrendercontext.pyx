@@ -93,9 +93,14 @@ cdef class MjRenderContext(object):
         else:
             if device_id < 0:
                 if "GPUS" in os.environ:
-                    device_id = int(os.environ["GPUS"].split(',')[0])
+                    device_id = os.environ["GPUS"]
                 else:
-                    device_id = int(os.getenv('CUDA_VISIBLE_DEVICES', '0').split(',')[0])
+                    device_id = os.getenv('CUDA_VISIBLE_DEVICES', '')
+                if len(device_id) > 0:
+                    device_id = int(device_id.split(',')[0])
+                else:
+                    # Sometimes env variable is an empty string.
+                    device_id = 0
             self.opengl_context = OffscreenOpenGLContext(device_id)
 
     def _init_camera(self, sim):
