@@ -41,7 +41,6 @@ setup(
     packages=packages,
     include_package_data=True,
     package_dir={'mujoco_py': 'mujoco_py'},
-    package_data={'mujoco_py': ['generated/*.so']},
     install_requires=read_requirements_file('requirements.txt'),
     tests_require=read_requirements_file('requirements.dev.txt'),
     # Add requirements for mujoco_py/builder.py here since there's no
