@@ -26,7 +26,7 @@ def get_nvidia_version():
     cmd = 'nvidia-smi --query-gpu=driver_version --format=csv,noheader --id=0'
     try:
         return subprocess.check_output(cmd.split(), universal_newlines=True)
-    except FileNotFoundError:
+    except (FileNotFoundError, subprocess.CalledProcessError):
         return None
 
 
