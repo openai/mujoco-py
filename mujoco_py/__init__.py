@@ -9,7 +9,6 @@ load_model_from_xml = cymj.load_model_from_xml
 load_model_from_mjb = cymj.load_model_from_mjb
 MjSim = cymj.MjSim
 MjSimState = cymj.MjSimState
-MjSimPool = cymj.MjSimPool
 MjRenderContext = cymj.MjRenderContext
 MjRenderContextOffscreen = cymj.MjRenderContextOffscreen
 MjRenderContextWindow = cymj.MjRenderContextWindow
@@ -17,7 +16,7 @@ MjBatchRenderer = cymj.MjBatchRenderer
 
 
 # Public API:
-__all__ = ['MjSim', 'MjSimState', 'MjSimPool',
+__all__ = ['MjSim', 'MjSimState',
            'MjRenderContextOffscreen', 'MjRenderContextWindow',
            'MjRenderContext', 'MjViewer', 'MjViewerBasic',
            'MujocoException', 'MjRenderPool', 'MjBatchRenderer',
