@@ -98,6 +98,10 @@ make test_gpu
 
 This is somewhat dependent on internal OpenAI infrastructure at the moment, but it should run if you change the `Makefile` parameters for your own setup.
 
+## Changelog
+
+- 03/08/2018: We removed MjSimPool, because most of benefit one can get with multiple processes having single simulation.
+
 ## Credits
 
 `mujoco-py` is maintained by the OpenAI Robotics team. Contributors include:
