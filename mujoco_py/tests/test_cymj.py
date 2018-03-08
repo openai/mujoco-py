@@ -4,7 +4,7 @@ from numbers import Number
 from io import BytesIO, StringIO
 import numpy as np
 from numpy.testing import assert_array_equal, assert_array_almost_equal
-from mujoco_py import (MjSim, MjSimPool, load_model_from_xml,
+from mujoco_py import (MjSim, load_model_from_xml,
                        load_model_from_path, MjSimState,
                        ignore_mujoco_warnings,
                        load_model_from_mjb)
@@ -146,39 +146,6 @@ def test_mj_sim_buffers():
          "foo_2": np.array([foo, foo, foo])}
     with pytest.raises(AssertionError):
         sim.step()
-
-
-def test_mj_sim_pool_buffers():
-    model = load_model_from_xml(BASIC_MODEL_XML)
-
-    foo = 10
-
-    def udd_callback(sim):
-        return {"foo": foo}
-
-    sims = [MjSim(model, udd_callback=udd_callback) for _ in range(2)]
-    sim_pool = MjSimPool(sims, nsubsteps=2)
-
-    for i in range(len(sim_pool.sims)):
-        assert(sim_pool.sims[i].udd_state is not None)
-        assert(sim_pool.sims[i].udd_state["foo"] == 10)
-
-    foo = 11
-    sim_pool.step()
-    for i in range(len(sim_pool.sims)):
-        assert(sim_pool.sims[i].udd_state is not None)
-        assert(sim_pool.sims[i].udd_state["foo"] == 11)
-
-
-def test_mj_sim_pool_basics():
-    model = load_model_from_xml(BASIC_MODEL_XML)
-    sims = [MjSim(model) for _ in range(2)]
-    sim_pool = MjSimPool(sims, nsubsteps=2)
-
-    sim_pool.reset()
-    sim_pool.step()
-    sim_pool.forward()
-
 
 def test_data_attribute_getters():
     model = load_model_from_xml(BASIC_MODEL_XML)
@@ -619,18 +586,6 @@ def test_viewercontext():
                         mat=np.eye(3).flatten(),
                         rgba=np.ones(4),
                         label="mark")
-
-
-@pytest.mark.requires_rendering
-def test_many_sims_rendering():
-    model = load_model_from_xml(BASIC_MODEL_XML)
-    sims = [MjSim(model) for _ in range(5)]
-    pool = MjSimPool(sims)
-    pool.forward()
-    for sim in sims:
-        img, depth = sim.render(200, 200, depth=True)
-        assert img.shape == (200, 200, 3)
-        compare_imgs(img, 'test_rendering.freecam.png')
 
 
 def test_xml_from_path():

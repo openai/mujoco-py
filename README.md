@@ -78,7 +78,6 @@ A number of examples demonstrating some advanced features of `mujoco-py` can be 
 - [`markers_demo.py`](./examples/markers_demo.py): shows how to add visualization-only geoms to the viewer
 - [`serialize_model.py`](./examples/serialize_model.py): shows how to save and restore a model
 - [`setting_state.py`](./examples/setting_state.py):  shows how to reset the simulation to a given state
-- [`simpool.py`](./examples/simpool.py): shows how `MjSimPool` can be used to run a number of simulations in parallel
 - [`tosser.py`](./examples/tosser.py): shows a simple actuated object sorting robot application
 
 See the [full documentation](https://openai.github.io/mujoco-py/build/html/index.html) for advanced usage.
@@ -98,6 +97,10 @@ make test_gpu
 ```
 
 This is somewhat dependent on internal OpenAI infrastructure at the moment, but it should run if you change the `Makefile` parameters for your own setup.
+
+## Changelog
+
+- 03/08/2018: We removed MjSimPool, because most of benefit one can get with multiple processes having single simulation.
 
 ## Credits
 

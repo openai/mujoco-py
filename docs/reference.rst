@@ -299,12 +299,6 @@ PyMjData: Time-dependent data
 
     </dd></dl>
 
-MjSimPool: Batched simulation
------------------------------
-
-.. autoclass:: mujoco_py.MjSimPool
-    :members: reset, forward, step, sims, create_from_sim
-
 MjViewer: 3D rendering
 -----------------------------
 
