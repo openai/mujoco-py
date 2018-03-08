@@ -20,7 +20,6 @@ from mujoco_py.generated import const
 include "generated/wrappers.pxi"
 include "opengl_context.pyx"
 include "mjsim.pyx"
-include "mjsimpool.pyx"
 include "mjsimstate.pyx"
 include "mjrendercontext.pyx"
 include "mjbatchrenderer.pyx"
