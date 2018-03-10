@@ -17,7 +17,6 @@ class Build(DistutilsBuild):
             "mujoco_py.builder", builder_path)
         builder = importlib.util.module_from_spec(spec)
         spec.loader.exec_module(builder)
-        builder.activate()
         DistutilsBuild.run(self)
 
 
