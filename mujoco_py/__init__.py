@@ -13,13 +13,14 @@ MjRenderContext = cymj.MjRenderContext
 MjRenderContextOffscreen = cymj.MjRenderContextOffscreen
 MjRenderContextWindow = cymj.MjRenderContextWindow
 MjBatchRenderer = cymj.MjBatchRenderer
+GlfwContext = cymj.GlfwContext
 
 
 # Public API:
 __all__ = ['MjSim', 'MjSimState',
            'MjRenderContextOffscreen', 'MjRenderContextWindow',
            'MjRenderContext', 'MjViewer', 'MjViewerBasic',
-           'MujocoException', 'MjRenderPool', 'MjBatchRenderer',
+           'MujocoException', 'MjRenderPool', 'MjBatchRenderer', 'GlfwContext',
            'load_model_from_path', 'load_model_from_xml',
            'load_model_from_mjb',
            'ignore_mujoco_warnings', 'const', "functions",
