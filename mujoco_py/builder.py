@@ -82,11 +82,16 @@ The easy solution is to `import mujoco_py` _before_ `import glfw`.
         cext_so_path = builder.build()
 
     lib_path = os.path.join(mjpro_path, "bin")
-    for var in ["DYLD_LIBRARY_PATH", "LD_LIBRARY_PATH"]:
-        if var not in os.environ or lib_path not in os.environ[var].split(":"):
-            raise Exception("Please add path to mujoco library to your .bashrc:\n"
-                            "export DYLD_LIBRARY_PATH=$DYLD_LIBRARY_PATH:%s\n"
-                            "export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:%s" % (lib_path, lib_path))
+    if sys.platform in ["darwin", "linux"]:
+        for var in ["DYLD_LIBRARY_PATH", "LD_LIBRARY_PATH"]:
+            if var not in os.environ or lib_path not in os.environ[var].split(":"):
+                raise Exception("Please add path to mujoco library to your .bashrc:\n"
+                                "export DYLD_LIBRARY_PATH=$DYLD_LIBRARY_PATH:%s\n"
+                                "export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:%s" % (lib_path, lib_path))
+    else:
+        if "PATH" not in os.environ or lib_path not in os.environ["PATH"].split(";"):
+            raise Exception("Please add path to mujoco library to your PATH:\n"
+                            "set PATH=%s;%%PATH%%" % lib_path)
 
     return load_dynamic_ext('cymj', cext_so_path)
 
