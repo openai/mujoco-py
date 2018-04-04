@@ -55,4 +55,3 @@ def discover_mujoco():
     key_path = join(expanduser('~'), '.mujoco', 'mjkey.txt')
     mjpro_path = join(expanduser('~'), '.mujoco', 'mjpro150')
     return (mjpro_path, key_path)
-
