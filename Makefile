@@ -2,7 +2,7 @@ SHELL := /bin/bash
 .PHONY: all clean build test mount_shell shell upload check-env
 
 MUJOCO_LICENSE_PATH ?= ~/.mujoco/mjkey.txt
-VERSION := `python -c "import mujoco_py;print(mujoco_py.get_version())"`
+VERSION := `cd mujoco_py; python -c "from version import get_version;print(get_version())"; cd ..`
 DOCKER_NAME := quay.io/openai/mujoco_py:$(USER)_$(VERSION)
 DOCKER := $(shell type -p nvidia-docker || echo docker)
 UUID := $(shell uuidgen)

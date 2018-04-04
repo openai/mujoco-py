@@ -82,7 +82,7 @@ The easy solution is to `import mujoco_py` _before_ `import glfw`.
         cext_so_path = builder.build()
 
     lib_path = os.path.join(mjpro_path, "bin")
-    if "LD_LIBRARY_PATH" not in os.environ or lib_path not in os.environ["DYLD_LIBRARY_PATH"].split(":"):
+    if "DYLD_LIBRARY_PATH" not in os.environ or lib_path not in os.environ["DYLD_LIBRARY_PATH"].split(":"):
         raise Exception("Please add path to mujoco library to DYLD_LIBRARY_PATH. You can add it to "
                         "your .bashrc:\nexport DYLD_LIBRARY_PATH=$DYLD_LIBRARY_PATH:%s" % lib_path)
 
@@ -133,7 +133,7 @@ def fix_shared_library(so_file, name, library_path):
 def manually_link_libraries(raw_cext_dll_path):
     ''' Used to fix mujoco library linking on Mac '''
     root, ext = os.path.splitext(raw_cext_dll_path)
-    final_cext_dll_path = root + '_final' + ext
+
 
     # If someone else already built the final DLL, don't bother
     # recreating it here, even though this should still be idempotent.
