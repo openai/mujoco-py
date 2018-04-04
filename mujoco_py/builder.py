@@ -18,6 +18,7 @@ import numpy as np
 from cffi import FFI
 from Cython.Build import cythonize
 from Cython.Distutils.old_build_ext import old_build_ext as build_ext
+from mujoco_py.version import get_version
 
 from mujoco_py.utils import discover_mujoco
 
@@ -79,6 +80,12 @@ The easy solution is to `import mujoco_py` _before_ `import glfw`.
     cext_so_path = builder.get_so_file_path()
     if not exists(cext_so_path):
         cext_so_path = builder.build()
+
+    lib_path = os.path.join(mjpro_path, "bin")
+    if "LD_LIBRARY_PATH" not in os.environ or lib_path not in os.environ["DYLD_LIBRARY_PATH"].split(":"):
+        raise Exception("Please add path to mujoco library to DYLD_LIBRARY_PATH. You can add it to "
+                        "your .bashrc:\nexport DYLD_LIBRARY_PATH=$DYLD_LIBRARY_PATH:%s" % lib_path)
+
     return load_dynamic_ext('cymj', cext_so_path)
 
 
@@ -86,55 +93,6 @@ def load_dynamic_ext(name, path):
     ''' Load compiled shared object and return as python module. '''
     loader = ExtensionFileLoader(name, path)
     return loader.load_module()
-
-
-def get_marker_file_path(obj):
-    return '%s.meta' % obj
-
-
-def should_compile(obj, src):
-    if not os.path.isfile(obj):
-        return True
-    marker_file_path = get_marker_file_path(obj)
-    if not os.path.isfile(marker_file_path):
-        return True
-    src_modification_time = '%f' % os.stat(src).st_mtime
-    with open(marker_file_path, 'r') as marker_file:
-        last_src_modification_time = marker_file.read()
-        if last_src_modification_time == src_modification_time:
-            return False
-    return True
-
-
-def save_marker(obj, src):
-    marker_file_path = get_marker_file_path(obj)
-    with open(marker_file_path, 'w') as marker_file:
-        marker_file.write('%f' % os.stat(src).st_mtime)
-
-
-def caching_compile(self, sources, output_dir=None, macros=None, include_dirs=None,
-                    debug=0, extra_preargs=None, extra_postargs=None, depends=None):
-    macros, objects, extra_postargs, pp_opts, build = self._setup_compile(
-        output_dir, macros, include_dirs, sources, depends, extra_postargs)
-    cc_args = self._get_cc_args(pp_opts, debug, extra_preargs)
-
-    for obj in objects:
-        try:
-            src, ext = build[obj]
-        except KeyError:
-            continue
-        if should_compile(obj, src):
-            self._compile(obj, src, ext, cc_args, extra_postargs, pp_opts)
-            save_marker(obj, src)
-        else:
-            print('%s up to date, skipping.' % obj)
-    return objects
-                
-
-def enable_compiler_caching(compiler):
-    ''' Patch 'compile' in UnixCCompiler in order to ignore existing artifacts. '''
-    if compiler.compiler_type == 'unix':
-        compiler.compile = types.MethodType(caching_compile, compiler) 
 
 
 class custom_build_ext(build_ext):
@@ -148,7 +106,6 @@ class custom_build_ext(build_ext):
 
     def build_extensions(self):
         customize_compiler(self.compiler)
-        enable_compiler_caching(self.compiler)
 
         try:
             self.compiler.compiler_so.remove("-Wstrict-prototypes")
@@ -173,7 +130,7 @@ def fix_shared_library(so_file, name, library_path):
          so_file])
 
 
-def manually_link_libraries(mjpro_path, raw_cext_dll_path):
+def manually_link_libraries(raw_cext_dll_path):
     ''' Used to fix mujoco library linking on Mac '''
     root, ext = os.path.splitext(raw_cext_dll_path)
     final_cext_dll_path = root + '_final' + ext
@@ -187,24 +144,14 @@ def manually_link_libraries(mjpro_path, raw_cext_dll_path):
     tmp_final_cext_dll_path = final_cext_dll_path + '~'
     shutil.copyfile(raw_cext_dll_path, tmp_final_cext_dll_path)
 
-    mj_bin_path = join(mjpro_path, 'bin')
-
     # Fix the rpath of the generated library -- i lost the Stackoverflow
     # reference here
     from_mujoco_path = '@executable_path/libmujoco150.dylib'
-    to_mujoco_path = '%s/libmujoco150.dylib' % mj_bin_path
+    to_mujoco_path = 'libmujoco150.dylib'
     subprocess.check_call(['install_name_tool',
                            '-change',
                            from_mujoco_path,
                            to_mujoco_path,
-                           tmp_final_cext_dll_path])
-
-    from_glfw_path = 'libglfw.3.dylib'
-    to_glfw_path = os.path.join(mj_bin_path, 'libglfw.3.dylib')
-    subprocess.check_call(['install_name_tool',
-                           '-change',
-                           from_glfw_path,
-                           to_glfw_path,
                            tmp_final_cext_dll_path])
 
     os.rename(tmp_final_cext_dll_path, final_cext_dll_path)
@@ -264,8 +211,9 @@ class MujocoExtensionBuilder():
 
     def get_so_file_path(self):
         dir_path = abspath(dirname(__file__))
-        return join(dir_path, "generated", "cymj_%s.so" % (
-            self.__class__.__name__.lower()))
+
+        return join(dir_path, "generated", "cymj_%s_%s.so" % (
+            get_version(), self.__class__.__name__.lower()))
 
 
 class WindowsExtensionBuilder(MujocoExtensionBuilder):
@@ -342,7 +290,7 @@ class MacExtensionBuilder(MujocoExtensionBuilder):
 
         so_file_path = super()._build_impl()
         del os.environ['CC']
-        return manually_link_libraries(self.mjpro_path, so_file_path)
+        return manually_link_libraries(so_file_path)
 
 
 class MujocoException(Exception):
@@ -490,7 +438,7 @@ def build_callback_fn(function_string, userdata_names=[]):
         raise e
     # On Mac the MuJoCo library is linked strangely, so we have to fix it here
     if sys.platform == 'darwin':
-        fixed_library_path = manually_link_libraries(mjpro_path, library_path)
+        fixed_library_path = manually_link_libraries(library_path)
         move(fixed_library_path, library_path)  # Overwrite with fixed library
     module = load_dynamic_ext(name, library_path)
     # Now that the module is loaded into memory, we can actually delete it
