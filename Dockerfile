@@ -1,6 +1,9 @@
 # We need the CUDA base dockerfile to enable GPU rendering
 # on hosts with GPUs.
-FROM nvidia/cuda:8.0-devel-ubuntu16.04
+# The image below is a pinned version of nvidia/cuda:9.1-cudnn7-devel-ubuntu16.04 (from Jan 2018)
+# If updating the base image, be sure to test training on vision since it has broken in the past.
+# For example, our custom Tensorflow is compiled to a specific CUDNN minor version.
+FROM nvidia/cuda@sha256:4df157f2afde1cb6077a191104ab134ed4b2fd62927f27b69d788e8e79a45fa1
 
 RUN apt-get update -q \
     && DEBIAN_FRONTEND=noninteractive apt-get install -y \
