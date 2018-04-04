@@ -238,7 +238,8 @@ class LinuxExtensionBuilder(MujocoExtensionBuilder):
     def _build_impl(self):
         so_file_path = super()._build_impl()
         # Removes absolute paths to libraries. Allows for dynamic loading.
-        subprocess.check_call(['patchelf', '--remove-rpath', so_file_path])
+        fix_shared_library(so_file_path, 'libmujoco150.so', 'libmujoco150.so')
+        fix_shared_library(so_file_path, 'libglewosmesa.so', 'libglewosmesa.so')
         return so_file_path
 
 class LinuxCPUExtensionBuilder(LinuxExtensionBuilder):
