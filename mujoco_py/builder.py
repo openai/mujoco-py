@@ -240,6 +240,7 @@ class LinuxExtensionBuilder(MujocoExtensionBuilder):
         # Removes absolute paths to libraries. Allows for dynamic loading.
         fix_shared_library(so_file_path, 'libmujoco150.so', 'libmujoco150.so')
         fix_shared_library(so_file_path, 'libglewosmesa.so', 'libglewosmesa.so')
+        fix_shared_library(so_file_path, 'libglewegl.so', 'libglewegl.so')
         return so_file_path
 
 class LinuxCPUExtensionBuilder(LinuxExtensionBuilder):
