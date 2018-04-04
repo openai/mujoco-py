@@ -82,9 +82,11 @@ The easy solution is to `import mujoco_py` _before_ `import glfw`.
         cext_so_path = builder.build()
 
     lib_path = os.path.join(mjpro_path, "bin")
-    if "DYLD_LIBRARY_PATH" not in os.environ or lib_path not in os.environ["DYLD_LIBRARY_PATH"].split(":"):
-        raise Exception("Please add path to mujoco library to DYLD_LIBRARY_PATH. You can add it to "
-                        "your .bashrc:\nexport DYLD_LIBRARY_PATH=$DYLD_LIBRARY_PATH:%s" % lib_path)
+    for var in ["DYLD_LIBRARY_PATH", "LD_LIBRARY_PATH"]:
+        if var not in os.environ or lib_path not in os.environ[var].split(":"):
+            raise Exception("Please add path to mujoco library to your .bashrc:\n"
+                            "export DYLD_LIBRARY_PATH=$DYLD_LIBRARY_PATH:%s\n"
+                            "export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:%s" % (lib_path, lib_path))
 
     return load_dynamic_ext('cymj', cext_so_path)
 
@@ -116,6 +118,7 @@ class custom_build_ext(build_ext):
 
 def fix_shared_library(so_file, name, library_path):
     ''' Used to fixup shared libraries on Linux '''
+    subprocess.check_call(['patchelf', '--remove-rpath', so_file])
     ldd_output = subprocess.check_output(
         ['ldd', so_file]).decode('utf-8')
 
@@ -133,7 +136,7 @@ def fix_shared_library(so_file, name, library_path):
 def manually_link_libraries(raw_cext_dll_path):
     ''' Used to fix mujoco library linking on Mac '''
     root, ext = os.path.splitext(raw_cext_dll_path)
-
+    final_cext_dll_path = root + '_final' + ext
 
     # If someone else already built the final DLL, don't bother
     # recreating it here, even though this should still be idempotent.
@@ -202,7 +205,7 @@ class MujocoExtensionBuilder():
         # following the convention of cython's pyxbuild and naming
         # base directory "_pyxbld"
         build.build_base = join(self.CYMJ_DIR_PATH, 'generated',
-                                '_pyxbld_%s' % self.build_base())
+                                '_pyxbld_%s_%s' % (get_version(), self.build_base()))
         dist.parse_command_line()
         obj_build_ext = dist.get_command_obj("build_ext")
         dist.run_commands()
@@ -232,6 +235,11 @@ class LinuxExtensionBuilder(MujocoExtensionBuilder):
     def build_base(self):
         return LinuxExtensionBuilder.__name__
 
+    def _build_impl(self):
+        so_file_path = super()._build_impl()
+        # Removes absolute paths to libraries. Allows for dynamic loading.
+        subprocess.check_call(['patchelf', '--remove-rpath', so_file_path])
+        return so_file_path
 
 class LinuxCPUExtensionBuilder(LinuxExtensionBuilder):
 

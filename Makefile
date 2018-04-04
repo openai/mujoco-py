@@ -70,13 +70,13 @@ upload: ./mujoco_py/generated/cymj_*_macextensionbuilder.so ./mujoco_py/generate
 
 generate_gpu_so:
 	rm -f ./mujoco_py/generated/cymj_*_linuxgpuextensionbuilder.so
-	nvidia-docker run -it --name $(UUID) $(DOCKER_NAME) bash -c "python -c 'import mujoco_py'"
-	nvidia-docker cp $(UUID):/mujoco_py/mujoco_py/generated/cymj_linuxgpuextensionbuilder.so mujoco_py/generated/cymj_$(VERSION)_linuxgpuextensionbuilder.so
+	nvidia-docker run -it --name $(UUID) $(DOCKER_NAME) bash -c "make clean;python -c 'import mujoco_py'"
+	nvidia-docker cp $(UUID):/mujoco_py/mujoco_py/generated/cymj_$(VERSION)_linuxgpuextensionbuilder.so mujoco_py/generated/
 
 generate_cpu_so:
 	rm -f ./mujoco_py/generated/cymj_*_linuxcpuextensionbuilder.so
-	docker run -it --name $(UUID) $(DOCKER_NAME) bash -c "python -c 'import mujoco_py'"
-	docker cp $(UUID):/mujoco_py/mujoco_py/generated/cymj_linuxcpuextensionbuilder.so mujoco_py/generated/cymj_$(VERSION)_linuxcpuextensionbuilder.so
+	docker run -it --name $(UUID) $(DOCKER_NAME) bash -c "make clean;python -c 'import mujoco_py'"
+	docker cp $(UUID):/mujoco_py/mujoco_py/generated/cymj_$(VERSION)_linuxcpuextensionbuilder.so mujoco_py/generated/
 
 generate_mac_so:
 	python -c "import mujoco_py"
