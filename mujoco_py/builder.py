@@ -119,18 +119,11 @@ class custom_build_ext(build_ext):
 def fix_shared_library(so_file, name, library_path):
     ''' Used to fixup shared libraries on Linux '''
     subprocess.check_call(['patchelf', '--remove-rpath', so_file])
-    ldd_output = subprocess.check_output(
-        ['ldd', so_file]).decode('utf-8')
+    ldd_output = subprocess.check_output(['ldd', so_file]).decode('utf-8')
 
     if name in ldd_output:
-        subprocess.check_call(['patchelf',
-                               '--remove-needed',
-                               name,
-                               so_file])
-    subprocess.check_call(
-        ['patchelf', '--add-needed',
-         library_path,
-         so_file])
+        subprocess.check_call(['patchelf', '--remove-needed', name, so_file])
+    subprocess.check_call(['patchelf', '--add-needed', library_path, so_file])
 
 
 def manually_link_libraries(raw_cext_dll_path):
@@ -227,23 +220,7 @@ class WindowsExtensionBuilder(MujocoExtensionBuilder):
         self.extension.sources.append(self.CYMJ_DIR_PATH + "/gl/dummyshim.c")
 
 
-class LinuxExtensionBuilder(MujocoExtensionBuilder):
-
-    def __init__(self, mjpro_path):
-        super().__init__(mjpro_path)
-
-    def build_base(self):
-        return LinuxExtensionBuilder.__name__
-
-    def _build_impl(self):
-        so_file_path = super()._build_impl()
-        # Removes absolute paths to libraries. Allows for dynamic loading.
-        fix_shared_library(so_file_path, 'libmujoco150.so', 'libmujoco150.so')
-        fix_shared_library(so_file_path, 'libglewosmesa.so', 'libglewosmesa.so')
-        fix_shared_library(so_file_path, 'libglewegl.so', 'libglewegl.so')
-        return so_file_path
-
-class LinuxCPUExtensionBuilder(LinuxExtensionBuilder):
+class LinuxCPUExtensionBuilder(MujocoExtensionBuilder):
 
     def __init__(self, mjpro_path):
         super().__init__(mjpro_path)
@@ -254,7 +231,15 @@ class LinuxCPUExtensionBuilder(LinuxExtensionBuilder):
         self.extension.runtime_library_dirs = [join(mjpro_path, 'bin')]
 
 
-class LinuxGPUExtensionBuilder(LinuxExtensionBuilder):
+    def _build_impl(self):
+        so_file_path = super()._build_impl()
+        # Removes absolute paths to libraries. Allows for dynamic loading.
+        fix_shared_library(so_file_path, 'libmujoco150.so', 'libmujoco150.so')
+        fix_shared_library(so_file_path, 'libglewosmesa.so', 'libglewosmesa.so')
+        return so_file_path
+
+
+class LinuxGPUExtensionBuilder(MujocoExtensionBuilder):
 
     def __init__(self, mjpro_path):
         super().__init__(mjpro_path)
@@ -270,6 +255,8 @@ class LinuxGPUExtensionBuilder(LinuxExtensionBuilder):
                            join(get_nvidia_lib_dir(), 'libOpenGL.so.0'))
         fix_shared_library(so_file_path, 'libEGL.so',
                            join(get_nvidia_lib_dir(), 'libEGL.so.1'))
+        fix_shared_library(so_file_path, 'libmujoco150.so', 'libmujoco150.so')
+        fix_shared_library(so_file_path, 'libglewegl.so', 'libglewegl.so')
         return so_file_path
 
 
