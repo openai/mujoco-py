@@ -34,7 +34,6 @@ RUN mkdir -p /root/.mujoco \
     && unzip mujoco.zip -d /root/.mujoco \
     && rm mujoco.zip
 COPY ./mjkey.txt /root/.mujoco/
-ENV DYLD_LIBRARY_PATH /root/.mujoco/mjpro150/bin:$DYLD_LIBRARY_PATH
 ENV LD_LIBRARY_PATH /root/.mujoco/mjpro150/bin:$LD_LIBRARY_PATH
 
 COPY vendor/Xdummy /usr/local/bin/Xdummy
