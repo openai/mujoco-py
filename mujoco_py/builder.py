@@ -66,21 +66,12 @@ The easy solution is to `import mujoco_py` _before_ `import glfw`.
 
     lib_path = os.path.join(mjpro_path, "bin")
     if sys.platform == 'darwin':
-        var = "DYLD_LIBRARY_PATH"
-        if var not in os.environ or lib_path not in os.environ[var].split(":"):
-            raise Exception("Please add mujoco library to your .bashrc:\n"
-                            "export %s=$%s:%s" % (var, var, lib_path))
+        _ensure_set_env_var("DYLD_LIBRARY_PATH", lib_path)
         Builder = MacExtensionBuilder
     elif sys.platform == 'linux':
-        var = "LD_LIBRARY_PATH"
-        if var not in os.environ or lib_path not in os.environ[var].split(":"):
-            raise Exception("Please add mujoco library to your .bashrc:\n"
-                            "export %s=$%s:%s" % (var, var, lib_path))
+        _ensure_set_env_var("LD_LIBRARY_PATH", lib_path)
         if os.getenv('MUJOCO_PY_FORCE_CPU') is None and get_nvidia_lib_dir() is not None:
-            nvidia_lib_path = get_nvidia_lib_dir()
-            if nvidia_lib_path not in os.environ[var].split(":"):
-                raise Exception("Please add path to nvidia libraries to your .bashrc:\n"
-                                "export %s=$%s:%s" % (var, var, nvidia_lib_path))
+            _ensure_set_env_var("LD_LIBRARY_PATH", get_nvidia_lib_dir())
             Builder = LinuxGPUExtensionBuilder
         else:
             Builder = LinuxCPUExtensionBuilder
@@ -100,6 +91,15 @@ The easy solution is to `import mujoco_py` _before_ `import glfw`.
 
     return load_dynamic_ext('cymj', cext_so_path)
 
+def _ensure_set_env_var(var_name, lib_path):
+    paths = os.environ.get(var_name, "").split(":")
+    paths = [os.path.expanduser(path) for path in paths]
+    if lib_path not in paths:
+        raise Exception("\nMissing path to your environment variable. \n"
+                        "Current values %s=%s\n"
+                        "Please add following line to .bashrc:\n"
+                        "export %s=$%s:%s" % (var_name, os.environ.get(var_name, ""),
+                                              var_name, var_name, lib_path))
 
 def load_dynamic_ext(name, path):
     ''' Load compiled shared object and return as python module. '''
