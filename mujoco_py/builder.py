@@ -77,6 +77,10 @@ The easy solution is to `import mujoco_py` _before_ `import glfw`.
             raise Exception("Please add mujoco library to your .bashrc:\n"
                             "export %s=$%s:%s" % (var, var, lib_path))
         if os.getenv('MUJOCO_PY_FORCE_CPU') is None and get_nvidia_lib_dir() is not None:
+            nvidia_lib_path = get_nvidia_lib_dir()
+            if nvidia_lib_path not in os.environ[var].split(":"):
+                raise Exception("Please add mujoco library to your .bashrc:\n"
+                                "export %s=$%s:%s" % (var, var, lib_path))
             Builder = LinuxGPUExtensionBuilder
         else:
             Builder = LinuxCPUExtensionBuilder
@@ -257,10 +261,8 @@ class LinuxGPUExtensionBuilder(MujocoExtensionBuilder):
 
     def _build_impl(self):
         so_file_path = super()._build_impl()
-        fix_shared_library(so_file_path, 'libOpenGL.so',
-                           join(get_nvidia_lib_dir(), 'libOpenGL.so.0'))
-        fix_shared_library(so_file_path, 'libEGL.so',
-                           join(get_nvidia_lib_dir(), 'libEGL.so.1'))
+        fix_shared_library(so_file_path, 'libOpenGL.so', 'libOpenGL.so.0')
+        fix_shared_library(so_file_path, 'libEGL.so', 'libEGL.so.1')
         fix_shared_library(so_file_path, 'libmujoco150.so', 'libmujoco150.so')
         fix_shared_library(so_file_path, 'libglewegl.so', 'libglewegl.so')
         return so_file_path
