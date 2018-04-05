@@ -93,7 +93,6 @@ The easy solution is to `import mujoco_py` _before_ `import glfw`.
 
 def _ensure_set_env_var(var_name, lib_path):
     paths = os.environ.get(var_name, "").split(":")
-    paths = [os.path.expanduser(path) for path in paths]
     if lib_path not in paths:
         raise Exception("\nMissing path to your environment variable. \n"
                         "Current values %s=%s\n"
