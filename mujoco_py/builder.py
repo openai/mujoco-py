@@ -64,14 +64,27 @@ MuJoCo comes with its own version of GLFW, so it's preferable to use that one.
 The easy solution is to `import mujoco_py` _before_ `import glfw`.
 ''')
 
+    lib_path = os.path.join(mjpro_path, "bin")
     if sys.platform == 'darwin':
+        var = "DYLD_LIBRARY_PATH"
+        if var not in os.environ or lib_path not in os.environ[var].split(":"):
+            raise Exception("Please add mujoco library to your .bashrc:\n"
+                            "export %s=$%s:%s" % (var, var, lib_path))
         Builder = MacExtensionBuilder
     elif sys.platform == 'linux':
+        var = "LD_LIBRARY_PATH"
+        if var not in os.environ or lib_path not in os.environ[var].split(":"):
+            raise Exception("Please add mujoco library to your .bashrc:\n"
+                            "export %s=$%s:%s" % (var, var, lib_path))
         if os.getenv('MUJOCO_PY_FORCE_CPU') is None and get_nvidia_lib_dir() is not None:
             Builder = LinuxGPUExtensionBuilder
         else:
             Builder = LinuxCPUExtensionBuilder
     elif sys.platform.startswith("win"):
+        var = "PATH"
+        if var not in os.environ or lib_path not in os.environ[var].split(";"):
+            raise Exception("Please add mujoco library to your PATH:\n"
+                            "set %s=%s;%%%s%%" % (var, lib_path, var))
         Builder = WindowsExtensionBuilder
     else:
         raise RuntimeError("Unsupported platform %s" % sys.platform)
@@ -80,18 +93,6 @@ The easy solution is to `import mujoco_py` _before_ `import glfw`.
     cext_so_path = builder.get_so_file_path()
     if not exists(cext_so_path):
         cext_so_path = builder.build()
-
-    lib_path = os.path.join(mjpro_path, "bin")
-    if sys.platform in ["darwin", "linux"]:
-        for var in ["DYLD_LIBRARY_PATH", "LD_LIBRARY_PATH"]:
-            if var not in os.environ or lib_path not in os.environ[var].split(":"):
-                raise Exception("Please add path to mujoco library to your .bashrc:\n"
-                                "export DYLD_LIBRARY_PATH=$DYLD_LIBRARY_PATH:%s\n"
-                                "export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:%s" % (lib_path, lib_path))
-    else:
-        if "PATH" not in os.environ or lib_path not in os.environ["PATH"].split(";"):
-            raise Exception("Please add path to mujoco library to your PATH:\n"
-                            "set PATH=%s;%%PATH%%" % lib_path)
 
     return load_dynamic_ext('cymj', cext_so_path)
 

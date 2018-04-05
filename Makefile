@@ -63,7 +63,10 @@ cirra:
 # Then you have to copy back generated cymj_linuxgpuextensionbuilder.so file.
 #
 # Gather all *.so files.
-upload: ./mujoco_py/generated/cymj_*_macextensionbuilder.so ./mujoco_py/generated/cymj_*_linuxgpuextensionbuilder.so ./mujoco_py/generated/cymj_*_linuxcpuextensionbuilder.so
+upload:
+	test -f ./mujoco_py/generated/cymj_$(VERSION)_linuxcpuextensionbuilder.so || exit -1
+	test -f ./mujoco_py/generated/cymj_$(VERSION)_linuxgpuextensionbuilder.so || exit -1
+	test -f ./mujoco_py/generated/cymj_$(VERSION)_macextensionbuilder.so || exit -1
 	rm -rf dist
 	python setup.py sdist
 	twine upload dist/*
