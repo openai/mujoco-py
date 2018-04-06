@@ -12,6 +12,7 @@ RUN apt-get update -q \
     libgl1-mesa-glx \
     libglew-dev \
     libosmesa6-dev \
+    software-properties-common \
     net-tools \
     unzip \
     vim \
