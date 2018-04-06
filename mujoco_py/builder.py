@@ -2,9 +2,7 @@ import distutils
 import glob
 import os
 import shutil
-import subprocess
 import sys
-import types
 from distutils.core import Extension
 from distutils.dist import Distribution
 from distutils.sysconfig import customize_compiler
@@ -13,34 +11,34 @@ from random import choice
 from shutil import move
 from string import ascii_lowercase
 from importlib.machinery import ExtensionFileLoader
+import glob
 
 import numpy as np
 from cffi import FFI
 from Cython.Build import cythonize
 from Cython.Distutils.old_build_ext import old_build_ext as build_ext
 from mujoco_py.version import get_version
+import subprocess
 
 from mujoco_py.utils import discover_mujoco
 
 
-def get_nvidia_version():
-    cmd = 'nvidia-smi --query-gpu=driver_version --format=csv,noheader --id=0'
-    try:
-        return subprocess.check_output(cmd.split(), universal_newlines=True)
-    except (FileNotFoundError, subprocess.CalledProcessError):
-        return None
-
-
 def get_nvidia_lib_dir():
-    nvidia_version = get_nvidia_version()
-    if nvidia_version is None:
+    exists_nvidia_smi = subprocess.call("type nvidia-smi", shell=True,
+                                        stdout=subprocess.PIPE, stderr=subprocess.PIPE) == 0
+    if not exists_nvidia_smi:
         return None
-    root = os.path.abspath(os.sep)
-    major_version = nvidia_version.split('.')[0]
-    for nvidia_lib_dir in [join(root, 'usr', 'local', 'nvidia', 'lib64'),
-                           join(root, 'usr', 'lib', 'nvidia-' + major_version)]:
-        if exists(nvidia_lib_dir):
-            return nvidia_lib_dir
+    docker_path = '/usr/local/nvidia/lib64'
+    if exists(docker_path):
+        return docker_path
+    paths = glob.glob('/usr/lib/nvidia-*')
+    assert len(paths) <= 1, "Expected only one version of nvidia to be " \
+                            "installed in the system. Found several: %s" % str(paths)
+    if len(paths) == 0:
+        return None
+    import ipdb
+    ipdb.set_trace()
+    return paths[0]
 
 
 def load_cython_ext(mjpro_path):
