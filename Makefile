@@ -3,6 +3,7 @@ SHELL := /bin/bash
 
 MUJOCO_LICENSE_PATH ?= ~/.mujoco/mjkey.txt
 VERSION := `cd mujoco_py; python -c "from version import get_version;print(get_version())"; cd ..`
+PYTHON_VERSION := `python -c `"import sys;print(str(sys.version_info.major) + str(sys.version_info.minor))"`
 DOCKER_NAME := quay.io/openai/mujoco_py:$(USER)_$(VERSION)
 DOCKER := $(shell type -p nvidia-docker || echo docker)
 UUID := $(shell uuidgen)
@@ -64,9 +65,9 @@ cirra:
 #
 # Gather all *.so files.
 upload:
-	test -f ./mujoco_py/generated/cymj_$(VERSION)_36_linuxcpuextensionbuilder.so || exit -1
-	test -f ./mujoco_py/generated/cymj_$(VERSION)_36_linuxgpuextensionbuilder.so || exit -1
-	test -f ./mujoco_py/generated/cymj_$(VERSION)_36_macextensionbuilder.so || exit -1
+	test -f ./mujoco_py/generated/cymj_$(VERSION)_$(PYTHON_VERSION)_linuxcpuextensionbuilder.so || exit -1
+	test -f ./mujoco_py/generated/cymj_$(VERSION)_$(PYTHON_VERSION)_linuxgpuextensionbuilder.so || exit -1
+	test -f ./mujoco_py/generated/cymj_$(VERSION)_$(PYTHON_VERSION)_macextensionbuilder.so || exit -1
 	rm -rf dist
 	python setup.py sdist
 	twine upload dist/*
@@ -74,12 +75,12 @@ upload:
 generate_gpu_so:
 	rm -f ./mujoco_py/generated/cymj_*_linuxgpuextensionbuilder.so
 	nvidia-docker run -it --name $(UUID) $(DOCKER_NAME) bash -c "make clean;python -c 'import mujoco_py'"
-	nvidia-docker cp $(UUID):/mujoco_py/mujoco_py/generated/cymj_$(VERSION)_linuxgpuextensionbuilder.so mujoco_py/generated/
+	nvidia-docker cp $(UUID):/mujoco_py/mujoco_py/generated/cymj_$(VERSION)_$(PYTHON_VERSION)_linuxgpuextensionbuilder.so mujoco_py/generated/
 
 generate_cpu_so:
 	rm -f ./mujoco_py/generated/cymj_*_linuxcpuextensionbuilder.so
 	docker run -it --name $(UUID) $(DOCKER_NAME) bash -c "make clean;python -c 'import mujoco_py'"
-	docker cp $(UUID):/mujoco_py/mujoco_py/generated/cymj_$(VERSION)_linuxcpuextensionbuilder.so mujoco_py/generated/
+	docker cp $(UUID):/mujoco_py/mujoco_py/generated/cymj_$(VERSION)_$(PYTHON_VERSION)_linuxcpuextensionbuilder.so mujoco_py/generated/
 
 generate_mac_so:
 	python -c "import mujoco_py"
