@@ -28,8 +28,8 @@ RUN DEBIAN_FRONTEND=noninteractive apt-get install --yes python3.6-dev python3.6
 RUN virtualenv --python=python3.6 env
 
 RUN rm /usr/bin/python
-RUN ln -s /root/env/bin/python3 /usr/bin/python
-RUN ln -s /root/env/bin/pip3 /usr/bin/pip
+RUN ln -s /env/bin/python3.6 /usr/bin/python
+RUN ln -s /env/bin/pip3.6 /usr/bin/pip
 
 RUN curl -o /usr/local/bin/patchelf https://s3-us-west-2.amazonaws.com/openai-sci-artifacts/manual-builds/patchelf_0.9_amd64.elf \
     && chmod +x /usr/local/bin/patchelf
