@@ -1,5 +1,4 @@
 import distutils
-import glob
 import os
 import shutil
 import sys
@@ -31,7 +30,7 @@ def get_nvidia_lib_dir():
     docker_path = '/usr/local/nvidia/lib64'
     if exists(docker_path):
         return docker_path
-    paths = glob.glob('/usr/lib/nvidia-*')
+    paths = glob.glob('/usr/lib/nvidia-[0-9][0-9][0-9]')
     assert len(paths) <= 1, "Expected only one version of nvidia to be " \
                             "installed in the system. Found several: %s" % str(paths)
     if len(paths) == 0:
@@ -165,6 +164,8 @@ class MujocoExtensionBuilder():
 
     def __init__(self, mjpro_path):
         self.mjpro_path = mjpro_path
+        python_version = str(sys.version_info.major) + str(sys.version_info.minor)
+        self.version = '%s_%s_%s' % (get_version(), python_version, self.build_base())
         self.extension = Extension(
             'mujoco_py.cymj',
             sources=[join(self.CYMJ_DIR_PATH, "cymj.pyx")],
@@ -189,7 +190,7 @@ class MujocoExtensionBuilder():
         return new_so_file_path
 
     def build_base(self):
-        return self.__class__.__name__
+        return self.__class__.__name__.lower()
 
     def _build_impl(self):
         dist = Distribution({
@@ -203,7 +204,7 @@ class MujocoExtensionBuilder():
         # following the convention of cython's pyxbuild and naming
         # base directory "_pyxbld"
         build.build_base = join(self.CYMJ_DIR_PATH, 'generated',
-                                '_pyxbld_%s_%s' % (get_version(), self.build_base()))
+                                '_pyxbld_%s' % (self.version))
         dist.parse_command_line()
         obj_build_ext = dist.get_command_obj("build_ext")
         dist.run_commands()
@@ -213,8 +214,8 @@ class MujocoExtensionBuilder():
     def get_so_file_path(self):
         dir_path = abspath(dirname(__file__))
 
-        return join(dir_path, "generated", "cymj_%s_%s.so" % (
-            get_version(), self.__class__.__name__.lower()))
+        python_version = str(sys.version_info.major) + str(sys.version_info.minor)
+        return join(dir_path, "generated", "cymj_%s.so" % self.version)
 
 
 class WindowsExtensionBuilder(MujocoExtensionBuilder):
