@@ -1,10 +1,7 @@
 import distutils
-import glob
 import os
 import shutil
-import subprocess
 import sys
-import types
 from distutils.core import Extension
 from distutils.dist import Distribution
 from distutils.sysconfig import customize_compiler
@@ -13,33 +10,32 @@ from random import choice
 from shutil import move
 from string import ascii_lowercase
 from importlib.machinery import ExtensionFileLoader
+import glob
 
 import numpy as np
 from cffi import FFI
 from Cython.Build import cythonize
 from Cython.Distutils.old_build_ext import old_build_ext as build_ext
+from mujoco_py.version import get_version
+import subprocess
 
 from mujoco_py.utils import discover_mujoco
 
 
-def get_nvidia_version():
-    cmd = 'nvidia-smi --query-gpu=driver_version --format=csv,noheader --id=0'
-    try:
-        return subprocess.check_output(cmd.split(), universal_newlines=True)
-    except (FileNotFoundError, subprocess.CalledProcessError):
-        return None
-
-
 def get_nvidia_lib_dir():
-    nvidia_version = get_nvidia_version()
-    if nvidia_version is None:
+    exists_nvidia_smi = subprocess.call("type nvidia-smi", shell=True,
+                                        stdout=subprocess.PIPE, stderr=subprocess.PIPE) == 0
+    if not exists_nvidia_smi:
         return None
-    root = os.path.abspath(os.sep)
-    major_version = nvidia_version.split('.')[0]
-    for nvidia_lib_dir in [join(root, 'usr', 'local', 'nvidia', 'lib64'),
-                           join(root, 'usr', 'lib', 'nvidia-' + major_version)]:
-        if exists(nvidia_lib_dir):
-            return nvidia_lib_dir
+    docker_path = '/usr/local/nvidia/lib64'
+    if exists(docker_path):
+        return docker_path
+    paths = glob.glob('/usr/lib/nvidia-[0-9][0-9][0-9]')
+    assert len(paths) <= 1, "Expected only one version of nvidia to be " \
+                            "installed in the system. Found several: %s" % str(paths)
+    if len(paths) == 0:
+        return None
+    return paths[0]
 
 
 def load_cython_ext(mjpro_path):
@@ -63,14 +59,22 @@ MuJoCo comes with its own version of GLFW, so it's preferable to use that one.
 The easy solution is to `import mujoco_py` _before_ `import glfw`.
 ''')
 
+    lib_path = os.path.join(mjpro_path, "bin")
     if sys.platform == 'darwin':
+        _ensure_set_env_var("DYLD_LIBRARY_PATH", lib_path)
         Builder = MacExtensionBuilder
     elif sys.platform == 'linux':
+        _ensure_set_env_var("LD_LIBRARY_PATH", lib_path)
         if os.getenv('MUJOCO_PY_FORCE_CPU') is None and get_nvidia_lib_dir() is not None:
+            _ensure_set_env_var("LD_LIBRARY_PATH", get_nvidia_lib_dir())
             Builder = LinuxGPUExtensionBuilder
         else:
             Builder = LinuxCPUExtensionBuilder
     elif sys.platform.startswith("win"):
+        var = "PATH"
+        if var not in os.environ or lib_path not in os.environ[var].split(";"):
+            raise Exception("Please add mujoco library to your PATH:\n"
+                            "set %s=%s;%%%s%%" % (var, lib_path, var))
         Builder = WindowsExtensionBuilder
     else:
         raise RuntimeError("Unsupported platform %s" % sys.platform)
@@ -79,62 +83,23 @@ The easy solution is to `import mujoco_py` _before_ `import glfw`.
     cext_so_path = builder.get_so_file_path()
     if not exists(cext_so_path):
         cext_so_path = builder.build()
+
     return load_dynamic_ext('cymj', cext_so_path)
 
+def _ensure_set_env_var(var_name, lib_path):
+    paths = os.environ.get(var_name, "").split(":")
+    paths = [os.path.abspath(path) for path in paths]
+    if lib_path not in paths:
+        raise Exception("\nMissing path to your environment variable. \n"
+                        "Current values %s=%s\n"
+                        "Please add following line to .bashrc:\n"
+                        "export %s=$%s:%s" % (var_name, os.environ.get(var_name, ""),
+                                              var_name, var_name, lib_path))
 
 def load_dynamic_ext(name, path):
     ''' Load compiled shared object and return as python module. '''
     loader = ExtensionFileLoader(name, path)
     return loader.load_module()
-
-
-def get_marker_file_path(obj):
-    return '%s.meta' % obj
-
-
-def should_compile(obj, src):
-    if not os.path.isfile(obj):
-        return True
-    marker_file_path = get_marker_file_path(obj)
-    if not os.path.isfile(marker_file_path):
-        return True
-    src_modification_time = '%f' % os.stat(src).st_mtime
-    with open(marker_file_path, 'r') as marker_file:
-        last_src_modification_time = marker_file.read()
-        if last_src_modification_time == src_modification_time:
-            return False
-    return True
-
-
-def save_marker(obj, src):
-    marker_file_path = get_marker_file_path(obj)
-    with open(marker_file_path, 'w') as marker_file:
-        marker_file.write('%f' % os.stat(src).st_mtime)
-
-
-def caching_compile(self, sources, output_dir=None, macros=None, include_dirs=None,
-                    debug=0, extra_preargs=None, extra_postargs=None, depends=None):
-    macros, objects, extra_postargs, pp_opts, build = self._setup_compile(
-        output_dir, macros, include_dirs, sources, depends, extra_postargs)
-    cc_args = self._get_cc_args(pp_opts, debug, extra_preargs)
-
-    for obj in objects:
-        try:
-            src, ext = build[obj]
-        except KeyError:
-            continue
-        if should_compile(obj, src):
-            self._compile(obj, src, ext, cc_args, extra_postargs, pp_opts)
-            save_marker(obj, src)
-        else:
-            print('%s up to date, skipping.' % obj)
-    return objects
-                
-
-def enable_compiler_caching(compiler):
-    ''' Patch 'compile' in UnixCCompiler in order to ignore existing artifacts. '''
-    if compiler.compiler_type == 'unix':
-        compiler.compile = types.MethodType(caching_compile, compiler) 
 
 
 class custom_build_ext(build_ext):
@@ -148,7 +113,6 @@ class custom_build_ext(build_ext):
 
     def build_extensions(self):
         customize_compiler(self.compiler)
-        enable_compiler_caching(self.compiler)
 
         try:
             self.compiler.compiler_so.remove("-Wstrict-prototypes")
@@ -159,21 +123,15 @@ class custom_build_ext(build_ext):
 
 def fix_shared_library(so_file, name, library_path):
     ''' Used to fixup shared libraries on Linux '''
-    ldd_output = subprocess.check_output(
-        ['ldd', so_file]).decode('utf-8')
+    subprocess.check_call(['patchelf', '--remove-rpath', so_file])
+    ldd_output = subprocess.check_output(['ldd', so_file]).decode('utf-8')
 
     if name in ldd_output:
-        subprocess.check_call(['patchelf',
-                               '--remove-needed',
-                               name,
-                               so_file])
-    subprocess.check_call(
-        ['patchelf', '--add-needed',
-         library_path,
-         so_file])
+        subprocess.check_call(['patchelf', '--remove-needed', name, so_file])
+    subprocess.check_call(['patchelf', '--add-needed', library_path, so_file])
 
 
-def manually_link_libraries(mjpro_path, raw_cext_dll_path):
+def manually_link_libraries(raw_cext_dll_path):
     ''' Used to fix mujoco library linking on Mac '''
     root, ext = os.path.splitext(raw_cext_dll_path)
     final_cext_dll_path = root + '_final' + ext
@@ -187,24 +145,14 @@ def manually_link_libraries(mjpro_path, raw_cext_dll_path):
     tmp_final_cext_dll_path = final_cext_dll_path + '~'
     shutil.copyfile(raw_cext_dll_path, tmp_final_cext_dll_path)
 
-    mj_bin_path = join(mjpro_path, 'bin')
-
     # Fix the rpath of the generated library -- i lost the Stackoverflow
     # reference here
     from_mujoco_path = '@executable_path/libmujoco150.dylib'
-    to_mujoco_path = '%s/libmujoco150.dylib' % mj_bin_path
+    to_mujoco_path = 'libmujoco150.dylib'
     subprocess.check_call(['install_name_tool',
                            '-change',
                            from_mujoco_path,
                            to_mujoco_path,
-                           tmp_final_cext_dll_path])
-
-    from_glfw_path = 'libglfw.3.dylib'
-    to_glfw_path = os.path.join(mj_bin_path, 'libglfw.3.dylib')
-    subprocess.check_call(['install_name_tool',
-                           '-change',
-                           from_glfw_path,
-                           to_glfw_path,
                            tmp_final_cext_dll_path])
 
     os.rename(tmp_final_cext_dll_path, final_cext_dll_path)
@@ -217,6 +165,8 @@ class MujocoExtensionBuilder():
 
     def __init__(self, mjpro_path):
         self.mjpro_path = mjpro_path
+        python_version = str(sys.version_info.major) + str(sys.version_info.minor)
+        self.version = '%s_%s_%s' % (get_version(), python_version, self.build_base())
         self.extension = Extension(
             'mujoco_py.cymj',
             sources=[join(self.CYMJ_DIR_PATH, "cymj.pyx")],
@@ -241,7 +191,7 @@ class MujocoExtensionBuilder():
         return new_so_file_path
 
     def build_base(self):
-        return self.__class__.__name__
+        return self.__class__.__name__.lower()
 
     def _build_impl(self):
         dist = Distribution({
@@ -255,7 +205,7 @@ class MujocoExtensionBuilder():
         # following the convention of cython's pyxbuild and naming
         # base directory "_pyxbld"
         build.build_base = join(self.CYMJ_DIR_PATH, 'generated',
-                                '_pyxbld_%s' % self.build_base())
+                                '_pyxbld_%s' % (self.version))
         dist.parse_command_line()
         obj_build_ext = dist.get_command_obj("build_ext")
         dist.run_commands()
@@ -264,8 +214,9 @@ class MujocoExtensionBuilder():
 
     def get_so_file_path(self):
         dir_path = abspath(dirname(__file__))
-        return join(dir_path, "generated", "cymj_%s.so" % (
-            self.__class__.__name__.lower()))
+
+        python_version = str(sys.version_info.major) + str(sys.version_info.minor)
+        return join(dir_path, "generated", "cymj_%s.so" % self.version)
 
 
 class WindowsExtensionBuilder(MujocoExtensionBuilder):
@@ -276,16 +227,7 @@ class WindowsExtensionBuilder(MujocoExtensionBuilder):
         self.extension.sources.append(self.CYMJ_DIR_PATH + "/gl/dummyshim.c")
 
 
-class LinuxExtensionBuilder(MujocoExtensionBuilder):
-
-    def __init__(self, mjpro_path):
-        super().__init__(mjpro_path)
-
-    def build_base(self):
-        return LinuxExtensionBuilder.__name__
-
-
-class LinuxCPUExtensionBuilder(LinuxExtensionBuilder):
+class LinuxCPUExtensionBuilder(MujocoExtensionBuilder):
 
     def __init__(self, mjpro_path):
         super().__init__(mjpro_path)
@@ -296,7 +238,15 @@ class LinuxCPUExtensionBuilder(LinuxExtensionBuilder):
         self.extension.runtime_library_dirs = [join(mjpro_path, 'bin')]
 
 
-class LinuxGPUExtensionBuilder(LinuxExtensionBuilder):
+    def _build_impl(self):
+        so_file_path = super()._build_impl()
+        # Removes absolute paths to libraries. Allows for dynamic loading.
+        fix_shared_library(so_file_path, 'libmujoco150.so', 'libmujoco150.so')
+        fix_shared_library(so_file_path, 'libglewosmesa.so', 'libglewosmesa.so')
+        return so_file_path
+
+
+class LinuxGPUExtensionBuilder(MujocoExtensionBuilder):
 
     def __init__(self, mjpro_path):
         super().__init__(mjpro_path)
@@ -308,10 +258,10 @@ class LinuxGPUExtensionBuilder(LinuxExtensionBuilder):
 
     def _build_impl(self):
         so_file_path = super()._build_impl()
-        fix_shared_library(so_file_path, 'libOpenGL.so',
-                           join(get_nvidia_lib_dir(), 'libOpenGL.so.0'))
-        fix_shared_library(so_file_path, 'libEGL.so',
-                           join(get_nvidia_lib_dir(), 'libEGL.so.1'))
+        fix_shared_library(so_file_path, 'libOpenGL.so', 'libOpenGL.so.0')
+        fix_shared_library(so_file_path, 'libEGL.so', 'libEGL.so.1')
+        fix_shared_library(so_file_path, 'libmujoco150.so', 'libmujoco150.so')
+        fix_shared_library(so_file_path, 'libglewegl.so', 'libglewegl.so')
         return so_file_path
 
 
@@ -342,7 +292,7 @@ class MacExtensionBuilder(MujocoExtensionBuilder):
 
         so_file_path = super()._build_impl()
         del os.environ['CC']
-        return manually_link_libraries(self.mjpro_path, so_file_path)
+        return manually_link_libraries(so_file_path)
 
 
 class MujocoException(Exception):
@@ -490,7 +440,7 @@ def build_callback_fn(function_string, userdata_names=[]):
         raise e
     # On Mac the MuJoCo library is linked strangely, so we have to fix it here
     if sys.platform == 'darwin':
-        fixed_library_path = manually_link_libraries(mjpro_path, library_path)
+        fixed_library_path = manually_link_libraries(library_path)
         move(fixed_library_path, library_path)  # Overwrite with fixed library
     module = load_dynamic_ext(name, library_path)
     # Now that the module is loaded into memory, we can actually delete it

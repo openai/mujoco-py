@@ -23,7 +23,7 @@ install:
     - conda config --set always_yes yes --set changeps1 no
     - conda update -q conda
     - conda info -a
-    - conda create -q -n test-environment python=3.5 numpy scipy
+    - conda create -q -n test-environment python=3.6 numpy scipy
     - activate test-environment
     - SET PATH=%userprofile%\.mujoco\mjpro150\bin;%PATH%;
     - cd C:\projects\mujoco-py
