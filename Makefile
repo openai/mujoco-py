@@ -3,7 +3,7 @@ SHELL := /bin/bash
 
 MUJOCO_LICENSE_PATH ?= ~/.mujoco/mjkey.txt
 VERSION := `cd mujoco_py; python -c "from version import get_version;print(get_version())"; cd ..`
-PYTHON_VERSION := `python -c `"import sys;print(str(sys.version_info.major) + str(sys.version_info.minor))"`
+PYTHON_VERSION := `python -c "import sys;print(str(sys.version_info.major) + str(sys.version_info.minor))"`
 DOCKER_NAME := quay.io/openai/mujoco_py:$(USER)_$(VERSION)
 DOCKER := $(shell type -p nvidia-docker || echo docker)
 UUID := $(shell uuidgen)
