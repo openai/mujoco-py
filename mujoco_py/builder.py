@@ -36,8 +36,6 @@ def get_nvidia_lib_dir():
                             "installed in the system. Found several: %s" % str(paths)
     if len(paths) == 0:
         return None
-    import ipdb
-    ipdb.set_trace()
     return paths[0]
 
 
