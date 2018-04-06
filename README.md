@@ -8,9 +8,9 @@
 
 The following platforms are currently supported:
 
-- Linux with Python 3.5.2. See [the `Dockerfile`](Dockerfile) for the canonical list of system dependencies. Support for Python 3.6 [is planned](https://github.com/openai/mujoco-py/issues/52).
-- OS X with Python 3.5.2. Support for Python 3.6 [is planned](https://github.com/openai/mujoco-py/issues/52).
-- Windows (experimental) with Python 3.5.2. See [the Appveyor file](https://github.com/openai/mujoco-py/blob/master/.appveyor.yml#L16-L32) for the canonical list of dependencies.
+- Linux with Python 3.6. See [the `Dockerfile`](Dockerfile) for the canonical list of system dependencies.
+- OS X with Python 3.6.
+- Windows (experimental) with Python 3.6. See [the Appveyor file](https://github.com/openai/mujoco-py/blob/master/.appveyor.yml#L16-L32) for the canonical list of dependencies.
 
 Python 2 has been desupported since [1.50.1.0](https://github.com/openai/mujoco-py/releases/tag/1.50.1.0). Python 2 users can stay on the [`0.5` branch](https://github.com/openai/mujoco-py/tree/0.5). The latest release there is [`0.5.7`](https://github.com/openai/mujoco-py/releases/tag/0.5.7) which can be installed with `pip install mujoco-py==0.5.7`.
 

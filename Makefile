@@ -64,9 +64,9 @@ cirra:
 #
 # Gather all *.so files.
 upload:
-	test -f ./mujoco_py/generated/cymj_$(VERSION)_linuxcpuextensionbuilder.so || exit -1
-	test -f ./mujoco_py/generated/cymj_$(VERSION)_linuxgpuextensionbuilder.so || exit -1
-	test -f ./mujoco_py/generated/cymj_$(VERSION)_macextensionbuilder.so || exit -1
+	test -f ./mujoco_py/generated/cymj_$(VERSION)_36_linuxcpuextensionbuilder.so || exit -1
+	test -f ./mujoco_py/generated/cymj_$(VERSION)_36_linuxgpuextensionbuilder.so || exit -1
+	test -f ./mujoco_py/generated/cymj_$(VERSION)_36_macextensionbuilder.so || exit -1
 	rm -rf dist
 	python setup.py sdist
 	twine upload dist/*
