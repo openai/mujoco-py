@@ -462,7 +462,8 @@ for func_name in dir(cymj):
     if func_name.startswith("_mj"):
         setattr(functions, func_name[1:], getattr(cymj, func_name))
 
-functions.mj_activate(key_path)
+def activate():
+    functions.mj_activate(key_path)
 
 # Set user-defined callbacks that raise assertion with message
 cymj.set_warning_callback(user_warning_raise_exception)
