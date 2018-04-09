@@ -3,6 +3,7 @@ from mujoco_py.generated import const
 from mujoco_py.mjrenderpool import MjRenderPool
 from mujoco_py.mjviewer import MjViewer, MjViewerBasic
 from mujoco_py.version import __version__, get_version
+import mujoco_py
 
 load_model_from_path = cymj.load_model_from_path
 load_model_from_xml = cymj.load_model_from_xml
@@ -25,3 +26,5 @@ __all__ = ['MjSim', 'MjSimState',
            'load_model_from_mjb',
            'ignore_mujoco_warnings', 'const', "functions",
            "__version__", "get_version"]
+
+mujoco_py.builder.activate()

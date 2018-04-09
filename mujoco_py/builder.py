@@ -31,11 +31,13 @@ def get_nvidia_lib_dir():
     if exists(docker_path):
         return docker_path
     paths = glob.glob('/usr/lib/nvidia-[0-9][0-9][0-9]')
-    assert len(paths) <= 1, "Expected only one version of nvidia to be " \
-                            "installed in the system. Found several: %s" % str(paths)
+    paths = sorted(paths)
     if len(paths) == 0:
         return None
-    return paths[0]
+    if len(paths) > 1:
+        print("Choosing the latest nvidia driver: %s, among %s" % (paths[-1], str(paths)))
+
+    return paths[-1]
 
 
 def load_cython_ext(mjpro_path):
@@ -447,6 +449,8 @@ def build_callback_fn(function_string, userdata_names=[]):
     build_fn_cleanup(name)
     return module.lib.__fun
 
+def activate():
+    functions.mj_activate(key_path)
 
 mjpro_path, key_path = discover_mujoco()
 cymj = load_cython_ext(mjpro_path)
@@ -461,8 +465,6 @@ functions = dict2()
 for func_name in dir(cymj):
     if func_name.startswith("_mj"):
         setattr(functions, func_name[1:], getattr(cymj, func_name))
-
-functions.mj_activate(key_path)
 
 # Set user-defined callbacks that raise assertion with message
 cymj.set_warning_callback(user_warning_raise_exception)
