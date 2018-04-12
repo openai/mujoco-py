@@ -5,4 +5,3 @@ include mujoco_py/gl/*.c
 include setup.py
 include mujoco_py/generated/cymj_*_linuxcpuextensionbuilder.so
 include mujoco_py/generated/cymj_*_linuxgpuextensionbuilder.so
-include mujoco_py/generated/cymj_*_macextensionbuilder.so

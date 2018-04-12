@@ -63,7 +63,6 @@ The easy solution is to `import mujoco_py` _before_ `import glfw`.
 
     lib_path = os.path.join(mjpro_path, "bin")
     if sys.platform == 'darwin':
-        _ensure_set_env_var("DYLD_LIBRARY_PATH", lib_path)
         Builder = MacExtensionBuilder
     elif sys.platform == 'linux':
         _ensure_set_env_var("LD_LIBRARY_PATH", lib_path)
@@ -133,7 +132,7 @@ def fix_shared_library(so_file, name, library_path):
     subprocess.check_call(['patchelf', '--add-needed', library_path, so_file])
 
 
-def manually_link_libraries(raw_cext_dll_path):
+def manually_link_libraries(mjpro_path, raw_cext_dll_path):
     ''' Used to fix mujoco library linking on Mac '''
     root, ext = os.path.splitext(raw_cext_dll_path)
     final_cext_dll_path = root + '_final' + ext
@@ -147,14 +146,24 @@ def manually_link_libraries(raw_cext_dll_path):
     tmp_final_cext_dll_path = final_cext_dll_path + '~'
     shutil.copyfile(raw_cext_dll_path, tmp_final_cext_dll_path)
 
+    mj_bin_path = join(mjpro_path, 'bin')
+
     # Fix the rpath of the generated library -- i lost the Stackoverflow
     # reference here
     from_mujoco_path = '@executable_path/libmujoco150.dylib'
-    to_mujoco_path = 'libmujoco150.dylib'
+    to_mujoco_path = '%s/libmujoco150.dylib' % mj_bin_path
     subprocess.check_call(['install_name_tool',
                            '-change',
                            from_mujoco_path,
                            to_mujoco_path,
+                           tmp_final_cext_dll_path])
+
+    from_glfw_path = 'libglfw.3.dylib'
+    to_glfw_path = os.path.join(mj_bin_path, 'libglfw.3.dylib')
+    subprocess.check_call(['install_name_tool',
+                           '-change',
+                           from_glfw_path,
+                           to_glfw_path,
                            tmp_final_cext_dll_path])
 
     os.rename(tmp_final_cext_dll_path, final_cext_dll_path)
@@ -294,7 +303,7 @@ class MacExtensionBuilder(MujocoExtensionBuilder):
 
         so_file_path = super()._build_impl()
         del os.environ['CC']
-        return manually_link_libraries(so_file_path)
+        return manually_link_libraries(self.mjpro_path, so_file_path)
 
 
 class MujocoException(Exception):
@@ -442,7 +451,7 @@ def build_callback_fn(function_string, userdata_names=[]):
         raise e
     # On Mac the MuJoCo library is linked strangely, so we have to fix it here
     if sys.platform == 'darwin':
-        fixed_library_path = manually_link_libraries(library_path)
+        fixed_library_path = manually_link_libraries(mjpro_path, library_path)
         move(fixed_library_path, library_path)  # Overwrite with fixed library
     module = load_dynamic_ext(name, library_path)
     # Now that the module is loaded into memory, we can actually delete it

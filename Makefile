@@ -67,7 +67,6 @@ cirra:
 upload:
 	test -f ./mujoco_py/generated/cymj_$(VERSION)_$(PYTHON_VERSION)_linuxcpuextensionbuilder.so || exit -1
 	test -f ./mujoco_py/generated/cymj_$(VERSION)_$(PYTHON_VERSION)_linuxgpuextensionbuilder.so || exit -1
-	test -f ./mujoco_py/generated/cymj_$(VERSION)_$(PYTHON_VERSION)_macextensionbuilder.so || exit -1
 	rm -rf dist
 	python setup.py sdist
 	twine upload dist/*
@@ -81,9 +80,6 @@ generate_cpu_so:
 	rm -f ./mujoco_py/generated/cymj_*_linuxcpuextensionbuilder.so
 	docker run -it --name $(UUID) $(DOCKER_NAME) bash -c "make clean;python -c 'import mujoco_py'"
 	docker cp $(UUID):/mujoco_py/mujoco_py/generated/cymj_$(VERSION)_$(PYTHON_VERSION)_linuxcpuextensionbuilder.so mujoco_py/generated/
-
-generate_mac_so:
-	python -c "import mujoco_py"
 
 
 check-license:
