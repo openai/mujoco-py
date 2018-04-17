@@ -112,7 +112,7 @@ cdef class MjRenderContext(object):
         self.cam.type = const.CAMERA_FREE
         self.cam.fixedcamid = -1
         for i in range(3):
-            self.cam.lookat[i] = sim.model.stat.center[i]
+            self.cam.lookat[i] = np.median(sim.data.geom_xpos[:, i])
         self.cam.distance = sim.model.stat.extent
 
     def update_offscreen_size(self, width, height):
