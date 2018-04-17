@@ -82,9 +82,12 @@ The easy solution is to `import mujoco_py` _before_ `import glfw`.
 
     builder = Builder(mjpro_path)
     cext_so_path = builder.get_so_file_path()
-    if not exists(cext_so_path):
-        cext_so_path = builder.build()
-
+    if exists(cext_so_path):
+        try:
+            return load_dynamic_ext('cymj', cext_so_path)
+        except ImportError:
+            print("Import error. Trying to rebuild mujoco_py.")
+    cext_so_path = builder.build()
     return load_dynamic_ext('cymj', cext_so_path)
 
 def _ensure_set_env_var(var_name, lib_path):
