@@ -22,7 +22,6 @@ include "opengl_context.pyx"
 include "mjsim.pyx"
 include "mjsimstate.pyx"
 include "mjrendercontext.pyx"
-include "mjbatchrenderer.pyx"
 
 cdef extern from "gl/glshim.h":
 

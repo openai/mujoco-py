@@ -8,7 +8,7 @@
   
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   
-  <title>API reference &mdash; mujoco-py 1.50.1.0 documentation</title>
+  <title>API reference &mdash; mujoco-py 1.50.1.56 documentation</title>
   
 
   
@@ -35,7 +35,7 @@
         <link rel="index" title="Index"
               href="genindex.html"/>
         <link rel="search" title="Search" href="search.html"/>
-    <link rel="top" title="mujoco-py 1.50.1.0 documentation" href="index.html"/>
+    <link rel="top" title="mujoco-py 1.50.1.56 documentation" href="index.html"/>
         <link rel="next" title="Internals" href="internals.html"/>
         <link rel="prev" title="mujoco-py Documentation" href="index.html"/> 
 
@@ -66,7 +66,7 @@
             
             
               <div class="version">
-                1.50.1.0
+                1.50.1.56
               </div>
             
           
@@ -94,7 +94,6 @@
 <li class="toctree-l1 current"><a class="current reference internal" href="#">API reference</a><ul>
 <li class="toctree-l2"><a class="reference internal" href="#mjsim-basic-simulation">MjSim: Basic simulation</a></li>
 <li class="toctree-l2"><a class="reference internal" href="#pymjdata-time-dependent-data">PyMjData: Time-dependent data</a></li>
-<li class="toctree-l2"><a class="reference internal" href="#mjsimpool-batched-simulation">MjSimPool: Batched simulation</a></li>
 <li class="toctree-l2"><a class="reference internal" href="#mjviewer-3d-rendering">MjViewer: 3D rendering</a></li>
 </ul>
 </li>
@@ -168,8 +167,7 @@
 <ul class="simple">
 <li><a class="reference internal" href="#mjsim-basic-simulation" id="id1">MjSim: Basic simulation</a></li>
 <li><a class="reference internal" href="#pymjdata-time-dependent-data" id="id2">PyMjData: Time-dependent data</a></li>
-<li><a class="reference internal" href="#mjsimpool-batched-simulation" id="id3">MjSimPool: Batched simulation</a></li>
-<li><a class="reference internal" href="#mjviewer-3d-rendering" id="id4">MjViewer: 3D rendering</a></li>
+<li><a class="reference internal" href="#mjviewer-3d-rendering" id="id3">MjViewer: 3D rendering</a></li>
 </ul>
 </div>
 <div class="section" id="mjsim-basic-simulation">
@@ -218,7 +216,7 @@ and a <code class="xref py py-class docutils literal"><span class="pre">PyMjData
 Buffers will be swapped only once per step.</p>
 </div></blockquote>
 <p><strong>udd_callback</strong> : fn(<a class="reference internal" href="#mujoco_py.MjSim" title="mujoco_py.MjSim"><code class="xref py py-class docutils literal"><span class="pre">MjSim</span></code></a>) -&gt; dict</p>
-<blockquote class="last">
+<blockquote>
 <div><p>Optional callback for user-defined dynamics. At every call to
 <a class="reference internal" href="#mujoco_py.MjSim.step" title="mujoco_py.MjSim.step"><code class="xref py py-meth docutils literal"><span class="pre">step()</span></code></a>, it receives an MjSim object <code class="docutils literal"><span class="pre">sim</span></code> containing the
 current user-defined dynamics state in <code class="docutils literal"><span class="pre">sim.udd_state</span></code>, and returns the
@@ -226,6 +224,19 @@ next <code class="docutils literal"><span class="pre">udd_state</span></code> af
 useful e.g. for reward functions that operate over functions of historical
 state.</p>
 </div></blockquote>
+<p><strong>substep_callback</strong> : str or int or None</p>
+<blockquote>
+<div><p>This uses a compiled C function as user-defined dynamics in substeps.
+If given as a string, it’s compiled as a C function and set as pointer.
+If given as int, it’s interpreted as a function pointer.
+See <code class="xref py py-meth docutils literal"><span class="pre">set_substep_callback()</span></code> for detailed info.</p>
+</div></blockquote>
+<p><strong>userdata_names</strong> : list of strings or None</p>
+<blockquote>
+<div><p>This is a convenience parameter which is just set on the model.
+Equivalent to calling <code class="docutils literal"><span class="pre">model.set_userdata_names</span></code></p>
+</div></blockquote>
+<p class="last"><strong>render_callback</strong> : callback for rendering.</p>
 </td>
 </tr>
 </tbody>
@@ -250,6 +261,11 @@ state.</p>
 <div>camera will be used.</div></blockquote>
 <ul class="simple">
 <li>depth (bool): if True, also return depth buffer</li>
+<li><dl class="first docutils">
+<dt>device (int): device to use for rendering (only for GPU-backed</dt>
+<dd>rendering).</dd>
+</dl>
+</li>
 </ul>
 <p>Returns:
 - rgb (uint8 array): image buffer from camera
@@ -312,7 +328,7 @@ in an inner loop.</p>
 <code class="descname">step</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#mujoco_py.MjSim.step" title="Permalink to this definition">¶</a></dt>
 <dd><p>Advances the simulation by calling <code class="docutils literal"><span class="pre">mj_step</span></code>.</p>
 <p>If <code class="docutils literal"><span class="pre">qpos</span></code> or <code class="docutils literal"><span class="pre">qvel</span></code> have been modified directly, the user is required to call
-<a class="reference internal" href="#mujoco_py.MjSimPool.forward" title="mujoco_py.MjSimPool.forward"><code class="xref py py-meth docutils literal"><span class="pre">forward()</span></code></a> before <a class="reference internal" href="#mujoco_py.MjSim.step" title="mujoco_py.MjSim.step"><code class="xref py py-meth docutils literal"><span class="pre">step()</span></code></a> if their <code class="docutils literal"><span class="pre">udd_callback</span></code> requires access to MuJoCo state
+<code class="xref py py-meth docutils literal"><span class="pre">forward()</span></code> before <a class="reference internal" href="#mujoco_py.MjSim.step" title="mujoco_py.MjSim.step"><code class="xref py py-meth docutils literal"><span class="pre">step()</span></code></a> if their <code class="docutils literal"><span class="pre">udd_callback</span></code> requires access to MuJoCo state
 set during the forward dynamics.</p>
 </dd></dl>
 
@@ -1156,82 +1172,8 @@ large, vectorized rollouts.</p>
 </dd></dl>
 
 </dd></dl></div>
-<div class="section" id="mjsimpool-batched-simulation">
-<h2><a class="toc-backref" href="#id3">MjSimPool: Batched simulation</a><a class="headerlink" href="#mjsimpool-batched-simulation" title="Permalink to this headline">¶</a></h2>
-<dl class="class">
-<dt id="mujoco_py.MjSimPool">
-<em class="property">class </em><code class="descclassname">mujoco_py.</code><code class="descname">MjSimPool</code><a class="headerlink" href="#mujoco_py.MjSimPool" title="Permalink to this definition">¶</a></dt>
-<dd><p>Keeps a pool of multiple MjSims and enables stepping them quickly
-in parallel.</p>
-<table class="docutils field-list" frame="void" rules="none">
-<col class="field-name" />
-<col class="field-body" />
-<tbody valign="top">
-<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><p class="first"><strong>sims</strong> : list of <a class="reference internal" href="#mujoco_py.MjSim" title="mujoco_py.MjSim"><code class="xref py py-class docutils literal"><span class="pre">MjSim</span></code></a></p>
-<blockquote>
-<div><p>List of simulators that make up the pool.</p>
-</div></blockquote>
-<p><strong>nsubsteps:</strong></p>
-<blockquote class="last">
-<div><p>Number of substeps to run on <a class="reference internal" href="#mujoco_py.MjSim.step" title="mujoco_py.MjSim.step"><code class="xref py py-meth docutils literal"><span class="pre">step()</span></code></a>. The individual
-simulators’ <code class="docutils literal"><span class="pre">nsubstep</span></code> will be ignored.</p>
-</div></blockquote>
-</td>
-</tr>
-</tbody>
-</table>
-<p class="rubric">Attributes</p>
-<p class="rubric">Methods</p>
-<dl class="staticmethod">
-<dt id="mujoco_py.MjSimPool.create_from_sim">
-<em class="property">static </em><code class="descname">create_from_sim</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#mujoco_py.MjSimPool.create_from_sim" title="Permalink to this definition">¶</a></dt>
-<dd><p>Create an <a class="reference internal" href="#mujoco_py.MjSimPool" title="mujoco_py.MjSimPool"><code class="xref py py-class docutils literal"><span class="pre">MjSimPool</span></code></a> by cloning the provided <code class="docutils literal"><span class="pre">sim</span></code> a total of <code class="docutils literal"><span class="pre">nsims</span></code> times.
-Returns the created <a class="reference internal" href="#mujoco_py.MjSimPool" title="mujoco_py.MjSimPool"><code class="xref py py-class docutils literal"><span class="pre">MjSimPool</span></code></a>.</p>
-<table class="docutils field-list" frame="void" rules="none">
-<col class="field-name" />
-<col class="field-body" />
-<tbody valign="top">
-<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><p class="first"><strong>sim</strong> : <a class="reference internal" href="#mujoco_py.MjSim" title="mujoco_py.MjSim"><code class="xref py py-class docutils literal"><span class="pre">MjSim</span></code></a></p>
-<blockquote>
-<div><p>The prototype to clone.</p>
-</div></blockquote>
-<p><strong>nsims</strong> : int</p>
-<blockquote class="last">
-<div><p>Number of clones to create.</p>
-</div></blockquote>
-</td>
-</tr>
-</tbody>
-</table>
-</dd></dl>
-
-<dl class="method">
-<dt id="mujoco_py.MjSimPool.forward">
-<code class="descname">forward</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#mujoco_py.MjSimPool.forward" title="Permalink to this definition">¶</a></dt>
-<dd><p>Calls <code class="docutils literal"><span class="pre">mj_forward</span></code> on all simulations in parallel.
-If <code class="xref py py-attr docutils literal"><span class="pre">nsims</span></code> is specified, than only the first <code class="xref py py-attr docutils literal"><span class="pre">nsims</span></code> simulator are forwarded.</p>
-</dd></dl>
-
-<dl class="method">
-<dt id="mujoco_py.MjSimPool.reset">
-<code class="descname">reset</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#mujoco_py.MjSimPool.reset" title="Permalink to this definition">¶</a></dt>
-<dd><p>Resets all simulations in pool.
-If <code class="xref py py-attr docutils literal"><span class="pre">nsims</span></code> is specified, than only the first <code class="xref py py-attr docutils literal"><span class="pre">nsims</span></code> simulators are reset.</p>
-</dd></dl>
-
-<dl class="method">
-<dt id="mujoco_py.MjSimPool.step">
-<code class="descname">step</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#mujoco_py.MjSimPool.step" title="Permalink to this definition">¶</a></dt>
-<dd><p>Calls <code class="docutils literal"><span class="pre">mj_step</span></code> on all simulations in parallel, with <code class="docutils literal"><span class="pre">nsubsteps</span></code> as
-specified when the pool was created.</p>
-<p>If <code class="xref py py-attr docutils literal"><span class="pre">nsims</span></code> is specified, than only the first <code class="xref py py-attr docutils literal"><span class="pre">nsims</span></code> simulator are stepped.</p>
-</dd></dl>
-
-</dd></dl>
-
-</div>
 <div class="section" id="mjviewer-3d-rendering">
-<h2><a class="toc-backref" href="#id4">MjViewer: 3D rendering</a><a class="headerlink" href="#mjviewer-3d-rendering" title="Permalink to this headline">¶</a></h2>
+<h2><a class="toc-backref" href="#id3">MjViewer: 3D rendering</a><a class="headerlink" href="#mjviewer-3d-rendering" title="Permalink to this headline">¶</a></h2>
 <dl class="class">
 <dt id="mujoco_py.MjViewerBasic">
 <em class="property">class </em><code class="descclassname">mujoco_py.</code><code class="descname">MjViewerBasic</code><span class="sig-paren">(</span><em>sim</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/mujoco_py/mjviewer.html#MjViewerBasic"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#mujoco_py.MjViewerBasic" title="Permalink to this definition">¶</a></dt>
@@ -1278,6 +1220,7 @@ Call this in your main loop.</p>
 <li>D: Enable/disable frame skipping when rendering lags behind real time.</li>
 <li>R: Toggle transparency of geoms.</li>
 <li>M: Toggle display of mocap bodies.</li>
+<li>0-4: Toggle display of geomgroups</li>
 </ul>
 <table class="docutils field-list" frame="void" rules="none">
 <col class="field-name" />
@@ -1349,7 +1292,7 @@ Call this in your main loop.</p>
     <script type="text/javascript">
         var DOCUMENTATION_OPTIONS = {
             URL_ROOT:'./',
-            VERSION:'1.50.1.0',
+            VERSION:'1.50.1.56',
             COLLAPSE_INDEX:false,
             FILE_SUFFIX:'.html',
             HAS_SOURCE:  true,
