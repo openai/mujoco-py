@@ -90,12 +90,6 @@ To run the provided unit and integrations tests:
 make test
 ```
 
-To test GPU-backed rendering, run:
-
-```
-make test_gpu
-```
-
 This is somewhat dependent on internal OpenAI infrastructure at the moment, but it should run if you change the `Makefile` parameters for your own setup.
 
 ## Changelog

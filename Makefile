@@ -38,12 +38,6 @@ test: build
 	# run it interactive mode so we can abort with CTRL+C
 	$(DOCKER) run --rm -i $(DOCKER_NAME) pytest
 
-test_gpu: build push
-	$(eval NODE="$(shell cirrascale-cli reserve -g 1080ti -t 10m)")
-	$(eval GPUS="$(shell echo $(NODE)| grep -oE '[^:]+f' | cut -c1-1 )")
-	$(eval NODE="$(shell echo $(NODE)| grep -oE '[^=]+:' | sed 's/://')")
-	ssh -t -o StrictHostKeyChecking=no $(NODE) 'docker pull $(DOCKER_NAME) && export GPUS=$(GPUS) && nvidia-docker run --rm -e GPUS -i $(DOCKER_NAME) pytest -m "not requires_glfw"'
-
 shell:
 	$(DOCKER) run --rm -it $(DOCKER_NAME) /bin/bash
 
@@ -60,21 +54,12 @@ cirra:
 # Requires to generate all *.so files. Call make generate_mac_so on mac; 
 # Call make generate_cpu_so on mac or linux. 
 # 
-# Call make generate_gpu_so on linux with nvidia-docker. The easiest way is to get to cirrascale, and call: make cirra. 
-# Then you have to copy back generated cymj_linuxgpuextensionbuilder.so file.
-#
 # Gather all *.so files.
 upload:
 	test -f ./mujoco_py/generated/cymj_$(VERSION)_$(PYTHON_VERSION)_linuxcpuextensionbuilder.so || exit -1
-	test -f ./mujoco_py/generated/cymj_$(VERSION)_$(PYTHON_VERSION)_linuxgpuextensionbuilder.so || exit -1
 	rm -rf dist
 	python setup.py sdist
 	twine upload dist/*
-
-generate_gpu_so:
-	rm -f ./mujoco_py/generated/cymj_*_linuxgpuextensionbuilder.so
-	nvidia-docker run -it --name $(UUID) $(DOCKER_NAME) bash -c "make clean;python -c 'import mujoco_py'"
-	nvidia-docker cp $(UUID):/mujoco_py/mujoco_py/generated/cymj_$(VERSION)_$(PYTHON_VERSION)_linuxgpuextensionbuilder.so mujoco_py/generated/
 
 generate_cpu_so:
 	rm -f ./mujoco_py/generated/cymj_*_linuxcpuextensionbuilder.so

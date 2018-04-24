@@ -22,24 +22,6 @@ import subprocess
 from mujoco_py.utils import discover_mujoco
 
 
-def get_nvidia_lib_dir():
-    exists_nvidia_smi = subprocess.call("type nvidia-smi", shell=True,
-                                        stdout=subprocess.PIPE, stderr=subprocess.PIPE) == 0
-    if not exists_nvidia_smi:
-        return None
-    docker_path = '/usr/local/nvidia/lib64'
-    if exists(docker_path):
-        return docker_path
-    paths = glob.glob('/usr/lib/nvidia-[0-9][0-9][0-9]')
-    paths = sorted(paths)
-    if len(paths) == 0:
-        return None
-    if len(paths) > 1:
-        print("Choosing the latest nvidia driver: %s, among %s" % (paths[-1], str(paths)))
-
-    return paths[-1]
-
-
 def load_cython_ext(mjpro_path):
     """
     Loads the cymj Cython extension. This is safe to be called from
@@ -66,11 +48,7 @@ The easy solution is to `import mujoco_py` _before_ `import glfw`.
         Builder = MacExtensionBuilder
     elif sys.platform == 'linux':
         _ensure_set_env_var("LD_LIBRARY_PATH", lib_path)
-        if os.getenv('MUJOCO_PY_FORCE_CPU') is None and get_nvidia_lib_dir() is not None:
-            _ensure_set_env_var("LD_LIBRARY_PATH", get_nvidia_lib_dir())
-            Builder = LinuxGPUExtensionBuilder
-        else:
-            Builder = LinuxCPUExtensionBuilder
+        Builder = LinuxCPUExtensionBuilder
     elif sys.platform.startswith("win"):
         var = "PATH"
         if var not in os.environ or lib_path not in os.environ[var].split(";"):
@@ -257,25 +235,6 @@ class LinuxCPUExtensionBuilder(MujocoExtensionBuilder):
         # Removes absolute paths to libraries. Allows for dynamic loading.
         fix_shared_library(so_file_path, 'libmujoco150.so', 'libmujoco150.so')
         fix_shared_library(so_file_path, 'libglewosmesa.so', 'libglewosmesa.so')
-        return so_file_path
-
-
-class LinuxGPUExtensionBuilder(MujocoExtensionBuilder):
-
-    def __init__(self, mjpro_path):
-        super().__init__(mjpro_path)
-
-        self.extension.sources.append(self.CYMJ_DIR_PATH + "/gl/eglshim.c")
-        self.extension.include_dirs.append(self.CYMJ_DIR_PATH + '/vendor/egl')
-        self.extension.libraries.extend(['glewegl'])
-        self.extension.runtime_library_dirs = [join(mjpro_path, 'bin')]
-
-    def _build_impl(self):
-        so_file_path = super()._build_impl()
-        fix_shared_library(so_file_path, 'libOpenGL.so', 'libOpenGL.so.0')
-        fix_shared_library(so_file_path, 'libEGL.so', 'libEGL.so.1')
-        fix_shared_library(so_file_path, 'libmujoco150.so', 'libmujoco150.so')
-        fix_shared_library(so_file_path, 'libglewegl.so', 'libglewegl.so')
         return so_file_path
 
 
