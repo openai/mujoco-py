@@ -156,7 +156,8 @@ int setOpenGLBufferSize(int device_id, int width, int height) {
 
 void closeOpenGL()
 {
-    for (int device_id=0; device_id<MAX_DEVICES; device_id++) {
+    int device_id;
+    for (device_id=0; device_id<MAX_DEVICES; device_id++) {
         if (!is_device_initialized[device_id])
             continue;
 
