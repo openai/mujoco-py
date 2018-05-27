@@ -27,20 +27,11 @@ model = load_model_from_xml(MODEL_XML)
 sim = MjSim(model)
 viewer = MjViewer(sim)
 step = 0
-
-doodle = np.zeros((100, 100, 3), np.uint8)
-
-
 while True:
-    # add flying box as a marker (visual-only geom)
     t = time.time()
     x, y = math.cos(t), math.sin(t)
-    viewer.add_marker(pos=np.array([x, y, 1]), label=str(t))
-
-    # draw an image to the screen
-    doodle[:, :, 0] = int(np.sin(t) * 128 + 127)
-    viewer.add_pixels(doodle, 100, 100)
-
+    viewer.add_marker(pos=np.array([x, y, 1]),
+                      label=str(t))
     viewer.render()
 
     step += 1
