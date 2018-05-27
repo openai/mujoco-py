@@ -56,9 +56,9 @@ while True:
     sim.data.qpos[:] = [x, y, -x, y, x, -y, -x, -y, x * .3, y * .3]
     sim.forward()
 
-    # draw an image drawn from the camera to the screen
-    render = sim.render(200, 200, mode="offscreen", camera_name="cam")
-    viewer.add_pixels(render, 300, 100)
+    # draw an image rendered from the camera to the viewer, near the bottom
+    buffer = sim.render(200, 200, mode="offscreen", camera_name="cam")
+    viewer.add_pixels(buffer, 300, 100)
 
     viewer.render()
 
