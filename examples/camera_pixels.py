@@ -1,5 +1,7 @@
 #!/usr/bin/env python
-# demonstration of markers (visual-only geoms)
+# demonstration of pixels (drawing buffers on top of viewer)
+# in this demo, the pixel buffer is from rendering a moving camera,
+# but in general any buffer of pixel values can be used.
 
 import time
 import os
