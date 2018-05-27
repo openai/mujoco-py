@@ -218,6 +218,7 @@ cdef class MjRenderContext(object):
         cdef mjvGeom *g = self._scn.geoms + self._scn.ngeom
 
         # default values.
+        g.label[0] = 0  # null byte == empty string
         g.dataid = -1
         g.objtype = const.OBJ_UNKNOWN
         g.objid = -1
