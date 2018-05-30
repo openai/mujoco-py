@@ -205,10 +205,11 @@ class MjViewer(MjViewerBasic):
         self._markers[:] = []
         self._overlay.clear()
 
-    def _read_pixels_as_in_window(self):
-        # Reads pixels with markers and overlay from the same camera as screen.
-        resolution = glfw.get_framebuffer_size(
-            self.sim._render_context_window.window)
+    def _read_pixels_as_in_window(self, resolution=None):
+        if resolution is None:
+            # Reads pixels with markers and overlay from the same camera as screen.
+            resolution = glfw.get_framebuffer_size(
+                self.sim._render_context_window.window)
 
         resolution = np.array(resolution)
         resolution = resolution * min(1000 / np.min(resolution), 1)
