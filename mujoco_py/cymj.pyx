@@ -146,7 +146,7 @@ def load_model_from_xml(str xml_str):
             fp.write(xml_str.encode())
             fp.flush()
         model = mj_loadXML(fp.name.encode(), NULL, errstr, 300)
-    os.path.remove(fp.name)
+    os.remove(fp.name)
     if model == NULL:
         raise Exception('%s\nFailed to load XML from string. mj_loadXML error: %s' % (xml_str, errstr,))
     return WrapMjModel(model)
