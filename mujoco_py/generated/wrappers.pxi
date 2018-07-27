@@ -885,9 +885,9 @@ cdef class PyMjModel(object):
     cdef np.ndarray _name_tupleadr
     cdef np.ndarray _names
     
-    cdef readonly tuple body_names, joint_names, geom_names, site_names, light_names, camera_names, actuator_names, sensor_names
-    cdef readonly dict _body_id2name, _joint_id2name, _geom_id2name, _site_id2name, _light_id2name, _camera_id2name, _actuator_id2name, _sensor_id2name
-    cdef readonly dict _body_name2id, _joint_name2id, _geom_name2id, _site_name2id, _light_name2id, _camera_name2id, _actuator_name2id, _sensor_name2id
+    cdef readonly tuple body_names, joint_names, geom_names, site_names, light_names, camera_names, actuator_names, sensor_names, tendon_names
+    cdef readonly dict _body_id2name, _joint_id2name, _geom_id2name, _site_id2name, _light_id2name, _camera_id2name, _actuator_id2name, _sensor_id2name, _tendon_id2name
+    cdef readonly dict _body_name2id, _joint_name2id, _geom_name2id, _site_name2id, _light_name2id, _camera_name2id, _actuator_name2id, _sensor_name2id, _tendon_name2id
 
     def body_id2name(self, id):
         if id not in self._body_id2name:
@@ -968,6 +968,16 @@ cdef class PyMjModel(object):
         if name not in self._sensor_name2id:
             raise ValueError("No \"sensor\" with name %s exists. Available \"sensor\" names = %s." % (name, self.sensor_names))
         return self._sensor_name2id[name]
+
+    def tendon_id2name(self, id):
+        if id not in self._tendon_id2name:
+            raise ValueError("No tendon with id %d exists." % id)
+        return self._tendon_id2name[id]
+
+    def tendon_name2id(self, name):
+        if name not in self._tendon_name2id:
+            raise ValueError("No \"tendon\" with name %s exists. Available \"tendon\" names = %s." % (name, self.tendon_names))
+        return self._tendon_name2id[name]
     cdef public tuple userdata_names
     cdef public dict _userdata_id2name
     cdef public dict _userdata_name2id
@@ -1095,6 +1105,7 @@ cdef class PyMjModel(object):
         self.camera_names, self._camera_name2id, self._camera_id2name = self._extract_mj_names(p, p.name_camadr, p.ncam, mjtObj.mjOBJ_CAMERA)
         self.actuator_names, self._actuator_name2id, self._actuator_id2name = self._extract_mj_names(p, p.name_actuatoradr, p.nu, mjtObj.mjOBJ_ACTUATOR)
         self.sensor_names, self._sensor_name2id, self._sensor_id2name = self._extract_mj_names(p, p.name_sensoradr, p.nsensor, mjtObj.mjOBJ_SENSOR)
+        self.tendon_names, self._tendon_name2id, self._tendon_id2name = self._extract_mj_names(p, p.name_tendonadr, p.ntendon, mjtObj.mjOBJ_TENDON)
         self.userdata_names = tuple()
         self._userdata_name2id = dict()
         self._userdata_id2name = dict()
