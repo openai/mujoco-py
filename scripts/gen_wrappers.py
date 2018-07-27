@@ -575,7 +575,8 @@ def main():
                          'light',
                          'camera',
                          'actuator',
-                         'sensor']
+                         'sensor',
+                         'tendon']
             obj_types_names = [o + '_names' for o in obj_types]
             extra += '    cdef readonly tuple ' + ', '.join(obj_types_names) + '\n'
             obj_types_id2names = ['_' + o + '_id2name' for o in obj_types]
@@ -658,6 +659,8 @@ def main():
                                                'actuator', 'actuator', 'ACTUATOR')
             extra_set += _set_body_identifiers('sensor',
                                                'sensor', 'sensor', 'SENSOR')
+            extra_set += _set_body_identifiers('tendon',
+                                               'tendon', 'tendon', 'TENDON')
             # userdata_names is empty at construction time
             extra_set += '        self.userdata_names = tuple()\n'
             extra_set += '        self._userdata_name2id = dict()\n'
