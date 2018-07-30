@@ -40,7 +40,7 @@ cdef class MjRenderContext(object):
 
     def __init__(self, MjSim sim, bint offscreen=True, int device_id=-1, opengl_backend=None):
         self.sim = sim
-        self._setup_opengl_context(offscreen, device_id, opengl_backend)
+        self.opengl_context = GlfwContext(offscreen=offscreen)
         self.offscreen = offscreen
 
         # Ensure the model data has been updated so that there
@@ -86,26 +86,6 @@ cdef class MjRenderContext(object):
             if self._con.currentBuffer != mjFB_WINDOW:
                 raise RuntimeError('Window rendering not supported')
         self.con = WrapMjrContext(&self._con)
-
-    def _setup_opengl_context(self, offscreen, device_id, opengl_backend):
-        if opengl_backend is None and (not offscreen or sys.platform == 'darwin'):
-            # default to glfw for onscreen viewing or mac (both offscreen/onscreen)
-            opengl_backend = 'glfw'
-
-        if opengl_backend == 'glfw':
-            self.opengl_context = GlfwContext(offscreen=offscreen)
-        else:
-            if device_id < 0:
-                if "GPUS" in os.environ:
-                    device_id = os.environ["GPUS"]
-                else:
-                    device_id = os.getenv('CUDA_VISIBLE_DEVICES', '')
-                if len(device_id) > 0:
-                    device_id = int(device_id.split(',')[0])
-                else:
-                    # Sometimes env variable is an empty string.
-                    device_id = 0
-            self.opengl_context = OffscreenOpenGLContext(device_id)
 
     def _init_camera(self, sim):
         # Make the free camera look at the scene

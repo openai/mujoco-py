@@ -1,6 +1,5 @@
 import os
 import sys
-from abc import ABCMeta, abstractmethod
 from mujoco_py.utils import discover_mujoco
 
 
@@ -19,22 +18,11 @@ except ImportError:
     pass
 
 
-class OpenGLContext(metaclass=ABCMeta):
-
-    @abstractmethod
-    def make_context_current(self):
-        raise NotImplementedError()
-
-    @abstractmethod
-    def set_buffer_size(self, width, height):
-        raise NotImplementedError()
-
-
 class GlfwError(RuntimeError):
     pass
 
 
-class GlfwContext(OpenGLContext):
+class GlfwContext():
 
     _INIT_WIDTH = 1000
     _INIT_HEIGHT = 1000
@@ -119,22 +107,3 @@ class GlfwContext(OpenGLContext):
         print("GLFW error (code %d): %s", error_code, description)
 
 
-class OffscreenOpenGLContext():
-
-    def __init__(self, device_id):
-        self.device_id = device_id
-        res = initOpenGL(device_id)
-        if res != 1:
-            raise RuntimeError("Failed to initialize OpenGL")
-
-    def close(self):
-        # TODO: properly close OpenGL in our contexts
-        closeOpenGL()
-
-    def make_context_current(self):
-        makeOpenGLContextCurrent(self.device_id)
-
-    def set_buffer_size(self, int width, int height):
-        res = setOpenGLBufferSize(self.device_id, width, height)
-        if res != 1:
-            raise RuntimeError("Failed to set buffer size")
