@@ -26,6 +26,7 @@ cdef class MjRenderContext(object):
     cdef readonly object opengl_context
     cdef readonly int _visible
     cdef readonly list _markers
+    cdef readonly list _pixels
     cdef readonly dict _overlay
 
     cdef readonly bint offscreen
@@ -61,6 +62,7 @@ cdef class MjRenderContext(object):
 
         self._markers = []
         self._overlay = {}
+        self._pixels = []
 
         self._init_camera(sim)
         self._set_mujoco_buffers()
@@ -157,6 +159,9 @@ cdef class MjRenderContext(object):
         for gridpos, (text1, text2) in self._overlay.items():
             mjr_overlay(const.FONTSCALE_150, gridpos, rect, text1.encode(), text2.encode(), &self._con)
 
+        for pixels_params in self._pixels:
+            self.draw_pixels(*pixels_params)
+
     def read_pixels(self, width, height, depth=True):
         cdef mjrRect rect
         rect.left = 0
@@ -213,6 +218,7 @@ cdef class MjRenderContext(object):
         cdef mjvGeom *g = self._scn.geoms + self._scn.ngeom
 
         # default values.
+        g.label[0] = 0  # null byte == empty string
         g.dataid = -1
         g.objtype = const.OBJ_UNKNOWN
         g.objid = -1
@@ -250,6 +256,8 @@ cdef class MjRenderContext(object):
 
         self._scn.ngeom += 1
 
+    def add_pixels(self, *pixels_params):
+        self._pixels.append(pixels_params)
 
     def __dealloc__(self):
         mjr_freeContext(&self._con)

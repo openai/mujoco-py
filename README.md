@@ -73,6 +73,7 @@ This is particularly useful on Ubuntu 14.04, which does not have a GLFW package.
 
 A number of examples demonstrating some advanced features of `mujoco-py` can be found in [`examples/`](/./examples/). These include:
 - [`body_interaction.py`](./examples/body_interaction.py): shows interactions between colliding bodies
+- [`camera_pixels.py`](./examples/camera_pixels.py): shows rendering a buffer on top of the viewer, in this case a buffer from one of the cameras
 - [`disco_fetch.py`](./examples/disco_fetch.py): shows how `TextureModder` can be used to randomize object textures
 - [`internal_functions.py`](./examples/internal_functions.py): shows how to call raw mujoco functions like `mjv_room2model`
 - [`markers_demo.py`](./examples/markers_demo.py): shows how to add visualization-only geoms to the viewer

@@ -201,8 +201,9 @@ class MjViewer(MjViewerBasic):
             while self._loop_count > 0:
                 render_inner_loop(self)
                 self._loop_count -= 1
-        # Markers and overlay are regenerated in every pass.
+        # Markers, pixels, and overlay are regenerated in every pass.
         self._markers[:] = []
+        self._pixels[:] = []
         self._overlay.clear()
 
     def _read_pixels_as_in_window(self):
@@ -220,21 +221,24 @@ class MjViewer(MjViewerBasic):
         window_ctx = self.sim._render_context_window
         # Save markers and overlay from offscreen.
         saved = [copy.deepcopy(offscreen_ctx._markers),
+                 copy.deepcopy(offscreen_ctx._pixels),
                  copy.deepcopy(offscreen_ctx._overlay),
                  rec_copy(offscreen_ctx.cam)]
         # Copy markers and overlay from window.
         offscreen_ctx._markers[:] = window_ctx._markers[:]
+        offscreen_ctx._pixels[:] = window_ctx._pixels[:]
         offscreen_ctx._overlay.clear()
         offscreen_ctx._overlay.update(window_ctx._overlay)
         rec_assign(offscreen_ctx.cam, rec_copy(window_ctx.cam))
 
         img = self.sim.render(*resolution)
-        img = img[::-1, :, :] # Rendered images are upside-down.
+        img = img[::-1, :, :]  # Rendered images are upside-down.
         # Restore markers and overlay to offscreen.
         offscreen_ctx._markers[:] = saved[0][:]
+        offscreen_ctx._pixels[:] = saved[1][:]
         offscreen_ctx._overlay.clear()
-        offscreen_ctx._overlay.update(saved[1])
-        rec_assign(offscreen_ctx.cam, saved[2])
+        offscreen_ctx._overlay.update(saved[2])
+        rec_assign(offscreen_ctx.cam, saved[3])
         return img
 
     def _create_full_overlay(self):
