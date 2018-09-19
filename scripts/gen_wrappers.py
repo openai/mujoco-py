@@ -349,12 +349,13 @@ def get_funcs(fname):
             for arg in args:
                 arg = arg.strip()
                 data_type = " ".join(arg.split(" ")[:-1])
+                # if data_type.strip() == 'int*' and 'ray' in func_name.lower():
+                #     import ipdb; ipdb.set_trace()
                 var_name = arg.split(" ")[-1]
                 if var_name.find("[") > -1:
                     #arr_size = var_name[var_name.find("[") + 1:var_name.find("]")]
                     data_type = data_type + "*"
                     var_name = var_name[:var_name.find("[")]
-
                 if data_type in ["char*"]:
                     py_args_string.append("str " + var_name)
                     c_args_string.append(var_name + ".encode()")
@@ -371,6 +372,15 @@ def get_funcs(fname):
                         "np.ndarray[np.float64_t, mode=\"c\", ndim=1] " + var_name)
                     c_args_string.append("&%s[0]" % var_name)
                     continue
+                if data_type == "mjtByte":
+                    py_args_string.append("int " + var_name)
+                    c_args_string.append(var_name)
+                    continue
+                if data_type == "mjtByte*":
+                    py_args_string.append(
+                        "np.ndarray[np.uint8_t, mode=\"c\", ndim=1] " + var_name)
+                    c_args_string.append("&%s[0]" % var_name)
+                    continue
                 if data_type[:2] == "mj" and data_type[-1] == "*":
                     py_args_string.append(
                         "PyMj" + data_type[2:-1] + " " + var_name)
@@ -384,6 +394,10 @@ def get_funcs(fname):
                 if data_type in "int":
                     py_args_string.append("int " + var_name)
                     c_args_string.append(var_name)
+                    continue
+                if data_type in "int*":
+                    py_args_string.append("uintptr_t " + var_name)
+                    c_args_string.append("<int*>" + var_name)
                     continue
                 # XXX
                 skip = True
