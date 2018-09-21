@@ -17,6 +17,7 @@ from cffi import FFI
 from Cython.Build import cythonize
 from Cython.Distutils.old_build_ext import old_build_ext as build_ext
 from mujoco_py.version import get_version
+from lockfile import LockFile
 import subprocess
 
 from mujoco_py.utils import discover_mujoco
@@ -82,13 +83,20 @@ The easy solution is to `import mujoco_py` _before_ `import glfw`.
 
     builder = Builder(mjpro_path)
     cext_so_path = builder.get_so_file_path()
-    if exists(cext_so_path):
-        try:
-            return load_dynamic_ext('cymj', cext_so_path)
-        except ImportError:
-            print("Import error. Trying to rebuild mujoco_py.")
-    cext_so_path = builder.build()
-    return load_dynamic_ext('cymj', cext_so_path)
+
+    lockpath = os.path.join(os.path.dirname(cext_so_path), 'mujocopy-buildlock')
+
+    with LockFile(lockpath):
+        mod = None
+        if exists(cext_so_path):
+            try:
+                mod = load_dynamic_ext('cymj', cext_so_path)
+            except ImportError:
+                print("Import error. Trying to rebuild mujoco_py.")
+        if mod is None:
+            cext_so_path = builder.build()
+            mod = load_dynamic_ext('cymj', cext_so_path)
+    return mod
 
 def _ensure_set_env_var(var_name, lib_path):
     paths = os.environ.get(var_name, "").split(":")
