@@ -301,7 +301,7 @@ class MacExtensionBuilder(MujocoExtensionBuilder):
             raise RuntimeError(
                 'Could not find GCC 6 or GCC 7 executable.\n\n'
                 'HINT: On OS X, install GCC 6 with '
-                '`brew install gcc --without-multilib`.')
+                '`brew install gcc@7 --without-multilib`.')
         os.environ['CC'] = available_c_compiler
 
         so_file_path = super()._build_impl()
