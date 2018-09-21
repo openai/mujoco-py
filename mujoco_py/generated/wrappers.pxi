@@ -3948,6 +3948,9 @@ def _mj_printData(PyMjModel m, PyMjData d, str filename):
 def _mju_printMat(np.ndarray[np.float64_t, mode="c", ndim=1] mat, int nr, int nc):
     mju_printMat(&mat[0], nr, nc)
 
+def _mju_printMatSparse(np.ndarray[np.float64_t, mode="c", ndim=1] mat, int nr, uintptr_t rownnz, uintptr_t rowadr, uintptr_t colind):
+    mju_printMatSparse(&mat[0], nr, <int*>rownnz, <int*>rowadr, <int*>colind)
+
 def _mj_fwdPosition(PyMjModel m, PyMjData d):
     mj_fwdPosition(m.ptr, d.ptr)
 
@@ -4104,6 +4107,9 @@ def _mj_fullM(PyMjModel m, np.ndarray[np.float64_t, mode="c", ndim=1] dst, np.nd
 def _mj_mulM(PyMjModel m, PyMjData d, np.ndarray[np.float64_t, mode="c", ndim=1] res, np.ndarray[np.float64_t, mode="c", ndim=1] vec):
     mj_mulM(m.ptr, d.ptr, &res[0], &vec[0])
 
+def _mj_addM(PyMjModel m, PyMjData d, np.ndarray[np.float64_t, mode="c", ndim=1] dst, uintptr_t rownnz, uintptr_t rowadr, uintptr_t colind):
+    mj_addM(m.ptr, d.ptr, &dst[0], <int*>rownnz, <int*>rowadr, <int*>colind)
+
 def _mj_applyFT(PyMjModel m, PyMjData d, np.ndarray[np.float64_t, mode="c", ndim=1] force, np.ndarray[np.float64_t, mode="c", ndim=1] torque, np.ndarray[np.float64_t, mode="c", ndim=1] point, int body, np.ndarray[np.float64_t, mode="c", ndim=1] qfrc_target):
     mj_applyFT(m.ptr, d.ptr, &force[0], &torque[0], &point[0], body, &qfrc_target[0])
 
@@ -4136,6 +4142,9 @@ def _mj_setTotalmass(PyMjModel m, float newmass):
 
 def _mj_version():
     return mj_version()
+
+def _mj_ray(PyMjModel m, PyMjData d, np.ndarray[np.float64_t, mode="c", ndim=1] pnt, np.ndarray[np.float64_t, mode="c", ndim=1] vec, np.ndarray[np.uint8_t, mode="c", ndim=1] geomgroup, int flg_static, int bodyexclude, uintptr_t geomid):
+    return mj_ray(m.ptr, d.ptr, &pnt[0], &vec[0], &geomgroup[0], flg_static, bodyexclude, <int*>geomid)
 
 def _mj_rayHfield(PyMjModel m, PyMjData d, int geomid, np.ndarray[np.float64_t, mode="c", ndim=1] pnt, np.ndarray[np.float64_t, mode="c", ndim=1] vec):
     return mj_rayHfield(m.ptr, d.ptr, geomid, &pnt[0], &vec[0])
@@ -4401,6 +4410,33 @@ def _mju_sqrMatTD(np.ndarray[np.float64_t, mode="c", ndim=1] res, np.ndarray[np.
 def _mju_transformSpatial(np.ndarray[np.float64_t, mode="c", ndim=1] res, np.ndarray[np.float64_t, mode="c", ndim=1] vec, int flg_force, np.ndarray[np.float64_t, mode="c", ndim=1] newpos, np.ndarray[np.float64_t, mode="c", ndim=1] oldpos, np.ndarray[np.float64_t, mode="c", ndim=1] rotnew2old):
     mju_transformSpatial(&res[0], &vec[0], flg_force, &newpos[0], &oldpos[0], &rotnew2old[0])
 
+def _mju_dotSparse(np.ndarray[np.float64_t, mode="c", ndim=1] vec1, np.ndarray[np.float64_t, mode="c", ndim=1] vec2, int nnz1, uintptr_t ind1):
+    return mju_dotSparse(&vec1[0], &vec2[0], nnz1, <int*>ind1)
+
+def _mju_dotSparse2(np.ndarray[np.float64_t, mode="c", ndim=1] vec1, np.ndarray[np.float64_t, mode="c", ndim=1] vec2, int nnz1, uintptr_t ind1, int nnz2, uintptr_t ind2):
+    return mju_dotSparse2(&vec1[0], &vec2[0], nnz1, <int*>ind1, nnz2, <int*>ind2)
+
+def _mju_dense2sparse(np.ndarray[np.float64_t, mode="c", ndim=1] res, np.ndarray[np.float64_t, mode="c", ndim=1] mat, int nr, int nc, uintptr_t rownnz, uintptr_t rowadr, uintptr_t colind):
+    mju_dense2sparse(&res[0], &mat[0], nr, nc, <int*>rownnz, <int*>rowadr, <int*>colind)
+
+def _mju_sparse2dense(np.ndarray[np.float64_t, mode="c", ndim=1] res, np.ndarray[np.float64_t, mode="c", ndim=1] mat, int nr, int nc, uintptr_t rownnz, uintptr_t rowadr, uintptr_t colind):
+    mju_sparse2dense(&res[0], &mat[0], nr, nc, <int*>rownnz, <int*>rowadr, <int*>colind)
+
+def _mju_mulMatVecSparse(np.ndarray[np.float64_t, mode="c", ndim=1] res, np.ndarray[np.float64_t, mode="c", ndim=1] mat, np.ndarray[np.float64_t, mode="c", ndim=1] vec, int nr, uintptr_t rownnz, uintptr_t rowadr, uintptr_t colind):
+    mju_mulMatVecSparse(&res[0], &mat[0], &vec[0], nr, <int*>rownnz, <int*>rowadr, <int*>colind)
+
+def _mju_compressSparse(np.ndarray[np.float64_t, mode="c", ndim=1] mat, int nr, int nc, uintptr_t rownnz, uintptr_t rowadr, uintptr_t colind):
+    mju_compressSparse(&mat[0], nr, nc, <int*>rownnz, <int*>rowadr, <int*>colind)
+
+def _mju_combineSparse(np.ndarray[np.float64_t, mode="c", ndim=1] dst, np.ndarray[np.float64_t, mode="c", ndim=1] src, int n, float a, float b, int dst_nnz, int src_nnz, uintptr_t dst_ind, uintptr_t src_ind, np.ndarray[np.float64_t, mode="c", ndim=1] scratch, int nscratch):
+    return mju_combineSparse(&dst[0], &src[0], n, a, b, dst_nnz, src_nnz, <int*>dst_ind, <int*>src_ind, &scratch[0], nscratch)
+
+def _mju_sqrMatTDSparse(np.ndarray[np.float64_t, mode="c", ndim=1] res, np.ndarray[np.float64_t, mode="c", ndim=1] mat, np.ndarray[np.float64_t, mode="c", ndim=1] matT, np.ndarray[np.float64_t, mode="c", ndim=1] diag, int nr, int nc, uintptr_t res_rownnz, uintptr_t res_rowadr, uintptr_t res_colind, uintptr_t rownnz, uintptr_t rowadr, uintptr_t colind, uintptr_t rownnzT, uintptr_t rowadrT, uintptr_t colindT, np.ndarray[np.float64_t, mode="c", ndim=1] scratch, int nscratch):
+    mju_sqrMatTDSparse(&res[0], &mat[0], &matT[0], &diag[0], nr, nc, <int*>res_rownnz, <int*>res_rowadr, <int*>res_colind, <int*>rownnz, <int*>rowadr, <int*>colind, <int*>rownnzT, <int*>rowadrT, <int*>colindT, &scratch[0], nscratch)
+
+def _mju_transposeSparse(np.ndarray[np.float64_t, mode="c", ndim=1] res, np.ndarray[np.float64_t, mode="c", ndim=1] mat, int nr, int nc, uintptr_t res_rownnz, uintptr_t res_rowadr, uintptr_t res_colind, uintptr_t rownnz, uintptr_t rowadr, uintptr_t colind):
+    mju_transposeSparse(&res[0], &mat[0], nr, nc, <int*>res_rownnz, <int*>res_rowadr, <int*>res_colind, <int*>rownnz, <int*>rowadr, <int*>colind)
+
 def _mju_rotVecQuat(np.ndarray[np.float64_t, mode="c", ndim=1] res, np.ndarray[np.float64_t, mode="c", ndim=1] vec, np.ndarray[np.float64_t, mode="c", ndim=1] quat):
     mju_rotVecQuat(&res[0], &vec[0], &quat[0])
 
@@ -4451,6 +4487,15 @@ def _mju_cholSolve(np.ndarray[np.float64_t, mode="c", ndim=1] res, np.ndarray[np
 
 def _mju_cholUpdate(np.ndarray[np.float64_t, mode="c", ndim=1] mat, np.ndarray[np.float64_t, mode="c", ndim=1] x, int n, int flg_plus):
     return mju_cholUpdate(&mat[0], &x[0], n, flg_plus)
+
+def _mju_cholFactorSparse(np.ndarray[np.float64_t, mode="c", ndim=1] mat, int n, uintptr_t rownnz, uintptr_t rowadr, uintptr_t colind, np.ndarray[np.float64_t, mode="c", ndim=1] scratch, int nscratch):
+    return mju_cholFactorSparse(&mat[0], n, <int*>rownnz, <int*>rowadr, <int*>colind, &scratch[0], nscratch)
+
+def _mju_cholSolveSparse(np.ndarray[np.float64_t, mode="c", ndim=1] res, np.ndarray[np.float64_t, mode="c", ndim=1] mat, np.ndarray[np.float64_t, mode="c", ndim=1] vec, int n, uintptr_t rownnz, uintptr_t rowadr, uintptr_t colind):
+    mju_cholSolveSparse(&res[0], &mat[0], &vec[0], n, <int*>rownnz, <int*>rowadr, <int*>colind)
+
+def _mju_cholUpdateSparse(np.ndarray[np.float64_t, mode="c", ndim=1] mat, np.ndarray[np.float64_t, mode="c", ndim=1] x, int n, int flg_plus, uintptr_t rownnz, uintptr_t rowadr, uintptr_t colind, int x_nnz, uintptr_t x_ind, np.ndarray[np.float64_t, mode="c", ndim=1] scratch, int nscratch):
+    return mju_cholUpdateSparse(&mat[0], &x[0], n, flg_plus, <int*>rownnz, <int*>rowadr, <int*>colind, x_nnz, <int*>x_ind, &scratch[0], nscratch)
 
 def _mju_eig3(np.ndarray[np.float64_t, mode="c", ndim=1] eigval, np.ndarray[np.float64_t, mode="c", ndim=1] eigvec, np.ndarray[np.float64_t, mode="c", ndim=1] quat, np.ndarray[np.float64_t, mode="c", ndim=1] mat):
     return mju_eig3(&eigval[0], &eigvec[0], &quat[0], &mat[0])
