@@ -424,7 +424,7 @@ def get_funcs(fname):
 
 
 def main():
-    HEADER_DIR = os.path.expanduser(os.path.join('~', '.mujoco', 'mjpro150', 'include'))
+    HEADER_DIR = os.path.expanduser(os.path.join('~', '.mujoco', 'mujoco200', 'include'))
     HEADER_FILES = [
         'mjmodel.h',
         'mjdata.h',

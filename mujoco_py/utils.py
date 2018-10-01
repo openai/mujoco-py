@@ -53,5 +53,5 @@ def discover_mujoco():
     - key_path (str): Path to the MuJoCo license key.
     """
     key_path = join(expanduser('~'), '.mujoco', 'mjkey.txt')
-    mjpro_path = join(expanduser('~'), '.mujoco', 'mjpro150')
+    mjpro_path = join(expanduser('~'), '.mujoco', 'mujoco200')
     return (mjpro_path, key_path)
