@@ -238,7 +238,8 @@ class MujocoExtensionBuilder():
 
     def get_so_file_path(self):
         dir_path = abspath(dirname(__file__))
-        return join(dir_path, "generated", "cymj_%s.so" % self.version)
+        python_version = str(sys.version_info.major) + str(sys.version_info.minor)
+        return join(dir_path, "generated", "cymj_{}_{}.so".format(self.version, python_version))
 
 
 class WindowsExtensionBuilder(MujocoExtensionBuilder):
