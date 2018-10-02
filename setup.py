@@ -1,7 +1,5 @@
 #!/usr/bin/env python3
-import importlib
-from distutils.command.build import build as DistutilsBuild
-from os.path import abspath, join, dirname, realpath
+from os.path import join, dirname, realpath
 from setuptools import find_packages, setup
 
 with open(join("mujoco_py", "version.py")) as version_file:

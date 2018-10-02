@@ -98,6 +98,7 @@ The easy solution is to `import mujoco_py` _before_ `import glfw`.
             mod = load_dynamic_ext('cymj', cext_so_path)
     return mod
 
+
 def _ensure_set_env_var(var_name, lib_path):
     paths = os.environ.get(var_name, "").split(":")
     paths = [os.path.abspath(path) for path in paths]
@@ -107,6 +108,7 @@ def _ensure_set_env_var(var_name, lib_path):
                         "Please add following line to .bashrc:\n"
                         "export %s=$%s:%s" % (var_name, os.environ.get(var_name, ""),
                                               var_name, var_name, lib_path))
+
 
 def load_dynamic_ext(name, path):
     ''' Load compiled shared object and return as python module. '''
@@ -236,8 +238,6 @@ class MujocoExtensionBuilder():
 
     def get_so_file_path(self):
         dir_path = abspath(dirname(__file__))
-
-        python_version = str(sys.version_info.major) + str(sys.version_info.minor)
         return join(dir_path, "generated", "cymj_%s.so" % self.version)
 
 
@@ -258,7 +258,6 @@ class LinuxCPUExtensionBuilder(MujocoExtensionBuilder):
             join(self.CYMJ_DIR_PATH, "gl", "osmesashim.c"))
         self.extension.libraries.extend(['glewosmesa', 'OSMesa', 'GL'])
         self.extension.runtime_library_dirs = [join(mjpro_path, 'bin')]
-
 
     def _build_impl(self):
         so_file_path = super()._build_impl()
@@ -469,8 +468,10 @@ def build_callback_fn(function_string, userdata_names=[]):
     build_fn_cleanup(name)
     return module.lib.__fun
 
+
 def activate():
     functions.mj_activate(key_path)
+
 
 mjpro_path, key_path = discover_mujoco()
 cymj = load_cython_ext(mjpro_path)
