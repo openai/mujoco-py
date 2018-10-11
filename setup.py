@@ -1,8 +1,9 @@
 #!/usr/bin/env python3
-import importlib
-from distutils.command.build import build as DistutilsBuild
-from os.path import abspath, join, dirname, realpath
+import os
+from os.path import join, dirname, realpath
 from setuptools import find_packages, setup
+from distutils.command.build import build as DistutilsBuild
+
 
 with open(join("mujoco_py", "version.py")) as version_file:
     exec(version_file.read())
@@ -19,6 +20,15 @@ packages = find_packages()
 for p in packages:
     assert p == 'mujoco_py' or p.startswith('mujoco_py.')
 
+
+class Build(DistutilsBuild):
+    def run(self):
+        os.environ['MUJOCO_PY_FORCE_REBUILD'] = 'True'
+        os.environ['MUJOCO_PY_SKIP_ACTIVATE'] = 'True'
+        import mujoco_py  # noqa: force build
+        DistutilsBuild.run(self)
+
+
 setup(
     name='mujoco-py',
     version=__version__,  # noqa
@@ -27,6 +37,7 @@ setup(
     url='https://github.com/openai/mujoco-py',
     packages=packages,
     include_package_data=True,
+    cmdclass={'build': Build},
     package_dir={'mujoco_py': 'mujoco_py'},
     package_data={'mujoco_py': ['generated/*.so']},
     install_requires=read_requirements_file('requirements.txt'),
