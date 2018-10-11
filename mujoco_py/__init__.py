@@ -1,3 +1,5 @@
+#!/usr/bin/env python
+import os
 from mujoco_py.builder import cymj, ignore_mujoco_warnings, functions, MujocoException
 from mujoco_py.generated import const
 from mujoco_py.mjrenderpool import MjRenderPool
@@ -27,4 +29,6 @@ __all__ = ['MjSim', 'MjSimState',
            'ignore_mujoco_warnings', 'const', "functions",
            "__version__", "get_version"]
 
-mujoco_py.builder.activate()
+
+if not os.environ.get('MUJOCO_PY_SKIP_ACTIVATE'):
+    mujoco_py.builder.activate()

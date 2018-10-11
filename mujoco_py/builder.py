@@ -88,6 +88,14 @@ The easy solution is to `import mujoco_py` _before_ `import glfw`.
 
     with LockFile(lockpath):
         mod = None
+        force_rebuild = os.environ.get('MUJOCO_PY_FORCE_REBUILD')
+        if force_rebuild:
+            # Try to remove the old file, ignore errors if it doesn't exist
+            print("Removing old mujoco_py cext", cext_so_path)
+            try:
+                os.remove(cext_so_path)
+            except OSError:
+                pass
         if exists(cext_so_path):
             try:
                 mod = load_dynamic_ext('cymj', cext_so_path)
