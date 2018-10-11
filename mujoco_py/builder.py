@@ -483,6 +483,25 @@ def build_callback_fn(function_string, userdata_names=[]):
     return module.lib.__fun
 
 
+MISSING_KEY_MESSAGE = '''
+You appear to be missing a License Key for mujoco.  We expected to find the
+file here: {}
+
+You can get licenses at this page:
+
+    https://www.roboti.us/license.html
+
+If python tries to activate an invalid license, the process will exit.
+'''
+
+
+def find_key():
+    ''' Try to find the key file, if missing, print out a big message '''
+    if exists(key_path):
+        return
+    print(MISSING_KEY_MESSAGE.format(key_path), file=sys.stderr)
+
+
 def activate():
     functions.mj_activate(key_path)
 
