@@ -480,7 +480,7 @@ def activate():
 
 
 mjpro_path, key_path = discover_mujoco()
-# cymj = load_cython_ext(mjpro_path)
+cymj = load_cython_ext(mjpro_path)
 
 
 # Trick to expose all mj* functions from mujoco in mujoco_py.*
@@ -488,10 +488,10 @@ class dict2(object):
     pass
 
 
-# functions = dict2()
-# for func_name in dir(cymj):
-#     if func_name.startswith("_mj"):
-#         setattr(functions, func_name[1:], getattr(cymj, func_name))
+functions = dict2()
+for func_name in dir(cymj):
+    if func_name.startswith("_mj"):
+        setattr(functions, func_name[1:], getattr(cymj, func_name))
 
 # Set user-defined callbacks that raise assertion with message
-# cymj.set_warning_callback(user_warning_raise_exception)
+cymj.set_warning_callback(user_warning_raise_exception)
