@@ -1,3 +1,4 @@
+import os
 import copy
 from os.path import join, expanduser
 
@@ -52,6 +53,10 @@ def discover_mujoco():
     - mjpro_path (str): Path to MuJoCo Pro 1.50 directory.
     - key_path (str): Path to the MuJoCo license key.
     """
-    key_path = join(expanduser('~'), '.mujoco', 'mjkey.txt')
-    mjpro_path = join(expanduser('~'), '.mujoco', 'mjpro150')
+    key_path = os.getenv('MUJOCO_PY_MJKEY_PATH')
+    if not key_path:
+        key_path = join(expanduser('~'), '.mujoco', 'mjkey.txt')
+    mjpro_path = os.getenv('MUJOCO_PY_MJPRO_PATH')
+    if not mjpro_path:
+        mjpro_path = join(expanduser('~'), '.mujoco', 'mjpro150')
     return (mjpro_path, key_path)

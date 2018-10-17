@@ -27,6 +27,9 @@ Python 2 has been desupported since [1.50.1.0](https://github.com/openai/mujoco-
    and place your license key (the `mjkey.txt` file from your email)
    at `~/.mujoco/mjkey.txt`.
 
+If you want to specify a nonstandard location for the key and package,
+use the env variables `MUJOCO_PY_MJKEY_PATH` and `MUJOCO_PY_MJPRO_PATH`.
+
 ### Install and use `mujoco-py`
 To include `mujoco-py` in your own package, add it to your requirements like so:
 ```
