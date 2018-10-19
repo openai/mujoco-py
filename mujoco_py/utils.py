@@ -1,9 +1,34 @@
+import sys
 import os
 import copy
-from os.path import join, expanduser
+from os.path import join, expanduser, exists
 
 import numpy as np
 
+MISSING_KEY_MESSAGE = '''
+You appear to be missing a License Key for mujoco.  We expected to find the
+file here: {}
+
+You can get licenses at this page:
+
+    https://www.roboti.us/license.html
+
+If python tries to activate an invalid license, the process will exit.
+'''
+
+MISSING_MJPRO_MESSAGE = '''
+You appear to be missing MuJoCo.  We expected to find the file here: {}
+
+This package only provides python bindings, the library must be installed separately.
+
+Please follow the instructions on the README to install MuJoCo
+
+    https://github.com/openai/mujoco-py#install-mujoco
+
+Which can be downloaded from the website
+
+    https://www.roboti.us/index.html
+'''
 
 
 def remove_empty_lines(string):
@@ -59,4 +84,16 @@ def discover_mujoco():
     mjpro_path = os.getenv('MUJOCO_PY_MJPRO_PATH')
     if not mjpro_path:
         mjpro_path = join(expanduser('~'), '.mujoco', 'mjpro150')
+
+    # We get lots of github issues that seem to be missing these
+    # so check that mujoco is really there and raise errors if not.
+    if not exists(mjpro_path):
+        message = MISSING_MJPRO_MESSAGE.format(mjpro_path)
+        print(message, file=sys.stderr)
+        raise Exception(message)
+    if not exists(key_path):
+        message = MISSING_KEY_MESSAGE.format(key_path)
+        print(message, file=sys.stderr)
+        raise Exception(message)
+
     return (mjpro_path, key_path)
