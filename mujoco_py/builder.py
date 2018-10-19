@@ -20,7 +20,7 @@ from mujoco_py.version import get_version
 from lockfile import LockFile
 import subprocess
 
-from mujoco_py.utils import discover_mujoco
+from mujoco_py.utils import discover_mujoco, MISSING_KEY_MESSAGE
 
 
 def get_nvidia_lib_dir():
@@ -483,16 +483,6 @@ def build_callback_fn(function_string, userdata_names=[]):
     return module.lib.__fun
 
 
-MISSING_KEY_MESSAGE = '''
-You appear to be missing a License Key for mujoco.  We expected to find the
-file here: {}
-
-You can get licenses at this page:
-
-    https://www.roboti.us/license.html
-
-If python tries to activate an invalid license, the process will exit.
-'''
 
 
 def find_key():
