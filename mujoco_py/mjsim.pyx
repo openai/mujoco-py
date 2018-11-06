@@ -337,11 +337,12 @@ cdef class MjSim(object):
 
     def ray(self, np.ndarray[np.float64_t, mode="c", ndim=1] pnt,
             np.ndarray[np.float64_t, mode="c", ndim=1] vec,
-            include_static_geoms=True, exclude_body=-1):
+            geomgroup=None, include_static_geoms=True, exclude_body=-1):
         """
         Cast a ray into the scene, and return the first valid geom it intersects.
             pnt - origin point of the ray in world coordinates (X Y Z)
             vec - direction of the ray in world coordinates (X Y Z)
+            geomgroup - None or an array of length mjNGROUP treated as booleans
             include_static_geoms - if False, we exclude geoms that are children of worldbody.
             exclude_body - if this is a body ID, we exclude all children geoms of this body.
         Returns (distance, geom_id) where
@@ -355,6 +356,17 @@ cdef class MjSim(object):
         cdef mjtNum distance
         cdef mjtNum[::view.contiguous] pnt_view = pnt
         cdef mjtNum[::view.contiguous] vec_view = vec
-        distance = mj_ray(self.model.ptr, self.data.ptr, &pnt_view[0], &vec_view[0], NULL,
-                          1 if include_static_geoms else 0, exclude_body, &geom_id)
+        cdef mjtByte[::view.contiguous] geomgroup_view
+        cdef mjtByte* geomgroup_ptr = NULL
+
+        if geomgroup is not None:
+            geomgroup_view = geomgroup
+            geomgroup_ptr = &geomgroup_view[0]
+
+        distance = mj_ray(self.model.ptr, self.data.ptr,
+                          &pnt_view[0], &vec_view[0],
+                          geomgroup_ptr,
+                          1 if include_static_geoms else 0,
+                          exclude_body,
+                          &geom_id)
         return (distance, geom_id)
