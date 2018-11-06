@@ -752,44 +752,42 @@ class TestRay(unittest.TestCase):
         sim = MjSim(load_model_from_xml(self.xml))
         sim.forward()
 
-        # Include all bodies
+        # Include all geoms
         self.check_rays(sim,
                         [0.9, 0.1, 0.9, 0.1, 0.9, 0.1, -1.0],
-                        ['A', 'A', 'B', 'B', 'C', 'C', None],
-                        include_static_geoms=True, exclude_body=-1)
+                        ['A', 'A', 'B', 'B', 'C', 'C', None])
 
-        # Exclude static bodies (just 'A')
+        # Include static geoms, but exclude worldbody (which contains 'A')
         self.check_rays(sim,
                         [2.9, 1.9, 0.9, 0.1, 0.9, 0.1, -1.0],
                         ['B', 'B', 'B', 'B', 'C', 'C', None],
-                        include_static_geoms=False, exclude_body=-1)
+                        exclude_body=0)
 
-        # Include static bodies, but exclude worldbody (which excludes static body 'A')
-        self.check_rays(sim,
-                        [2.9, 1.9, 0.9, 0.1, 0.9, 0.1, -1.0],
-                        ['B', 'B', 'B', 'B', 'C', 'C', None],
-                        include_static_geoms=True, exclude_body=0)
-
-        # Include static bodies, and exclude body 1
-        # (this excludes 'C' which is in body 1, but not 'B' which is in child body 2)
+        # Include static geoms, and exclude body 1 (which contains 'C')
         self.check_rays(sim,
                         [0.9, 0.1, 0.9, 0.1, -1.0, -1.0, -1.0],
                         ['A', 'A', 'B', 'B', None, None, None],
-                        include_static_geoms=True, exclude_body=1)
+                        exclude_body=1)
 
-        # Exclude static bodies, and exclude body 1 ('C')
+        # Include static geoms, and exclude body 2 (which contains 'B')
+        self.check_rays(sim,
+                        [0.9, 0.1, 2.9, 1.9, 0.9, 0.1, -1.0],
+                        ['A', 'A', 'C', 'C', 'C', 'C', None],
+                        exclude_body=2)
+
+        # Exclude static geoms ('A' is the only static geom)
+        self.check_rays(sim,
+                        [2.9, 1.9, 0.9, 0.1, 0.9, 0.1, -1.0],
+                        ['B', 'B', 'B', 'B', 'C', 'C', None],
+                        include_static_geoms=False)
+
+        # Exclude static geoms, and exclude body 1 ('C')
         self.check_rays(sim,
                         [2.9, 1.9, 0.9, 0.1, -1.0, -1.0, -1.0],
                         ['B', 'B', 'B', 'B', None, None, None],
                         include_static_geoms=False, exclude_body=1)
 
-        # Include static bodies, and exclude body 2 (which contains 'B')
-        self.check_rays(sim,
-                        [0.9, 0.1, 2.9, 1.9, 0.9, 0.1, -1.0],
-                        ['A', 'A', 'C', 'C', 'C', 'C', None],
-                        include_static_geoms=True, exclude_body=2)
-
-        # Exclude static bodies, and exclude body 2 (which contains 'B')
+        # Exclude static geoms, and exclude body 2 (which contains 'B')
         self.check_rays(sim,
                         [4.9, 3.9, 2.9, 1.9, 0.9, 0.1, -1.0],
                         ['C', 'C', 'C', 'C', 'C', 'C', None],

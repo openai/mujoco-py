@@ -335,9 +335,11 @@ cdef class MjSim(object):
         else:
             raise ValueError("Unsupported format. Valid ones are 'xml' and 'mjb'")
 
-    def ray(self, np.ndarray[np.float64_t, mode="c", ndim=1] pnt,
+    def ray(self,
+            np.ndarray[np.float64_t, mode="c", ndim=1] pnt,
             np.ndarray[np.float64_t, mode="c", ndim=1] vec,
-            geomgroup=None, include_static_geoms=True, exclude_body=-1):
+            np.ndarray[np.uint8_t, mode="c", ndim=1] geomgroup=np.ones(mjNGROUP, dtype=np.uint8),
+            include_static_geoms=True, exclude_body=-1):
         """
         Cast a ray into the scene, and return the first valid geom it intersects.
             pnt - origin point of the ray in world coordinates (X Y Z)
@@ -356,16 +358,10 @@ cdef class MjSim(object):
         cdef mjtNum distance
         cdef mjtNum[::view.contiguous] pnt_view = pnt
         cdef mjtNum[::view.contiguous] vec_view = vec
-        cdef mjtByte[::view.contiguous] geomgroup_view
-        cdef mjtByte* geomgroup_ptr = NULL
-
-        if geomgroup is not None:
-            geomgroup_view = geomgroup
-            geomgroup_ptr = &geomgroup_view[0]
+        cdef mjtByte[::view.contiguous] geomgroup_view = geomgroup
 
         distance = mj_ray(self.model.ptr, self.data.ptr,
-                          &pnt_view[0], &vec_view[0],
-                          geomgroup_ptr,
+                          &pnt_view[0], &vec_view[0], &geomgroup_view[0],
                           1 if include_static_geoms else 0,
                           exclude_body,
                           &geom_id)
