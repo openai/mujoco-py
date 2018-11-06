@@ -334,3 +334,27 @@ cdef class MjSim(object):
             file.write(new_model.get_mjb())
         else:
             raise ValueError("Unsupported format. Valid ones are 'xml' and 'mjb'")
+
+    def ray(self, np.ndarray[np.float64_t, mode="c", ndim=1] pnt,
+            np.ndarray[np.float64_t, mode="c", ndim=1] vec,
+            include_static_geoms=True, exclude_body=-1):
+        """
+        Cast a ray into the scene, and return the first valid geom it intersects.
+            pnt - origin point of the ray in world coordinates (X Y Z)
+            vec - direction of the ray in world coordinates (X Y Z)
+            include_static_geoms - if False, we exclude geoms that are children of worldbody.
+            exclude_body - if this is a body ID, we exclude all children geoms of this body.
+        Returns (distance, geom_id) where
+            distance - distance along ray until first collision with geom
+            geom_id - id of the geom the ray collided with
+        If no collision was found in the scene, return (-1, None)
+
+        NOTE: sometimes self.forward() needs to be called before self.ray().
+        """
+        cdef int geom_id
+        cdef mjtNum distance
+        cdef mjtNum[::view.contiguous] pnt_view = pnt
+        cdef mjtNum[::view.contiguous] vec_view = vec
+        distance = mj_ray(self.model.ptr, self.data.ptr, &pnt_view[0], &vec_view[0], NULL,
+                          1 if include_static_geoms else 0, exclude_body, &geom_id)
+        return (distance, geom_id)

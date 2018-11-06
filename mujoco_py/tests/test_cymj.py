@@ -712,3 +712,126 @@ class TestUserdata(unittest.TestCase):
         model.set_userdata_names(['foo'])
         with self.assertRaises(AssertionError):
             model.set_userdata_names(['foo', 'bar'])
+
+
+class TestRay(unittest.TestCase):
+    ''' Test raycasting '''
+    xml = '''
+        <mujoco>
+            <worldbody>
+                <geom name="A" type="sphere" size=".1" pos="1 0 0"/>
+                <body name="M" pos="0 0 0">
+                    <geom name="C" type="sphere" size=".1" pos="5 0 0"/>
+                    <body name="N" pos="0 0 0">
+                        <geom name="B" type="sphere" size=".1" pos="3 0 0"/>
+                    </body>
+                </body>
+            </worldbody>
+        </mujoco>
+    '''
+
+    def check_ray(self, sim, pnt, expected_dist, expected_geom_name,
+                  include_static_geoms=True, exclude_body=-1):
+        x = np.array([1.0, 0.0, 0.0])  # X direction
+        dist, geom = sim.ray(pnt, x, include_static_geoms=include_static_geoms,
+                             exclude_body=exclude_body)
+        self.assertAlmostEqual(dist, expected_dist)
+        if expected_geom_name is None:
+            self.assertEqual(geom, -1)
+        else:
+            self.assertEqual(sim.model.geom_id2name(geom), expected_geom_name)
+
+    def test_ray(self):
+        ''' Test raycasting and exclusions '''
+        sim = MjSim(load_model_from_xml(self.xml))
+        sim.forward()
+        x = np.array([1.0, 0.0, 0.0])  # X direction
+
+        # Include all bodies
+        include_static_geoms = True
+        exclude_body = -1
+        self.check_ray(sim, x * 0, 0.9, 'A', include_static_geoms, exclude_body)
+        self.check_ray(sim, x * 1, 0.1, 'A', include_static_geoms, exclude_body)
+        self.check_ray(sim, x * 2, 0.9, 'B', include_static_geoms, exclude_body)
+        self.check_ray(sim, x * 3, 0.1, 'B', include_static_geoms, exclude_body)
+        self.check_ray(sim, x * 4, 0.9, 'C', include_static_geoms, exclude_body)
+        self.check_ray(sim, x * 5, 0.1, 'C', include_static_geoms, exclude_body)
+        self.check_ray(sim, x * 6, -1., None, include_static_geoms, exclude_body)
+
+        # Exclude static bodies (just 'A')
+        include_static_geoms = False
+        exclude_body = -1
+        self.check_ray(sim, x * 0, 2.9, 'B', include_static_geoms, exclude_body)
+        self.check_ray(sim, x * 1, 1.9, 'B', include_static_geoms, exclude_body)
+        self.check_ray(sim, x * 2, 0.9, 'B', include_static_geoms, exclude_body)
+        self.check_ray(sim, x * 3, 0.1, 'B', include_static_geoms, exclude_body)
+        self.check_ray(sim, x * 4, 0.9, 'C', include_static_geoms, exclude_body)
+        self.check_ray(sim, x * 5, 0.1, 'C', include_static_geoms, exclude_body)
+        self.check_ray(sim, x * 6, -1., None, include_static_geoms, exclude_body)
+
+        # Include static bodies, but exclude worldbody (which excludes static body 'A')
+        include_static_geoms = True
+        exclude_body = 0
+        self.check_ray(sim, x * 0, 2.9, 'B', include_static_geoms, exclude_body)
+        self.check_ray(sim, x * 1, 1.9, 'B', include_static_geoms, exclude_body)
+        self.check_ray(sim, x * 2, 0.9, 'B', include_static_geoms, exclude_body)
+        self.check_ray(sim, x * 3, 0.1, 'B', include_static_geoms, exclude_body)
+        self.check_ray(sim, x * 4, 0.9, 'C', include_static_geoms, exclude_body)
+        self.check_ray(sim, x * 5, 0.1, 'C', include_static_geoms, exclude_body)
+        self.check_ray(sim, x * 6, -1., None, include_static_geoms, exclude_body)
+
+        # Exclude static bodies, and exclude worldbody (both exclude static body 'A')
+        include_static_geoms = False
+        exclude_body = 0
+        self.check_ray(sim, x * 0, 2.9, 'B', include_static_geoms, exclude_body)
+        self.check_ray(sim, x * 1, 1.9, 'B', include_static_geoms, exclude_body)
+        self.check_ray(sim, x * 2, 0.9, 'B', include_static_geoms, exclude_body)
+        self.check_ray(sim, x * 3, 0.1, 'B', include_static_geoms, exclude_body)
+        self.check_ray(sim, x * 4, 0.9, 'C', include_static_geoms, exclude_body)
+        self.check_ray(sim, x * 5, 0.1, 'C', include_static_geoms, exclude_body)
+        self.check_ray(sim, x * 6, -1., None, include_static_geoms, exclude_body)
+
+        # Include static bodies, and exclude body 1
+        # (this excludes 'C' which is in body 1, but not 'B' which is in child body 2)
+        include_static_geoms = True
+        exclude_body = 1
+        self.check_ray(sim, x * 0, 0.9, 'A', include_static_geoms, exclude_body)
+        self.check_ray(sim, x * 1, 0.1, 'A', include_static_geoms, exclude_body)
+        self.check_ray(sim, x * 2, 0.9, 'B', include_static_geoms, exclude_body)
+        self.check_ray(sim, x * 3, 0.1, 'B', include_static_geoms, exclude_body)
+        self.check_ray(sim, x * 4, -1., None, include_static_geoms, exclude_body)
+        self.check_ray(sim, x * 5, -1., None, include_static_geoms, exclude_body)
+        self.check_ray(sim, x * 6, -1., None, include_static_geoms, exclude_body)
+
+        # Exclude static bodies, and exclude body 1 ('C')
+        include_static_geoms = False
+        exclude_body = 1
+        self.check_ray(sim, x * 0, 2.9, 'B', include_static_geoms, exclude_body)
+        self.check_ray(sim, x * 1, 1.9, 'B', include_static_geoms, exclude_body)
+        self.check_ray(sim, x * 2, 0.9, 'B', include_static_geoms, exclude_body)
+        self.check_ray(sim, x * 3, 0.1, 'B', include_static_geoms, exclude_body)
+        self.check_ray(sim, x * 4, -1., None, include_static_geoms, exclude_body)
+        self.check_ray(sim, x * 5, -1., None, include_static_geoms, exclude_body)
+        self.check_ray(sim, x * 6, -1., None, include_static_geoms, exclude_body)
+
+        # Include static bodies, and exclude body 2 (which contains 'B')
+        include_static_geoms = True
+        exclude_body = 2
+        self.check_ray(sim, x * 0, 0.9, 'A', include_static_geoms, exclude_body)
+        self.check_ray(sim, x * 1, 0.1, 'A', include_static_geoms, exclude_body)
+        self.check_ray(sim, x * 2, 2.9, 'C', include_static_geoms, exclude_body)
+        self.check_ray(sim, x * 3, 1.9, 'C', include_static_geoms, exclude_body)
+        self.check_ray(sim, x * 4, 0.9, 'C', include_static_geoms, exclude_body)
+        self.check_ray(sim, x * 5, 0.1, 'C', include_static_geoms, exclude_body)
+        self.check_ray(sim, x * 6, -1., None, include_static_geoms, exclude_body)
+
+        # Exclude static bodies, and exclude body 2 (which contains 'B')
+        include_static_geoms = False
+        exclude_body = 2
+        self.check_ray(sim, x * 0, 4.9, 'C', include_static_geoms, exclude_body)
+        self.check_ray(sim, x * 1, 3.9, 'C', include_static_geoms, exclude_body)
+        self.check_ray(sim, x * 2, 2.9, 'C', include_static_geoms, exclude_body)
+        self.check_ray(sim, x * 3, 1.9, 'C', include_static_geoms, exclude_body)
+        self.check_ray(sim, x * 4, 0.9, 'C', include_static_geoms, exclude_body)
+        self.check_ray(sim, x * 5, 0.1, 'C', include_static_geoms, exclude_body)
+        self.check_ray(sim, x * 6, -1., None, include_static_geoms, exclude_body)
