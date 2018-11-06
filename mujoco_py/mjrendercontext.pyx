@@ -176,6 +176,17 @@ cdef class MjRenderContext(object):
         else:
             return rgb_img
 
+    def read_pixels_depth(self, np.ndarray[np.float32_t, mode="c", ndim=2] buffer):
+            ''' Read depth pixels into a preallocated buffer '''
+            cdef mjrRect rect
+            rect.left = 0
+            rect.bottom = 0
+            rect.width = buffer.shape[1]
+            rect.height = buffer.shape[0]
+
+            cdef float[::view.contiguous] buffer_view = buffer.ravel()
+            mjr_readPixels(NULL, &buffer_view[0], rect, &self._con)
+
     def upload_texture(self, int tex_id):
         """ Uploads given texture to the GPU. """
         self.opengl_context.make_context_current()
