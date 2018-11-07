@@ -1,4 +1,6 @@
+#!/usr/bin/env python
 import pytest
+import numpy as np
 from mujoco_py import MjSim, load_model_from_xml, MjRenderContext, GlfwContext
 from mujoco_py.tests.utils import compare_imgs
 
@@ -44,3 +46,18 @@ def test_glfw_context():
     compare_imgs(sim.render(201, 205, camera_name="topcam"), 'test_glfw_context.png')
     assert len(sim.render_contexts) == 1
     assert sim.render_contexts[0] is render_context
+
+
+@pytest.mark.requires_rendering
+def test_read_depth_buffer():
+    model = load_model_from_xml(BASIC_MODEL_XML)
+    sim = MjSim(model)
+    sim.forward()
+    ctx = MjRenderContext(sim, offscreen=True, opengl_backend='glfw')
+
+    buf = np.zeros((11, 100), dtype=np.float32)
+    assert buf.sum() == 0, f'{buf.sum()}'
+
+    ctx.render(buf.shape[1], buf.shape[0], 0)
+    ctx.read_pixels_depth(buf)
+    assert buf.sum() != 0, f'{buf.sum()} {buf.max()}'
