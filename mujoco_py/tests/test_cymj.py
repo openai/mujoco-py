@@ -712,3 +712,82 @@ class TestUserdata(unittest.TestCase):
         model.set_userdata_names(['foo'])
         with self.assertRaises(AssertionError):
             model.set_userdata_names(['foo', 'bar'])
+
+
+class TestRay(unittest.TestCase):
+    ''' Test raycasting '''
+    xml = '''
+        <mujoco>
+            <worldbody>
+                <geom name="A" type="sphere" size=".1" pos="1 0 0" rgba="1 0 0 1"/>
+                <body name="M" pos="0 0 0">
+                    <body name="N" pos="0 0 0">
+                        <geom name="B" type="sphere" size=".1" pos="3 0 0" rgba="0 1 0 1"/>
+                    </body>
+                <geom name="C" type="sphere" size=".1" pos="5 0 0" rgba="0 0 1 1"/>
+                </body>
+            </worldbody>
+        </mujoco>
+    '''
+
+    def check_ray(self, sim, pnt, expected_dist, expected_geom_name, **kwargs):
+        ''' Check a single raycast returns the expected distance and geom name '''
+        x = np.array([1.0, 0.0, 0.0])  # X direction
+        dist, geom = sim.ray(pnt, x, **kwargs)
+        self.assertAlmostEqual(dist, expected_dist)
+        if expected_geom_name is None:
+            self.assertEqual(geom, -1)
+        else:
+            self.assertEqual(sim.model.geom_id2name(geom), expected_geom_name)
+
+    def check_rays(self, sim, dists, names, **kwargs):
+        ''' Check a line of rays along the x axis for expected names and distances '''
+        x = np.array([1.0, 0.0, 0.0])  # X direction
+        for i, (dist, name) in enumerate(zip(dists, names)):
+            self.check_ray(sim, x * i, dist, name, **kwargs)
+
+    def test_ray(self):
+        ''' Test raycasting and exclusions '''
+        sim = MjSim(load_model_from_xml(self.xml))
+        sim.forward()
+
+        # Include all geoms
+        self.check_rays(sim,
+                        [0.9, 0.1, 0.9, 0.1, 0.9, 0.1, -1.0],
+                        ['A', 'A', 'B', 'B', 'C', 'C', None])
+
+        # Include static geoms, but exclude worldbody (which contains 'A')
+        self.check_rays(sim,
+                        [2.9, 1.9, 0.9, 0.1, 0.9, 0.1, -1.0],
+                        ['B', 'B', 'B', 'B', 'C', 'C', None],
+                        exclude_body=0)
+
+        # Include static geoms, and exclude body 1 (which contains 'C')
+        self.check_rays(sim,
+                        [0.9, 0.1, 0.9, 0.1, -1.0, -1.0, -1.0],
+                        ['A', 'A', 'B', 'B', None, None, None],
+                        exclude_body=1)
+
+        # Include static geoms, and exclude body 2 (which contains 'B')
+        self.check_rays(sim,
+                        [0.9, 0.1, 2.9, 1.9, 0.9, 0.1, -1.0],
+                        ['A', 'A', 'C', 'C', 'C', 'C', None],
+                        exclude_body=2)
+
+        # Exclude static geoms ('A' is the only static geom)
+        self.check_rays(sim,
+                        [2.9, 1.9, 0.9, 0.1, 0.9, 0.1, -1.0],
+                        ['B', 'B', 'B', 'B', 'C', 'C', None],
+                        include_static_geoms=False)
+
+        # Exclude static geoms, and exclude body 1 ('C')
+        self.check_rays(sim,
+                        [2.9, 1.9, 0.9, 0.1, -1.0, -1.0, -1.0],
+                        ['B', 'B', 'B', 'B', None, None, None],
+                        include_static_geoms=False, exclude_body=1)
+
+        # Exclude static geoms, and exclude body 2 (which contains 'B')
+        self.check_rays(sim,
+                        [4.9, 3.9, 2.9, 1.9, 0.9, 0.1, -1.0],
+                        ['C', 'C', 'C', 'C', 'C', 'C', None],
+                        include_static_geoms=False, exclude_body=2)
