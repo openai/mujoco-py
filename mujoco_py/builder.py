@@ -349,6 +349,9 @@ def user_warning_raise_exception(warn_bytes):
         raise MujocoException(warn + 'Increase njmax in mujoco XML')
     if 'Pre-allocated contact buffer is full' in warn:
         raise MujocoException(warn + 'Increase njconmax in mujoco XML')
+    # This unhelpfully-named warning is what you get if you feed MuJoCo NaNs
+    if 'Unknown warning type' in warn:
+        raise MujocoException(warn + 'Check for NaN in simulation.')
     raise MujocoException('Got MuJoCo Warning: {}'.format(warn))
 
 
