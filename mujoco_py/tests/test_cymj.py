@@ -719,12 +719,12 @@ class TestRay(unittest.TestCase):
     xml = '''
         <mujoco>
             <worldbody>
-                <geom name="A" type="sphere" size=".1" pos="1 0 0" group="3"/>
+                <geom name="A" type="sphere" size=".1" pos="1 0 0" rgba="1 0 0 1"/>
                 <body name="M" pos="0 0 0">
                     <body name="N" pos="0 0 0">
-                        <geom name="B" type="sphere" size=".1" pos="3 0 0" group="4"/>
+                        <geom name="B" type="sphere" size=".1" pos="3 0 0" rgba="0 1 0 1"/>
                     </body>
-                <geom name="C" type="sphere" size=".1" pos="5 0 0" group="5"/>
+                <geom name="C" type="sphere" size=".1" pos="5 0 0" rgba="0 0 1 1"/>
                 </body>
             </worldbody>
         </mujoco>
@@ -743,7 +743,6 @@ class TestRay(unittest.TestCase):
     def check_rays(self, sim, dists, names, **kwargs):
         ''' Check a line of rays along the x axis for expected names and distances '''
         x = np.array([1.0, 0.0, 0.0])  # X direction
-
         for i, (dist, name) in enumerate(zip(dists, names)):
             self.check_ray(sim, x * i, dist, name, **kwargs)
 
