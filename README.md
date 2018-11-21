@@ -1,3 +1,5 @@
+**Status:** Maintenance (expect bug fixes and minor updates)
+
 # mujoco-py [![Documentation](https://img.shields.io/badge/docs-latest-brightgreen.svg?style=flat)](https://openai.github.io/mujoco-py/build/html/index.html) [![Build Status](https://travis-ci.org/openai/mujoco-py.svg?branch=master)](https://travis-ci.org/openai/mujoco-py) [![Build status](https://ci.appveyor.com/api/projects/status/iw52c0198j87s76w?svg=true)](https://ci.appveyor.com/project/wojzaremba/mujoco-py)
 
 [MuJoCo](http://mujoco.org/) is a physics engine for detailed, efficient rigid body simulations with contacts. `mujoco-py` allows using MuJoCo from Python 3.
