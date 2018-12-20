@@ -202,7 +202,7 @@ class MujocoExtensionBuilder():
         #Check if a anaconda environment is being used
         extra_include_dirs = ""
         if "CONDA_PREFIX" in os.environ:
-            extra_include_dirs = os.environ["CONDA_PREFIX"]
+            extra_include_dirs = os.environ["CONDA_PREFIX"] + "/include"
         self.extension = Extension(
             'mujoco_py.cymj',
             sources=[join(self.CYMJ_DIR_PATH, "cymj.pyx")],
