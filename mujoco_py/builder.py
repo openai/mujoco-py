@@ -199,6 +199,10 @@ class MujocoExtensionBuilder():
         self.mjpro_path = mjpro_path
         python_version = str(sys.version_info.major) + str(sys.version_info.minor)
         self.version = '%s_%s_%s' % (get_version(), python_version, self.build_base())
+        #Check if a anaconda environment is being used
+        extra_include_dirs = ""
+        if "CONDA_PREFIX" in os.environ:
+            extra_include_dirs = os.environ["CONDA_PREFIX"]
         self.extension = Extension(
             'mujoco_py.cymj',
             sources=[join(self.CYMJ_DIR_PATH, "cymj.pyx")],
@@ -206,6 +210,7 @@ class MujocoExtensionBuilder():
                 self.CYMJ_DIR_PATH,
                 join(mjpro_path, 'include'),
                 np.get_include(),
+                extra_include_dirs,
             ],
             libraries=['mujoco150'],
             library_dirs=[join(mjpro_path, 'bin')],
