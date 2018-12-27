@@ -1,6 +1,6 @@
 **Status:** Maintenance (expect bug fixes and minor updates)
 
-# mujoco-py [![Documentation](https://img.shields.io/badge/docs-latest-brightgreen.svg?style=flat)](https://openai.github.io/mujoco-py/build/html/index.html) [![Build Status](https://travis-ci.org/openai/mujoco-py.svg?branch=master)](https://travis-ci.org/openai/mujoco-py) [![Build status](https://ci.appveyor.com/api/projects/status/iw52c0198j87s76w?svg=true)](https://ci.appveyor.com/project/wojzaremba/mujoco-py)
+# mujoco-py [![Documentation](https://img.shields.io/badge/docs-latest-brightgreen.svg?style=flat)](https://openai.github.io/mujoco-py/build/html/index.html) [![Build Status](https://travis-ci.org/openai/mujoco-py.svg?branch=master)](https://travis-ci.org/openai/mujoco-py)
 
 [MuJoCo](http://mujoco.org/) is a physics engine for detailed, efficient rigid body simulations with contacts. `mujoco-py` allows using MuJoCo from Python 3.
 
@@ -12,9 +12,11 @@ The following platforms are currently supported:
 
 - Linux with Python 3.6. See [the `Dockerfile`](Dockerfile) for the canonical list of system dependencies.
 - OS X with Python 3.6.
-- Windows (experimental) with Python 3.6. See [the Appveyor file](https://github.com/openai/mujoco-py/blob/master/.appveyor.yml#L16-L32) for the canonical list of dependencies.
 
-Python 2 has been desupported since [1.50.1.0](https://github.com/openai/mujoco-py/releases/tag/1.50.1.0). Python 2 users can stay on the [`0.5` branch](https://github.com/openai/mujoco-py/tree/0.5). The latest release there is [`0.5.7`](https://github.com/openai/mujoco-py/releases/tag/0.5.7) which can be installed with `pip install mujoco-py==0.5.7`.
+The following platforms are DEPRECATED and unsupported:
+
+- Windows support is DEPRECATED and will be removed soon. One known good past version is [1.50.1.68](https://github.com/openai/mujoco-py/blob/9ea9bb000d6b8551b99f9aa440862e0c7f7b4191/README.md#requirements).
+- Python 2 has been DEPRECATED and removed in [1.50.1.0](https://github.com/openai/mujoco-py/releases/tag/1.50.1.0). Python 2 users can stay on the [`0.5` branch](https://github.com/openai/mujoco-py/tree/0.5). The latest release there is [`0.5.7`](https://github.com/openai/mujoco-py/releases/tag/0.5.7) which can be installed with `pip install mujoco-py==0.5.7`.
 
 ### Install MuJoCo
 
