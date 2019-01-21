@@ -3,11 +3,12 @@ import glob
 import os.path
 import mujoco_py
 import sys
-from mujoco_py.tests.utils import requires_rendering
+import pytest
 mujoco_py_root = os.path.dirname(os.path.dirname(mujoco_py.__file__))
 
 
-@requires_rendering
+@pytest.mark.requires_rendering
+@pytest.mark.requires_glfw
 def test_examples():
     scripts = glob.glob("%s/examples/*.py" % mujoco_py_root)
     env = os.environ.update({'TESTING': 'true'})

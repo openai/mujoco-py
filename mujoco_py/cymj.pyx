@@ -20,16 +20,28 @@ from mujoco_py.generated import const
 include "generated/wrappers.pxi"
 include "opengl_context.pyx"
 include "mjsim.pyx"
-include "mjsimpool.pyx"
 include "mjsimstate.pyx"
 include "mjrendercontext.pyx"
+include "mjbatchrenderer.pyx"
 
 cdef extern from "gl/glshim.h":
 
+    cdef int usingEGL()
     cdef int initOpenGL(int device_id)
     cdef void closeOpenGL()
     cdef int makeOpenGLContextCurrent(int device_id)
     cdef int setOpenGLBufferSize(int device_id, int width, int height)
+
+    cdef unsigned int createPBO(int width, int height, int batchSize, int use_short)
+    cdef void freePBO(unsigned int pixelBuffer)
+    cdef void copyFBOToPBO(mjrContext* con,
+                           unsigned int pbo_rgb, unsigned int pbo_depth,
+                           mjrRect viewport, int bufferOffset)
+    cdef void readPBO(unsigned char *buffer_rgb, unsigned short *buffer_depth,
+                      unsigned int pbo_rgb, unsigned int pbo_depth,
+                      int width, int height, int batchSize)
+
+
 
 # TODO: make this function or class so these comments turn into doc strings:
 
@@ -108,7 +120,13 @@ def load_model_from_path(str path):
     cdef char errstr[300]
     cdef mjModel *model
     with wrap_mujoco_warning():
-        model = mj_loadXML(path.encode(), NULL, errstr, 300)
+        if (path.endswith(".mjb")):
+            model = mj_loadModel(path.encode(), NULL)
+        elif (path.endswith(".xml")):
+            model = mj_loadXML(path.encode(), NULL, errstr, 300)
+        else:
+            raise RuntimeError("Unrecognized extension for %s. Expected .xml or .mjb" % path)
+
     if model == NULL:
         raise Exception('Failed to load XML file: %s. mj_loadXML error: %s' % (path, errstr,))
     return WrapMjModel(model)
@@ -145,5 +163,3 @@ def load_model_from_mjb(bytes mjb_bytes):
     if model == NULL:
         raise Exception('%s\nFailed to load MJB')
     return WrapMjModel(model)
-
-

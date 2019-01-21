@@ -1,5 +1,11 @@
 from xml.dom import minidom
 from mujoco_py.utils import remove_empty_lines
+from mujoco_py.builder import build_callback_fn
+from threading import Lock
+
+_MjSim_render_lock = Lock()
+
+ctypedef void (*substep_udd_t)(const mjModel* m, mjData* d)
 
 
 cdef class MjSim(object):
@@ -24,6 +30,15 @@ cdef class MjSim(object):
         next ``udd_state`` after applying the user-defined dynamics. This is
         useful e.g. for reward functions that operate over functions of historical
         state.
+    substep_callback : str or int or None
+        This uses a compiled C function as user-defined dynamics in substeps.
+        If given as a string, it's compiled as a C function and set as pointer.
+        If given as int, it's interpreted as a function pointer.
+        See :meth:`.set_substep_callback` for detailed info.
+    userdata_names : list of strings or None
+        This is a convenience parameter which is just set on the model.
+        Equivalent to calling ``model.set_userdata_names``
+    render_callback : callback for rendering.
     """
     # MjRenderContext for rendering camera views.
     cdef readonly list render_contexts
@@ -38,16 +53,21 @@ cdef class MjSim(object):
     """
     cdef readonly PyMjData data
     # Number of substeps when calling .step
-    cdef readonly int nsubsteps
+    cdef public int nsubsteps
     # User defined state.
-    cdef readonly dict udd_state
+    cdef public dict udd_state
     # User defined dynamics callback
     cdef readonly object _udd_callback
     # Allows to store extra information in MjSim.
     cdef readonly dict extras
+    # Function pointer for substep callback, stored as uintptr
+    cdef readonly uintptr_t substep_callback_ptr
+    # Callback executed before rendering.
+    cdef public object render_callback
 
     def __cinit__(self, PyMjModel model, PyMjData data=None, int nsubsteps=1,
-                  udd_callback=None):
+                  udd_callback=None, substep_callback=None, userdata_names=None,
+                  render_callback=None):
         self.nsubsteps = nsubsteps
         self.model = model
         if data is None:
@@ -64,7 +84,9 @@ cdef class MjSim(object):
         self._render_context_window = None
         self.udd_state = None
         self.udd_callback = udd_callback
+        self.render_callback = render_callback
         self.extras = {}
+        self.set_substep_callback(substep_callback, userdata_names)
 
     def reset(self):
         """
@@ -83,7 +105,7 @@ cdef class MjSim(object):
         with wrap_mujoco_warning():
             mj_forward(self.model.ptr, self.data.ptr)
 
-    def step(self):
+    def step(self, with_udd=True):
         """
         Advances the simulation by calling ``mj_step``.
 
@@ -91,10 +113,12 @@ cdef class MjSim(object):
         :meth:`.forward` before :meth:`.step` if their ``udd_callback`` requires access to MuJoCo state
         set during the forward dynamics.
         """
-        self.step_udd()
+        if with_udd:
+            self.step_udd()
 
         with wrap_mujoco_warning():
             for _ in range(self.nsubsteps):
+                self.substep_callback()
                 mj_step(self.model.ptr, self.data.ptr)
 
     def render(self, width=None, height=None, *, camera_name=None, depth=False,
@@ -122,16 +146,17 @@ cdef class MjSim(object):
             camera_id = self.model.camera_name2id(camera_name)
 
         if mode == 'offscreen':
-            if self._render_context_offscreen is None:
-                render_context = MjRenderContextOffscreen(
-                    self, device_id=device_id)
-            else:
-                render_context = self._render_context_offscreen
+            with _MjSim_render_lock:
+                if self._render_context_offscreen is None:
+                    render_context = MjRenderContextOffscreen(
+                        self, device_id=device_id)
+                else:
+                    render_context = self._render_context_offscreen
 
-            render_context.render(
-                width=width, height=height, camera_id=camera_id)
-            return render_context.read_pixels(
-                width, height, depth=depth)
+                render_context.render(
+                    width=width, height=height, camera_id=camera_id)
+                return render_context.read_pixels(
+                    width, height, depth=depth)
         elif mode == 'window':
             if self._render_context_window is None:
                 from mujoco_py.mjviewer import MjViewer
@@ -160,6 +185,36 @@ cdef class MjSim(object):
         self._udd_callback = value
         self.udd_state = None
         self.step_udd()
+
+    cpdef substep_callback(self):
+        if self.substep_callback_ptr:
+            (<mjfGeneric>self.substep_callback_ptr)(self.model.ptr, self.data.ptr)
+
+    def set_substep_callback(self, substep_callback, userdata_names=None):
+        '''
+        Set a substep callback function.
+
+        Parameters :
+            substep_callback : str or int or None
+                If `substep_callback` is a string, compile to function pointer and set.
+                    See `builder.build_callback_fn()` for documentation.
+                If `substep_callback` is an int, we interpret it as a function pointer.
+                If `substep_callback` is None, we disable substep_callbacks.
+            userdata_names : list of strings or None
+                This is a convenience parameter, if not None, this is passed
+                onto ``model.set_userdata_names()``.
+        '''
+        if userdata_names is not None:
+            self.model.set_userdata_names(userdata_names)
+        if substep_callback is None:
+            self.substep_callback_ptr = 0
+        elif isinstance(substep_callback, int):
+            self.substep_callback_ptr = substep_callback
+        elif isinstance(substep_callback, str):
+            self.substep_callback_ptr = build_callback_fn(substep_callback,
+                                                          self.model.userdata_names)
+        else:
+            raise TypeError('invalid: {}'.format(type(substep_callback)))
 
     def step_udd(self):
         if self._udd_callback is None:
@@ -279,3 +334,32 @@ cdef class MjSim(object):
             file.write(new_model.get_mjb())
         else:
             raise ValueError("Unsupported format. Valid ones are 'xml' and 'mjb'")
+
+    def ray(self,
+            np.ndarray[np.float64_t, mode="c", ndim=1] pnt,
+            np.ndarray[np.float64_t, mode="c", ndim=1] vec,
+            include_static_geoms=True, exclude_body=-1):
+        """
+        Cast a ray into the scene, and return the first valid geom it intersects.
+            pnt - origin point of the ray in world coordinates (X Y Z)
+            vec - direction of the ray in world coordinates (X Y Z)
+            include_static_geoms - if False, we exclude geoms that are children of worldbody.
+            exclude_body - if this is a body ID, we exclude all children geoms of this body.
+        Returns (distance, geom_id) where
+            distance - distance along ray until first collision with geom
+            geom_id - id of the geom the ray collided with
+        If no collision was found in the scene, return (-1, None)
+
+        NOTE: sometimes self.forward() needs to be called before self.ray().
+        """
+        cdef int geom_id
+        cdef mjtNum distance
+        cdef mjtNum[::view.contiguous] pnt_view = pnt
+        cdef mjtNum[::view.contiguous] vec_view = vec
+
+        distance = mj_ray(self.model.ptr, self.data.ptr,
+                          &pnt_view[0], &vec_view[0], NULL,
+                          1 if include_static_geoms else 0,
+                          exclude_body,
+                          &geom_id)
+        return (distance, geom_id)

@@ -4,8 +4,9 @@ from mujoco_py.builder import cymj
 from mujoco_py.generated import const
 import time
 import copy
-from multiprocessing import Process
+from multiprocessing import Process, Queue
 from mujoco_py.utils import rec_copy, rec_assign
+import numpy as np
 import imageio
 
 
@@ -120,6 +121,7 @@ class MjViewer(MjViewerBasic):
     - D: Enable/disable frame skipping when rendering lags behind real time.
     - R: Toggle transparency of geoms.
     - M: Toggle display of mocap bodies.
+    - 0-4: Toggle display of geomgroups
 
     Parameters
     ----------
@@ -137,7 +139,7 @@ class MjViewer(MjViewerBasic):
 
         # Vars for recording video
         self._record_video = False
-        self._video_frames = []
+        self._video_queue = Queue()
         self._video_idx = 0
         self._video_path = "/tmp/video_%07d.mp4"
 
@@ -173,11 +175,10 @@ class MjViewer(MjViewerBasic):
                 for k, v in self._user_overlay.items():
                     self._overlay[k] = copy.deepcopy(v)
                 self._create_full_overlay()
-
             super().render()
             if self._record_video:
                 frame = self._read_pixels_as_in_window()
-                self._video_frames.append(frame)
+                self._video_queue.put(frame)
             else:
                 self._time_per_render = 0.9 * self._time_per_render + \
                     0.1 * (time.time() - render_start)
@@ -208,8 +209,13 @@ class MjViewer(MjViewerBasic):
         # Reads pixels with markers and overlay from the same camera as screen.
         resolution = glfw.get_framebuffer_size(
             self.sim._render_context_window.window)
+
+        resolution = np.array(resolution)
+        resolution = resolution * min(1000 / np.min(resolution), 1)
+        resolution = resolution.astype(np.int32)
+        resolution -= resolution % 16
         if self.sim._render_context_offscreen is None:
-            self.sim.render(*resolution)
+            self.sim.render(resolution[0], resolution[1])
         offscreen_ctx = self.sim._render_context_offscreen
         window_ctx = self.sim._render_context_window
         # Save markers and overlay from offscreen.
@@ -223,6 +229,7 @@ class MjViewer(MjViewerBasic):
         rec_assign(offscreen_ctx.cam, rec_copy(window_ctx.cam))
 
         img = self.sim.render(*resolution)
+        img = img[::-1, :, :] # Rendered images are upside-down.
         # Restore markers and overlay to offscreen.
         offscreen_ctx._markers[:] = saved[0][:]
         offscreen_ctx._overlay.clear()
@@ -282,6 +289,9 @@ class MjViewer(MjViewerBasic):
             self.sim.data.solver_iter + 1))
         step = round(self.sim.data.time / self.sim.model.opt.timestep)
         self.add_overlay(const.GRID_BOTTOMRIGHT, "Step", str(step))
+        self.add_overlay(const.GRID_BOTTOMRIGHT, "timestep", "%.5f" % self.sim.model.opt.timestep)
+        self.add_overlay(const.GRID_BOTTOMRIGHT, "n_substeps", str(self.sim.nsubsteps))
+        self.add_overlay(const.GRID_TOPLEFT, "Toggle geomgroup visibility", "0-4")
 
     def key_callback(self, window, key, scancode, action, mods):
         if action != glfw.RELEASE:
@@ -303,14 +313,14 @@ class MjViewer(MjViewerBasic):
         elif key == glfw.KEY_V or \
                 (key == glfw.KEY_ESCAPE and self._record_video):  # Records video. Trigers with V or if in progress by ESC.
             self._record_video = not self._record_video
-            if not self._record_video and len(self._video_frames) > 0:
-                # This include captures console, if in the top declaration.
-                frames = [f for f in self._video_frames]
+            if self._record_video:
                 fps = (1 / self._time_per_render)
-                process = Process(target=save_video,
-                                  args=(frames, self._video_path % self._video_idx, fps))
-                process.start()
-                self._video_frames = []
+                self._video_process = Process(target=save_video,
+                                  args=(self._video_queue, self._video_path % self._video_idx, fps))
+                self._video_process.start()
+            if not self._record_video:
+                self._video_queue.put(None)
+                self._video_process.join()
                 self._video_idx += 1
         elif key == glfw.KEY_T:  # capture screenshot
             img = self._read_pixels_as_in_window()
@@ -352,14 +362,19 @@ class MjViewer(MjViewerBasic):
                             else:
                                 self.sim.model.geom_rgba[
                                     geom_idx, 3] = self.sim.extras[geom_idx]
+        elif key in (glfw.KEY_0, glfw.KEY_1, glfw.KEY_2, glfw.KEY_3, glfw.KEY_4):
+            self.vopt.geomgroup[key - glfw.KEY_0] ^= 1
         super().key_callback(window, key, scancode, action, mods)
 
 # Separate Process to save video. This way visualization is
 # less slowed down.
 
 
-def save_video(frames, filename, fps):
+def save_video(queue, filename, fps):
     writer = imageio.get_writer(filename, fps=fps)
-    for f in frames:
-        writer.append_data(f)
+    while True:
+        frame = queue.get()
+        if frame is None:
+            break
+        writer.append_data(frame)
     writer.close()

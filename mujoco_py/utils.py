@@ -1,8 +1,34 @@
+import sys
+import os
 import copy
-from os.path import join, expanduser
+from os.path import join, expanduser, exists
 
 import numpy as np
 
+MISSING_KEY_MESSAGE = '''
+You appear to be missing a License Key for mujoco.  We expected to find the
+file here: {}
+
+You can get licenses at this page:
+
+    https://www.roboti.us/license.html
+
+If python tries to activate an invalid license, the process will exit.
+'''
+
+MISSING_MJPRO_MESSAGE = '''
+You appear to be missing MuJoCo.  We expected to find the file here: {}
+
+This package only provides python bindings, the library must be installed separately.
+
+Please follow the instructions on the README to install MuJoCo
+
+    https://github.com/openai/mujoco-py#install-mujoco
+
+Which can be downloaded from the website
+
+    https://www.roboti.us/index.html
+'''
 
 
 def remove_empty_lines(string):
@@ -17,7 +43,7 @@ def rec_assign(node, assign):
     # Assigns values to node recursively.
     # This is neccessary to avoid overriding pointers in MuJoCo.
     for field in dir(node):
-        if field.find("__") == -1:
+        if field.find("__") == -1 and field != 'uintptr':
             val = getattr(node, field)
             if isinstance(val, (int, bool, float, None.__class__, str)):
                 setattr(node, field, assign[field])
@@ -52,6 +78,22 @@ def discover_mujoco():
     - mjpro_path (str): Path to MuJoCo Pro 1.50 directory.
     - key_path (str): Path to the MuJoCo license key.
     """
-    key_path = join(expanduser('~'), '.mujoco', 'mjkey.txt')
-    mjpro_path = join(expanduser('~'), '.mujoco', 'mjpro150')
+    key_path = os.getenv('MUJOCO_PY_MJKEY_PATH')
+    if not key_path:
+        key_path = join(expanduser('~'), '.mujoco', 'mjkey.txt')
+    mjpro_path = os.getenv('MUJOCO_PY_MJPRO_PATH')
+    if not mjpro_path:
+        mjpro_path = join(expanduser('~'), '.mujoco', 'mjpro150')
+
+    # We get lots of github issues that seem to be missing these
+    # so check that mujoco is really there and raise errors if not.
+    if not exists(mjpro_path):
+        message = MISSING_MJPRO_MESSAGE.format(mjpro_path)
+        print(message, file=sys.stderr)
+        raise Exception(message)
+    if not exists(key_path):
+        message = MISSING_KEY_MESSAGE.format(key_path)
+        print(message, file=sys.stderr)
+        raise Exception(message)
+
     return (mjpro_path, key_path)

@@ -1,24 +1,12 @@
 #!/usr/bin/env python3
-import importlib.util
-from distutils.command.build import build as DistutilsBuild
-from os.path import abspath, join, dirname, realpath
+import os
+from os.path import join, dirname, realpath
 from setuptools import find_packages, setup
+from distutils.command.build import build as DistutilsBuild
+
 
 with open(join("mujoco_py", "version.py")) as version_file:
     exec(version_file.read())
-
-
-class Build(DistutilsBuild):
-    def run(self):
-        # Pre-compile the Cython
-        current_path = abspath(dirname(__file__))
-        builder_path = join(current_path, 'mujoco_py', 'builder.py')
-        spec = importlib.util.spec_from_file_location(
-            "mujoco_py.builder", builder_path)
-        builder = importlib.util.module_from_spec(spec)
-        spec.loader.exec_module(builder)
-
-        DistutilsBuild.run(self)
 
 
 def read_requirements_file(filename):
@@ -32,6 +20,15 @@ packages = find_packages()
 for p in packages:
     assert p == 'mujoco_py' or p.startswith('mujoco_py.')
 
+
+class Build(DistutilsBuild):
+    def run(self):
+        os.environ['MUJOCO_PY_FORCE_REBUILD'] = 'True'
+        os.environ['MUJOCO_PY_SKIP_ACTIVATE'] = 'True'
+        import mujoco_py  # noqa: force build
+        DistutilsBuild.run(self)
+
+
 setup(
     name='mujoco-py',
     version=__version__,  # noqa
@@ -40,14 +37,9 @@ setup(
     url='https://github.com/openai/mujoco-py',
     packages=packages,
     include_package_data=True,
+    cmdclass={'build': Build},
     package_dir={'mujoco_py': 'mujoco_py'},
     package_data={'mujoco_py': ['generated/*.so']},
     install_requires=read_requirements_file('requirements.txt'),
     tests_require=read_requirements_file('requirements.dev.txt'),
-    # Add requirements for mujoco_py/builder.py here since there's no
-    # guarantee that they've been installed before this setup script
-    # is run. (The install requirements only guarantee that those packages
-    # are installed as part of installation. No promises about order.)
-    setup_requires=read_requirements_file('requirements.txt'),
-    cmdclass={'build': Build},
 )
