@@ -776,7 +776,7 @@ def main():
                 extra += """
     def get_joint_q{q_type}(self, name):
         addr = self._model.get_joint_q{q_type}_addr(name)
-        if isinstance(addr, (int, np.int32, np.int64)):
+        if hasattr(addr, '__int__'):
             return self.q{q_type}[addr]
         else:
             start_i, end_i = addr
@@ -784,7 +784,7 @@ def main():
 
     def set_joint_q{q_type}(self, name, value):
         addr = self._model.get_joint_q{q_type}_addr(name)
-        if isinstance(addr, (int, np.int32, np.int64)):
+        if hasattr(addr, '__int__'):
             self.q{q_type}[addr] = value
         else:
             start_i, end_i = addr

@@ -2533,7 +2533,7 @@ cdef class PyMjData(object):
 
     def get_joint_qpos(self, name):
         addr = self._model.get_joint_qpos_addr(name)
-        if isinstance(addr, (int, np.int32, np.int64)):
+        if hasattr(addr, '__int__'):
             return self.qpos[addr]
         else:
             start_i, end_i = addr
@@ -2541,7 +2541,7 @@ cdef class PyMjData(object):
 
     def set_joint_qpos(self, name, value):
         addr = self._model.get_joint_qpos_addr(name)
-        if isinstance(addr, (int, np.int32, np.int64)):
+        if hasattr(addr, '__int__'):
             self.qpos[addr] = value
         else:
             start_i, end_i = addr
@@ -2552,7 +2552,7 @@ cdef class PyMjData(object):
 
     def get_joint_qvel(self, name):
         addr = self._model.get_joint_qvel_addr(name)
-        if isinstance(addr, (int, np.int32, np.int64)):
+        if hasattr(addr, '__int__'):
             return self.qvel[addr]
         else:
             start_i, end_i = addr
@@ -2560,7 +2560,7 @@ cdef class PyMjData(object):
 
     def set_joint_qvel(self, name, value):
         addr = self._model.get_joint_qvel_addr(name)
-        if isinstance(addr, (int, np.int32, np.int64)):
+        if hasattr(addr, '__int__'):
             self.qvel[addr] = value
         else:
             start_i, end_i = addr
