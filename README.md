@@ -15,7 +15,11 @@ The following platforms are currently supported:
 
 The following platforms are DEPRECATED and unsupported:
 
-- Windows support is DEPRECATED and will be removed soon. One known good past version is [1.50.1.68](https://github.com/openai/mujoco-py/blob/9ea9bb000d6b8551b99f9aa440862e0c7f7b4191/README.md#requirements).
+- Windows support is DEPRECATED and will be removed soon. One known good past
+ version is [1.50.1.68](https://github
+ .com/openai/mujoco-py/blob/9ea9bb000d6b8551b99f9aa440862e0c7f7b4191/README
+ .md#requirements). For instructions on using this version with a Conda 
+ environment, see [README.windows-conda.md](README.windows-build.md)
 - Python 2 has been DEPRECATED and removed in [1.50.1.0](https://github.com/openai/mujoco-py/releases/tag/1.50.1.0). Python 2 users can stay on the [`0.5` branch](https://github.com/openai/mujoco-py/tree/0.5). The latest release there is [`0.5.7`](https://github.com/openai/mujoco-py/releases/tag/0.5.7) which can be installed with `pip install mujoco-py==0.5.7`.
 
 ### Install MuJoCo
