@@ -1,4 +1,4 @@
-# Windows Build Instructions for [mujoco-py](https://openai.github.io/mujoco-py/build/html/index.html) [![Build Status](https://travis-ci.org/openai/mujoco-py.svg?branch=master)](https://travis-ci.org/openai/mujoco-py)
+# Windows Build Instructions for [mujoco-py](https://openai.github.io/mujoco-py/build/html/index.html)
 
 To get MuJoCo Python working on windows with a Conda environment, perform the 
 following setup:
