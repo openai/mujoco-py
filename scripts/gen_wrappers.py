@@ -184,15 +184,25 @@ def get_struct_wrapper(struct_dict):
     return structname2wrappername, structname2wrapfuncname
 
 
-def _add_named_access_methods(obj_type, attr_name, attr_name_short):
+def _add_named_access_methods(obj_type, attr_name, attr_name_short, attr_adr_dim_offset=False):
     getter_name = obj_type
     if attr_name_short is not None:
         getter_name += "_" + attr_name_short
     reshape_suffix = ".reshape((3, 3))" if attr_name.endswith('mat') else ''
-    code = """
+    # Some data are offset into a single long array
+    if not attr_adr_dim_offset:
+        code = """
     def get_{getter_name}(self, name):
         id = self._model.{obj_type}_name2id(name)
         return self._{attr_name}[id]{reshape_suffix}\n""".format(
+        obj_type=obj_type, getter_name=getter_name, attr_name=attr_name, reshape_suffix=reshape_suffix)
+    else:
+        code = """
+    def get_{getter_name}(self, name):
+        id = self._model.{obj_type}_name2id(name)
+        adr = self._model.{obj_type}_adr[id]
+        dim = self._model.{obj_type}_dim[id]
+        return self._{attr_name}[adr:adr+dim]{reshape_suffix}\n""".format(
         obj_type=obj_type, getter_name=getter_name, attr_name=attr_name, reshape_suffix=reshape_suffix)
     if getter_name != attr_name:
         code += """
@@ -756,7 +766,7 @@ def main():
             extra += _add_named_access_methods('camera', 'cam_xmat', 'xmat')
             extra += _add_named_access_methods('light', 'light_xpos', 'xpos')
             extra += _add_named_access_methods('light', 'light_xdir', 'xdir')
-            extra += _add_named_access_methods('sensor', 'sensordata', None)
+            extra += _add_named_access_methods('sensor', 'sensordata', None, True)
             extra += _add_named_access_methods('userdata', 'userdata', None)
 
             for pose_type in ('pos', 'quat'):

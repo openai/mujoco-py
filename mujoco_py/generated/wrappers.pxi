@@ -2502,7 +2502,9 @@ cdef class PyMjData(object):
 
     def get_sensor(self, name):
         id = self._model.sensor_name2id(name)
-        return self._sensordata[id]
+        adr = self._model.sensor_adr[id]
+        dim = self._model.sensor_dim[id]
+        return self._sensordata[adr:adr+dim]
 
     def get_sensordata(self, name):
         raise RuntimeError("get_sensor should be used instead of get_sensordata")
