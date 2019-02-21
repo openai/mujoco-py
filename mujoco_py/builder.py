@@ -323,7 +323,7 @@ class MacExtensionBuilder(MujocoExtensionBuilder):
                 raise RuntimeError(
                     'Could not find GCC executable.\n\n'
                     'HINT: On OS X, install GCC with '
-                    '`brew install gcc` or'
+                    '`brew install gcc` or '
                     '`port install gcc`.')
             os.environ['CC'] = available_c_compiler
 
