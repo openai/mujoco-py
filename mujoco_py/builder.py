@@ -310,7 +310,10 @@ class MacExtensionBuilder(MujocoExtensionBuilder):
             # Known-working versions of GCC on mac
             c_compilers = ['/usr/local/bin/gcc-6',
                            '/usr/local/bin/gcc-7',
-                           '/usr/local/bin/gcc-8']
+                           '/usr/local/bin/gcc-8',
+                           '/opt/local/bin/gcc-mp-6',
+                           '/opt/local/bin/gcc-mp-7',
+                           '/opt/local/bin/gcc-mp-8']
             available_c_compiler = None
             for c_compiler in c_compilers:
                 if distutils.spawn.find_executable(c_compiler) is not None:
@@ -320,7 +323,8 @@ class MacExtensionBuilder(MujocoExtensionBuilder):
                 raise RuntimeError(
                     'Could not find GCC executable.\n\n'
                     'HINT: On OS X, install GCC with '
-                    '`brew install gcc`.')
+                    '`brew install gcc` or'
+                    '`port install gcc`.')
             os.environ['CC'] = available_c_compiler
 
             so_file_path = super()._build_impl()
