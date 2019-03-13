@@ -53,3 +53,4 @@ cymj.c
 *.c
 *.so
 .python-version
+/build
