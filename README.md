@@ -2,7 +2,11 @@
 
 # mujoco-py [![Documentation](https://img.shields.io/badge/docs-latest-brightgreen.svg?style=flat)](https://openai.github.io/mujoco-py/build/html/index.html) [![Build Status](https://travis-ci.org/openai/mujoco-py.svg?branch=master)](https://travis-ci.org/openai/mujoco-py)
 
-[MuJoCo](http://mujoco.org/) is a physics engine for detailed, efficient rigid body simulations with contacts. `mujoco-py` allows using MuJoCo from Python 3.
+[MuJoCo](http://mujoco.org/) is a physics engine for detailed, efficient rigid body simulations with contacts.
+`mujoco-py` allows using MuJoCo from Python 3.
+
+This library has been updated to be compatible with MuJoCo version 2.0 released on 10/1/2018.
+
 
 ## Synopsis
 
@@ -23,25 +27,25 @@ The following platforms are DEPRECATED and unsupported:
 1. Obtain a 30-day free trial on the [MuJoCo website](https://www.roboti.us/license.html)
    or free license if you are a student.
    The license key will arrive in an email with your username and password.
-2. Download the MuJoCo version 1.50 binaries for
-   [Linux](https://www.roboti.us/download/mjpro150_linux.zip),
-   [OSX](https://www.roboti.us/download/mjpro150_osx.zip), or
-   [Windows](https://www.roboti.us/download/mjpro150_win64.zip).
-3. Unzip the downloaded `mjpro150` directory into `~/.mujoco/mjpro150`,
+2. Download the MuJoCo version 2.0 binaries for
+   [Linux](https://www.roboti.us/download/mujoco200_linux.zip),
+   [OSX](https://www.roboti.us/download/mujoco200_macos.zip), or
+   [Windows](https://www.roboti.us/download/mujoco200_win64.zip).
+3. Unzip the downloaded `mujoco200` directory into `~/.mujoco/mujoco200`,
    and place your license key (the `mjkey.txt` file from your email)
    at `~/.mujoco/mjkey.txt`.
 
 If you want to specify a nonstandard location for the key and package,
-use the env variables `MUJOCO_PY_MJKEY_PATH` and `MUJOCO_PY_MJPRO_PATH`.
+use the env variables `MUJOCO_PY_MJKEY_PATH` and `MUJOCO_PY_MUJOCO_PATH`.
 
 ### Install and use `mujoco-py`
 To include `mujoco-py` in your own package, add it to your requirements like so:
 ```
-mujoco-py<1.50.2,>=1.50.1
+mujoco-py<2.1,>=2.0
 ```
 To play with `mujoco-py` interactively, follow these steps:
 ```
-$ pip3 install -U 'mujoco-py<1.50.2,>=1.50.1'
+$ pip3 install -U 'mujoco-py<2.1,>=2.0'
 $ python3
 import mujoco_py
 import os
@@ -77,7 +81,7 @@ MuJoCo ships with its own copy of this library, which can be used during install
 
 Add the path to the mujoco bin directory to your dynamic loader:
 
-    LD_LIBRARY_PATH=$HOME/.mujoco/mjpro150/bin pip install mujoco-py
+    LD_LIBRARY_PATH=$HOME/.mujoco/mujoco200/bin pip install mujoco-py
 
 This is particularly useful on Ubuntu 14.04, which does not have a GLFW package.
 
@@ -124,3 +128,4 @@ This is somewhat dependent on internal OpenAI infrastructure at the moment, but 
 - Jonathan Ho
 - Peter Welinder
 - Wojciech Zaremba
+- Jerry Tworek

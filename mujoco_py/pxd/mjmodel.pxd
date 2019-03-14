@@ -11,7 +11,6 @@ cdef struct mjVisual_quality:   # rendering quality
     int   offsamples            # number of multisamples for offscreen rendering
     int   numslices             # number of slices for Glu drawing
     int   numstacks             # number of stacks for Glu drawing
-    int   numarrows             # number of arrows for torque rendering
     int   numquads              # number of quads for box rendering
 
 cdef struct mjVisual_headlight: # head light
@@ -30,8 +29,10 @@ cdef struct mjVisual_map:       # mapping
     float fogend                # OpenGL fog ends at fogend * mjModel.stat.extent
     float znear                 # near clipping plane = znear * mjModel.stat.extent
     float zfar                  # far clipping plane = zfar * mjModel.stat.extent
+    float haze                  # haze ratio
     float shadowclip            # directional light: shadowclip * mjModel.stat.extent
     float shadowscale           # spot light: shadowscale * light.cutoff
+    float actuatortendon        # scale tendon width
 
 cdef struct mjVisual_scale:     # scale of decor elements relative to mean body size
     float forcewidth            # width of force arrow
@@ -53,10 +54,13 @@ cdef struct mjVisual_scale:     # scale of decor elements relative to mean body 
 
 cdef struct mjVisual_rgba:      # color of decor elements
     float fog[4]                # external force
+    float haze[4]               # haze
     float force[4]              # external force
     float inertia[4]            # inertia box
     float joint[4]              # joint
     float actuator[4]           # actuator
+    float actuatornegative[4]   # actuator, negative limit
+    float actuatorpositive[4]   # actuator, positive limit
     float com[4]                # center of mass
     float camera[4]             # camera object
     float light[4]              # light object
@@ -66,6 +70,8 @@ cdef struct mjVisual_rgba:      # color of decor elements
     float contactforce[4]       # contact force
     float contactfriction[4]    # contact friction force
     float contacttorque[4]      # contact torque
+    float contactgap[4]         # contact point in gap
+    float rangefinder[4]        # rangefinder ray
     float constraint[4]         # constraint
     float slidercrank[4]        # slidercrank
     float crankbroken[4]        # used when crank must be stretched/broken
@@ -73,6 +79,7 @@ cdef struct mjVisual_rgba:      # color of decor elements
 cdef extern from "mjmodel.h" nogil:
     # ---------------------------- floating-point definitions -------------------------------
     ctypedef double mjtNum
+
     # global constants
     enum: mjPI
     enum: mjMAXVAL
@@ -386,8 +393,6 @@ cdef extern from "mjmodel.h" nogil:
         # discrete settings
         int integrator                  # integration mode (mjtIntegrator)
         int collision                   # collision mode (mjtCollision)
-        int impedance                   # how to interpret solimp (mjtImp)
-        int reference                   # how to interpret solref (mjtRef)
         int cone                        # type of friction cone (mjtCone)
         int jacobian                    # type of Jacobian (mjtJacobian)
         int solver                      # solver mode (mjtSolver)
@@ -396,6 +401,23 @@ cdef extern from "mjmodel.h" nogil:
         int mpr_iterations              # maximum number of MPR solver iterations
         int disableflags                # bit flags for disabling standard features
         int enableflags                 # bit flags for enabling optional features
+
+    #------------------------------ mjLROpt ------------------------------------------------
+
+    ctypedef struct mjLROpt:
+        # flags
+        int mode                        # which actuators to process (mjtLRMode)
+        int useexisting                 # use existing length range if available
+        int uselimit                    # use joint and tendon limits if available
+
+        # algorithm parameters
+        mjtNum accel                    # target acceleration used to compute force
+        mjtNum maxforce                 # maximum force; 0: no limit
+        mjtNum timeconst                # time constant for velocity reduction; min 0.01
+        mjtNum timestep                 # simulation timestep; 0: use mjOption.timestep
+        mjtNum inttotal                 # total simulation time interval
+        mjtNum inteval                  # evaluation time interval (at the end)
+        mjtNum tolrange                 # convergence tolerance (relative to range)
 
     #------------------------------ mjVisual -----------------------------------------------
 
@@ -435,8 +457,15 @@ cdef extern from "mjmodel.h" nogil:
         int nlight                      # number of lights
         int nmesh                       # number of meshes
         int nmeshvert                   # number of vertices in all meshes
+        int nmeshtexvert;               # number of vertices with texcoords in all meshes
         int nmeshface                   # number of triangular faces in all meshes
         int nmeshgraph                  # number of ints in mesh auxiliary data
+        int nskin                       # number of skins
+        int nskinvert                   # number of vertices in all skins
+        int nskintexvert                # number of vertiex with texcoords in all skins
+        int nskinface                   # number of triangular faces in all skins
+        int nskinbone                   # number of bones in all skins
+        int nskinbonevert               # number of vertices in all skin bones
         int nhfield                     # number of heightfields
         int nhfielddata                 # number of data points in all heightfields
         int ntex                        # number of textures
@@ -465,7 +494,7 @@ cdef extern from "mjmodel.h" nogil:
         int nuser_sensor                # number of mjtNums in sensor_user
         int nnames                      # number of chars in all names
 
-        # sizes set after mjModel construction (only affect mjData)
+        # sizes set after jModel construction (only affect mjData)
         int nM                          # number of non-zeros in sparse inertia matrix
         int nemax                       # number of potential equality-constraint rows
         int njmax                       # number of available rows in constraint Jacobian
@@ -503,6 +532,8 @@ cdef extern from "mjmodel.h" nogil:
         int*      body_dofadr           # start addr of dofs; -1: no dofs          (nbody x 1)
         int*      body_geomnum          # number of geoms                          (nbody x 1)
         int*      body_geomadr          # start addr of geoms; -1: no geoms        (nbody x 1)
+        mjtByte*  body_simple           # body is simple (has diagonal M)          (nbody x 1)
+        mjtByte*  body_sameframe        # inertial frame is same as body frame     (nbody x 1)
         mjtNum*   body_pos              # position offset rel. to parent body      (nbody x 3)
         mjtNum*   body_quat             # orientation offset rel. to parent body   (nbody x 4)
         mjtNum*   body_ipos             # local position of center of mass         (nbody x 3)
@@ -518,6 +549,7 @@ cdef extern from "mjmodel.h" nogil:
         int*      jnt_qposadr           # start addr in 'qpos' for joint's data    (njnt x 1)
         int*      jnt_dofadr            # start addr in 'qvel' for joint's data    (njnt x 1)
         int*      jnt_bodyid            # id of joint's body                       (njnt x 1)
+        int*      jnt_group             # group for visibility                     (njnt x 1)
         mjtByte*  jnt_limited           # does joint have limits                   (njnt x 1)
         mjtNum*   jnt_solref            # constraint solver reference: limit       (njnt x mjNREF)
         mjtNum*   jnt_solimp            # constraint solver impedance: limit       (njnt x mjNIMP)
@@ -533,12 +565,14 @@ cdef extern from "mjmodel.h" nogil:
         int*      dof_jntid             # id of dof's joint                        (nv x 1)
         int*      dof_parentid          # id of dof's parent; -1: none             (nv x 1)
         int*      dof_Madr              # dof address in M-diagonal                (nv x 1)
+        int*      dof_simplenum         # number of consecutive simple dofs        (nv x 1)
         mjtNum*   dof_solref            # constraint solver reference:frictionloss (nv x mjNREF)
         mjtNum*   dof_solimp            # constraint solver impedance:frictionloss (nv x mjNIMP)
         mjtNum*   dof_frictionloss      # dof friction loss                        (nv x 1)
         mjtNum*   dof_armature          # dof armature inertia/mass                (nv x 1)
         mjtNum*   dof_damping           # damping coefficient                      (nv x 1)
         mjtNum*   dof_invweight0        # inv. diag. inertia in qpos0              (nv x 1)
+        mjtNum*   dof_M0                # diag. inertia in qpos0                   (nv x 1)
 
         # geoms
         int*      geom_type             # geometric type (mjtGeom)                 (ngeom x 1)
@@ -549,6 +583,8 @@ cdef extern from "mjmodel.h" nogil:
         int*      geom_dataid           # id of geom's mesh/hfield (-1: none)      (ngeom x 1)
         int*      geom_matid            # material id for rendering                (ngeom x 1)
         int*      geom_group            # group for visibility                     (ngeom x 1)
+        int*      geom_priority         # geom contact priority                    (ngeom x 1)
+        mjtByte*  geom_sameframe        # same as body frame (1) or iframe (2)     (ngeom x 1)
         mjtNum*   geom_solmix           # mixing coef for solref/imp in geom pair  (ngeom x 1)
         mjtNum*   geom_solref           # constraint solver reference: contact     (ngeom x mjNREF)
         mjtNum*   geom_solimp           # constraint solver impedance: contact     (ngeom x mjNIMP)
@@ -567,6 +603,7 @@ cdef extern from "mjmodel.h" nogil:
         int*      site_bodyid           # id of site's body                        (nsite x 1)
         int*      site_matid            # material id for rendering                (nsite x 1)
         int*      site_group            # group for visibility                     (nsite x 1)
+        mjtByte*  site_sameframe        # same as body frame (1) or iframe (2)     (nsite x 1)
         mjtNum*   site_size             # geom size for rendering                  (nsite x 3)
         mjtNum*   site_pos              # local position offset rel. to body       (nsite x 3)
         mjtNum*   site_quat             # local orientation offset rel. to body    (nsite x 4)
@@ -606,15 +643,39 @@ cdef extern from "mjmodel.h" nogil:
         float*    light_specular        # specular rgb (alpha=1)                   (nlight x 3)
 
         # meshes
-        int*      mesh_faceadr          # first face address                       (nmesh x 1)
-        int*      mesh_facenum          # number of faces                          (nmesh x 1)
         int*      mesh_vertadr          # first vertex address                     (nmesh x 1)
         int*      mesh_vertnum          # number of vertices                       (nmesh x 1)
+        int*      mesh_texcoordadr      # texcoord data address; -1: no texcoord   (nmesh x 1)
+        int*      mesh_faceadr          # first face address                       (nmesh x 1)
+        int*      mesh_facenum          # number of faces                          (nmesh x 1)
         int*      mesh_graphadr         # graph data address; -1: no graph         (nmesh x 1)
         float*    mesh_vert             # vertex data for all meshes               (nmeshvert x 3)
         float*    mesh_normal           # vertex normal data for all meshes        (nmeshvert x 3)
+        float*    mesh_texcoord         # vertex texcoords for all meshes          (nmeshtexvert x 2)
         int*      mesh_face             # triangle face data                       (nmeshface x 3)
         int*      mesh_graph            # convex graph data                        (nmeshgraph x 1)
+
+        # skins
+        int*      skin_matid            # skin material id; -1: none               (nskin x 1)
+        float*    skin_rgba             # skin rgba                                (nskin x 4)
+        float*    skin_inflate          # inflate skin in normal direction         (nskin x 1)
+        int*      skin_vertadr          # first vertex address                     (nskin x 1)
+        int*      skin_vertnum          # number of vertices                       (nskin x 1)
+        int*      skin_texcoordadr      # texcoord data address; -1: no texcoord   (nskin x 1)
+        int*      skin_faceadr          # first face address                       (nskin x 1)
+        int*      skin_facenum          # number of faces                          (nskin x 1)
+        int*      skin_boneadr          # first bone in skin                       (nskin x 1)
+        int*      skin_bonenum          # number of bones in skin                  (nskin x 1)
+        float*    skin_vert             # vertex positions for all skin meshes     (nskinvert x 3)
+        float*    skin_texcoord         # vertex texcoords for all skin meshes     (nskintexvert x 2)
+        int*      skin_face             # triangle faces for all skin meshes       (nskinface x 3)
+        int*      skin_bonevertadr      # first vertex in each bone                (nskinbone x 1)
+        int*      skin_bonevertnum      # number of vertices in each bone          (nskinbone x 1)
+        float*    skin_bonebindpos      # bind pos of each bone                    (nskinbone x 3)
+        float*    skin_bonebindquat     # bind quat of each bone                   (nskinbone x 4)
+        int*      skin_bonebodyid       # body id of each bone                     (nskinbone x 1)
+        int*      skin_bonevertid       # mesh ids of vertices in each bone        (nskinbonevert x 1)
+        float*    skin_bonevertweight   # weights of vertices in each bone         (nskinbonevert x 1)
 
         # height fields
         mjtNum*   hfield_size           # (x, y, z_top, z_bottom)                  (nhfield x 4)
@@ -667,6 +728,7 @@ cdef extern from "mjmodel.h" nogil:
         int*      tendon_adr            # address of first object in tendon's path (ntendon x 1)
         int*      tendon_num            # number of objects in tendon's path       (ntendon x 1)
         int*      tendon_matid          # material id for rendering                (ntendon x 1)
+        int*      tendon_group          # group for visibility                     (ntendon x 1)
         mjtByte*  tendon_limited        # does tendon have length limits           (ntendon x 1)
         mjtNum*   tendon_width          # width for rendering                      (ntendon x 1)
         mjtNum*   tendon_solref_lim     # constraint solver reference: limit       (ntendon x mjNREF)
@@ -695,6 +757,7 @@ cdef extern from "mjmodel.h" nogil:
         int*      actuator_gaintype     # gain type (mjtGain)                      (nu x 1)
         int*      actuator_biastype     # bias type (mjtBias)                      (nu x 1)
         int*      actuator_trnid        # transmission id: joint, tendon, site     (nu x 2)
+        int*      actuator_group        # group for visibility                     (nu x 1)
         mjtByte*  actuator_ctrllimited; # is control limited                       (nu x 1)
         mjtByte*  actuator_forcelimited;# is force limited                         (nu x 1)
         mjtNum*   actuator_dynprm       # dynamics parameters                      (nu x mjNDYN)
@@ -704,7 +767,7 @@ cdef extern from "mjmodel.h" nogil:
         mjtNum*   actuator_forcerange;  # range of forces                          (nu x 2)
         mjtNum*   actuator_gear         # scale length and transmitted force       (nu x 6)
         mjtNum*   actuator_cranklength; # crank length for slider-crank            (nu x 1)
-        mjtNum*   actuator_invweight0;  # inv. weight in qpos0                     (nu x 1)
+        mjtNum*   actuator_acc0         # acceleration from unit force in qpos0    (nu x 1)
         mjtNum*   actuator_length0      # actuator length in qpos0                 (nu x 1)
         mjtNum*   actuator_lengthrange  # ... not yet implemented ???              (nu x 2)
         mjtNum*   actuator_user         # user data                                (nu x nuser_actuator)
@@ -752,9 +815,12 @@ cdef extern from "mjmodel.h" nogil:
         int*      name_camadr           # camera name pointers                     (ncam x 1)
         int*      name_lightadr         # light name pointers                      (nlight x 1)
         int*      name_meshadr          # mesh name pointers                       (nmesh x 1)
+        int*      name_skinadr          # skin name pointers                       (nskin x 1)
         int*      name_hfieldadr        # hfield name pointers                     (nhfield x 1)
         int*      name_texadr           # texture name pointers                    (ntex x 1)
         int*      name_matadr           # material name pointers                   (nmat x 1)
+        int*      name_pairadr          # geom pair name pointers                  (npair x 1)
+        int*      name_excludeadr       # exclude name pointers                    (nexclude x 1)
         int*      name_eqadr            # equality constraint name pointers        (neq x 1)
         int*      name_tendonadr        # tendon name pointers                     (ntendon x 1)
         int*      name_actuatoradr      # actuator name pointers                   (nu x 1)
@@ -762,4 +828,5 @@ cdef extern from "mjmodel.h" nogil:
         int*      name_numericadr       # numeric name pointers                    (nnumeric x 1)
         int*      name_textadr          # text name pointers                       (ntext x 1)
         int*      name_tupleadr         # tuple name pointers                      (ntuple x 1)
+        int*      name_keyadr           # keyframe name pointers                   (nkey x 1)
         char*     names                 # names of all objects, 0-terminated       (nnames x 1)

@@ -1,16 +1,21 @@
+import codecs
 import os
+import pycparser
 import re
 import subprocess
+import sys
 import tempfile
+import traceback
+
+
 from collections import OrderedDict
-import sys
-import pycparser
-from pycparser.c_ast import ArrayDecl, TypeDecl, PtrDecl
-import sys
+from pycparser.c_ast import ArrayDecl, TypeDecl, PtrDecl, Union, BinaryOp, UnaryOp
+
 
 c_compiler = "cc"
 if sys.platform.startswith("win"):
     c_compiler = "cl"
+
 
 def tryint(x):
     try:
@@ -72,8 +77,12 @@ def get_struct_dict(struct, struct_name, array_shapes):
                 # but currently that never happens.
                 if struct_name != 'mjModel':
                     struct_dict[struct_name]['depends_on_model'] = True
+        elif isinstance(child_type, Union):
+            # I'm ignoring unions for now until we think they're necessary
+            continue
         else:
             raise NotImplementedError
+
     assert isinstance(struct_dict, OrderedDict), 'Must be deterministic'
     return struct_dict
 
@@ -82,7 +91,8 @@ def get_full_scr_lines(HEADER_DIR, HEADER_FILES):
     # ===== Read all header files =====
     file_contents = []
     for filename in HEADER_FILES:
-        with open(os.path.join(HEADER_DIR, filename), 'r') as f:
+        # mujoco 2.0 header files fail when parsed as utf-8
+        with codecs.open(os.path.join(HEADER_DIR, filename), 'r', encoding='latin-1') as f:
             file_contents.append(f.read())
     full_src_lines = [line.strip()
                       for line in '\n'.join(file_contents).splitlines()]
@@ -149,19 +159,45 @@ def get_const_from_enum(processed_src):
         assert (node[1].name is None) == isinstance(
             node[1].type, pycparser.c_ast.Struct)
         struct = node[1].children()[0][1]
+
+        # Check if it is an enum
         if hasattr(struct, "type") and isinstance(struct.type, pycparser.c_ast.Enum):
             lines.append(" # " + struct.type.name)
+
+            # enum list os a list of key-value enumerations
             enumlist = struct.children()[0][1].children()[0][1].children()
+
             last_value = None
+
             for _, enum in enumlist:
                 var = enum.name[2:]
+
+                # Enum has two parts - name and value
                 if enum.value is not None:
-                    children = enum.value.children()
-                    if len(children) > 0:
-                        value = children[1][1].value
+                    if isinstance(enum.value, BinaryOp):
+                        # An enum is actually a binary operation
+                        if enum.value.op == '<<':
+                            # Parse and evaluate simple constant expression. Will throw if it's anything more complex
+                            value = int(enum.value.children()[0][1].value) << int(enum.value.children()[1][1].value)
+                        else:
+                            raise NotImplementedError
+                    elif isinstance(enum.value, UnaryOp):
+                        # If we want to be correct we need to do a bit of parsing here....
+                        if enum.value.op == '-':
+                            # Again, if some assumptions I'm making here are not correct, this should throw
+                            value = -int(enum.value.expr.value)
+                        else:
+                            raise NotImplementedError
                     else:
-                        value = enum.value.value
-                    value = int(value)
+                        children = enum.value.children()
+
+                        if len(children) > 0:
+                            value = children[1][1].value
+                        else:
+                            value = enum.value.value
+
+                        value = int(value)
+
                     last_value = value
                     new_line = str(var) + " = " + str(value)
                     lines.append(new_line)
@@ -295,29 +331,42 @@ def _add_getters(obj_type):
 
 def get_const_from_define(full_src_lines):
     define_code = []
+
     for line in full_src_lines:
         define = "#define"
         if line.find(define) > -1:
             line = line[len(define):].strip()
             last_len = 100000
+
             while last_len != len(line):
                 last_len = len(line)
                 line = line.replace("  ", " ")
                 line = line.replace("\t", " ")
+
             comment = ""
+
             if line.find("//") > -1:
                 line, comment = line.split("//")
+
             line, comment = line.strip(), comment.strip()
+
             if line.find(" ") > -1:
                 var, val = line.split(" ")
                 try:
+                    # In C/C++ numbers can have an 'f' suffix, specifying a single-precision number.
+                    # That is not supported by the Python floating point parser, therefore we need to strip that bit.
+                    if val[-1] == 'f':
+                        val = val[:-1]
+
                     val = float(val)
                     new_line = var[2:] + " = " + str(val)
                     new_line += " " * (35 - len(new_line))
                     new_line += " # " + comment
                     define_code.append(new_line)
-                except:
+                except Exception:
+                    traceback.print_exc()
                     print("Couldn't parse line: %s" % line)
+
     return define_code
 
 
@@ -325,6 +374,7 @@ def get_funcs(fname):
     src = subprocess.check_output([c_compiler, '-E', '-P', fname]).decode()
     src = src[src.find("int mj_activat"):]
     l = -1
+
     while l != len(src):
         l = len(src)
         src = src.replace("  ", " ")
@@ -333,27 +383,40 @@ def get_funcs(fname):
         src = src.replace("const ", "")
         src = src.replace(", ", ",")
         src = src.strip()
+
     funcs = src.split(";")
     funcs = [f.strip() for f in funcs if len(f) > 0]
     ret = ""
     count = 0
+
     for f in funcs:
         ret_name = f.split(" ")[0]
         func_name = f.split(" ")[1].split("(")[0]
+
         args = f.split("(")[1][:-1]
         skip = False
+
         py_args_string = []
         c_args_string = []
+
         if args != "void":
             args = args.split(",")
+
             for arg in args:
                 arg = arg.strip()
                 data_type = " ".join(arg.split(" ")[:-1])
                 var_name = arg.split(" ")[-1]
+
                 if var_name.find("[") > -1:
                     #arr_size = var_name[var_name.find("[") + 1:var_name.find("]")]
                     data_type = data_type + "*"
                     var_name = var_name[:var_name.find("[")]
+
+                # Some words are keywords in Python that are not keywords in C/C++, therefore they can be used as
+                # variable identifiers. We need to handle these situations.
+                if var_name in ['def']:
+                    var_name = '_' + var_name
+
                 if data_type in ["char*"]:
                     py_args_string.append("str " + var_name)
                     c_args_string.append(var_name + ".encode()")
@@ -397,6 +460,7 @@ def get_funcs(fname):
                     py_args_string.append("uintptr_t " + var_name)
                     c_args_string.append("<int*>" + var_name)
                     continue
+
                 # XXX
                 skip = True
 
@@ -424,25 +488,27 @@ def get_funcs(fname):
 
 
 def main():
-    HEADER_DIR = os.path.expanduser(os.path.join('~', '.mujoco', 'mjpro150', 'include'))
+    HEADER_DIR = os.path.expanduser(os.path.join('~', '.mujoco', 'mujoco200', 'include'))
     HEADER_FILES = [
         'mjmodel.h',
         'mjdata.h',
         'mjvisualize.h',
         'mjrender.h',
+        'mjui.h'
     ]
     if len(sys.argv) > 1:
         OUTPUT = sys.argv[1]
     else:
         OUTPUT = os.path.join('mujoco_py', 'generated', 'wrappers.pxi')
     OUTPUT_CONST = os.path.join('mujoco_py', 'generated', 'const.py')
+
     funcs = get_funcs(os.path.join(HEADER_DIR, "mujoco.h"))
     full_src_lines = get_full_scr_lines(HEADER_DIR, HEADER_FILES)
     array_shapes = get_array_shapes(full_src_lines)
     processed_src = get_processed_src(HEADER_DIR, full_src_lines)
     struct_dict = get_full_struct_dict(processed_src, array_shapes)
-    structname2wrappername, structname2wrapfuncname = get_struct_wrapper(
-        struct_dict)
+
+    structname2wrappername, structname2wrapfuncname = get_struct_wrapper(struct_dict)
 
     define_const = get_const_from_define(full_src_lines)
     enum_const = get_const_from_enum(processed_src)
@@ -892,6 +958,7 @@ from tempfile import TemporaryDirectory
     print(len(code.splitlines()))
     with open(OUTPUT, 'w') as f:
         f.write(code)
+
 
 if __name__ == "__main__":
     main()

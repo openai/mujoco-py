@@ -38,11 +38,12 @@ RUN curl -o /usr/local/bin/patchelf https://s3-us-west-2.amazonaws.com/openai-sc
 ENV LANG C.UTF-8
 
 RUN mkdir -p /root/.mujoco \
-    && wget https://www.roboti.us/download/mjpro150_linux.zip -O mujoco.zip \
+    && wget https://www.roboti.us/download/mujoco200_linux.zip -O mujoco.zip \
     && unzip mujoco.zip -d /root/.mujoco \
+    && mv /root/.mujoco/mujoco200_linux /root/.mujoco/mujoco200 \
     && rm mujoco.zip
 COPY ./mjkey.txt /root/.mujoco/
-ENV LD_LIBRARY_PATH /root/.mujoco/mjpro150/bin:${LD_LIBRARY_PATH}
+ENV LD_LIBRARY_PATH /root/.mujoco/mujoco200/bin:${LD_LIBRARY_PATH}
 ENV LD_LIBRARY_PATH /usr/local/nvidia/lib64:${LD_LIBRARY_PATH}
 
 COPY vendor/Xdummy /usr/local/bin/Xdummy

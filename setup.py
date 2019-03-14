@@ -1,5 +1,6 @@
 #!/usr/bin/env python3
 import os
+
 from os.path import join, dirname, realpath
 from setuptools import find_packages, setup
 from distutils.command.build import build as DistutilsBuild
