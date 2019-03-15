@@ -369,14 +369,14 @@ cdef class MjSim(object):
             return self.ray_fast_group(
                 np.asarray(pnt, dtype=np.float64),
                 np.asarray(vec, dtype=np.float64),
-                np.asarray(group_filter, dtype=np.int32),
+                np.asarray(group_filter, dtype=np.uint8),
                 1 if include_static_geoms else 0,
                 exclude_body)
 
     def ray_fast_group(self,
             np.ndarray[np.float64_t, mode="c", ndim=1] pnt,
             np.ndarray[np.float64_t, mode="c", ndim=1] vec,
-            np.ndarray[np.int32_t, mode="c", ndim=1] geomgroup,
+            np.ndarray[np.uint8_t, mode="c", ndim=1] geomgroup,
             mjtByte flg_static=1,
             int bodyexclude=-1):
         """
