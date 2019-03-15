@@ -612,45 +612,6 @@ def test_sensors():
     sim.data.get_sensor("touchsensor")
 
 
-# jt: This test is crashing Python for me
-#
-# @pytest.mark.requires_rendering
-# @pytest.mark.skipif("Darwin" not in sys.platform.lower(),
-#                     reason="Only Darwin code is thread safe.")
-# def test_concurrent_rendering():
-#     '''Best-effort testing that concurrent multi-threaded rendering works.
-#     The test has no guarantees around being deterministic, but if it fails
-#     you know something is wrong with concurrent rendering. If it passes,
-#     things are probably working.'''
-#     err = None
-#     def func(sim, event):
-#         event.wait()
-#         sim.data.qpos[:] = 0.0
-#         sim.forward()
-#         img1 = sim.render(width=40, height=40, camera_name="camera1")
-#         img2 = sim.render(width=40, height=40, camera_name="camera2")
-#         try:
-#             assert np.sum(img1[:]) == 23255
-#             assert np.sum(img2[:]) == 12007
-#         except Exception as e:
-#             nonlocal err
-#             err = e
-#
-#     model = load_model_from_xml(BASIC_MODEL_XML)
-#     sim = MjSim(model)
-#     sim.render(100, 100)
-#     event = Event()
-#     threads = []
-#     for _ in range(100):
-#         thread = Thread(target=func, args=(sim, event))
-#         threads.append(thread)
-#         thread.start()
-#     event.set()
-#     for thread in threads:
-#         thread.join()
-#     assert err is None, "Exception: %s" % (str(err))
-
-
 @pytest.mark.requires_rendering
 def test_high_res():
     model = load_model_from_xml(BASIC_MODEL_XML)
