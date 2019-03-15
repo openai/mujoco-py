@@ -366,7 +366,7 @@ cdef class MjSim(object):
                 1 if include_static_geoms else 0,
                 exclude_body)
         else:
-            return self.ray_fast_nogroup(
+            return self.ray_fast_group(
                 np.asarray(pnt, dtype=np.float64),
                 np.asarray(vec, dtype=np.float64),
                 np.asarray(group_filter, dtype=np.int32),
