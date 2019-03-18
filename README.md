@@ -19,7 +19,7 @@ The following platforms are currently supported:
 
 The following platforms are DEPRECATED and unsupported:
 
-- Windows support is DEPRECATED and will be removed soon. One known good past version is [1.50.1.68](https://github.com/openai/mujoco-py/blob/9ea9bb000d6b8551b99f9aa440862e0c7f7b4191/README.md#requirements).
+- Windows support has been DEPRECATED and removed in [2.0.2.0]. One known good past version is [1.50.1.68](https://github.com/openai/mujoco-py/blob/9ea9bb000d6b8551b99f9aa440862e0c7f7b4191/README.md#requirements).
 - Python 2 has been DEPRECATED and removed in [1.50.1.0](https://github.com/openai/mujoco-py/releases/tag/1.50.1.0). Python 2 users can stay on the [`0.5` branch](https://github.com/openai/mujoco-py/tree/0.5). The latest release there is [`0.5.7`](https://github.com/openai/mujoco-py/releases/tag/0.5.7) which can be installed with `pip install mujoco-py==0.5.7`.
 
 ### Install MuJoCo
@@ -28,9 +28,8 @@ The following platforms are DEPRECATED and unsupported:
    or free license if you are a student.
    The license key will arrive in an email with your username and password.
 2. Download the MuJoCo version 2.0 binaries for
-   [Linux](https://www.roboti.us/download/mujoco200_linux.zip),
-   [OSX](https://www.roboti.us/download/mujoco200_macos.zip), or
-   [Windows](https://www.roboti.us/download/mujoco200_win64.zip).
+   [Linux](https://www.roboti.us/download/mujoco200_linux.zip) or
+   [OSX](https://www.roboti.us/download/mujoco200_macos.zip).
 3. Unzip the downloaded `mujoco200` directory into `~/.mujoco/mujoco200`,
    and place your license key (the `mjkey.txt` file from your email)
    at `~/.mujoco/mjkey.txt`.
