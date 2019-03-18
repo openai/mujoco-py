@@ -7,7 +7,7 @@ version_info = (2, 0, 2, 0)
 
 def get_version():
     "Returns the version as a human-format string."
-    return '%d.%d.%d.%d' % version_info
+    return '%d.%d.%d.%da1' % version_info
 
 
 __version__ = get_version()
