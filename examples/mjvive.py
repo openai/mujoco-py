@@ -25,7 +25,7 @@ import openvr
 import numpy as np
 import OpenGL.GL as gl
 from mujoco_py import functions
-from mujoco_py.builder import mjpro_path
+from mujoco_py.builder import mujoco_path
 from mujoco_py.cymj import (MjRenderContext, MjSim, load_model_from_xml,
                             PyMjrRect, PyMjvCamera)
 from mujoco_py.generated.const import (CAT_ALL, FB_OFFSCREEN, FONT_BIG,
@@ -36,6 +36,7 @@ from mujoco_py.generated.const import (CAT_ALL, FB_OFFSCREEN, FONT_BIG,
 # but we want to be as close as possible to the original file.
 class HMD():  # anonymous object we can set fields on
     pass
+
 
 window = None
 sim = None
@@ -156,7 +157,7 @@ def v_render():
 
 
 if __name__ == '__main__':
-    filename = os.path.join(mjpro_path, 'model', 'humanoid.xml')
+    filename = os.path.join(mujoco_path, 'model', 'humanoid.xml')
     v_initPre()
     initMuJoCo(filename, hmd.width * 2, hmd.height)
     v_initPost()

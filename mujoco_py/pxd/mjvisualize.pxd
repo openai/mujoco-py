@@ -1,6 +1,3 @@
-include "mjmodel.pxd"
-
-
 cdef extern from "mjvisualize.h" nogil:
 
     #---------------------------- global constants -----------------------------------------
@@ -114,6 +111,7 @@ cdef extern from "mjvisualize.h" nogil:
 
     ctypedef struct mjvPerturb:                  # object selection and perturbation
         int      select                 # selected body id; non-positive: none
+        int      skinselect;            # selected skin id; non-positive: none
         int      active                 # perturbation bitmask (mjtPertBit)
         mjtNum   refpos[3]              # desired position for selected object
         mjtNum   refquat[4]             # desired orientation for selected object
@@ -157,6 +155,8 @@ cdef extern from "mjvisualize.h" nogil:
         int      category               # visual category
         int      texid                  # texture id; -1: no texture
         int      texuniform             # uniform cube mapping
+        int      texcoord               # mesh geom has texture coordinates
+        int      segid                  # segmentation id; -1: not shown
 
         # OpenGL info
         float    texrepeat[2]           # texture repetition for 2D mapping
@@ -191,11 +191,14 @@ cdef extern from "mjvisualize.h" nogil:
 
 
     ctypedef struct mjvOption:                   # abstract visualization options
-        int      label                  # what objects to label (mjtLabel)
-        int      frame                  # which frame to show (mjtFrame)
-        mjtByte  geomgroup[mjNGROUP]    # geom visualization by group
-        mjtByte  sitegroup[mjNGROUP]    # site visualization by group
-        mjtByte  flags[mjNVISFLAG]      # visualization flags (indexed by mjtVisFlag)
+        int      label                    # what objects to label (mjtLabel)
+        int      frame                    # which frame to show (mjtFrame)
+        mjtByte  geomgroup[mjNGROUP]      # geom visualization by group
+        mjtByte  sitegroup[mjNGROUP]      # site visualization by group
+        mjtByte  jointgroup[mjNGROUP]     # joint visualization by group
+        mjtByte  tendongroup[mjNGROUP]    # tendon visualization by group
+        mjtByte  actuatorgroup[mjNGROUP]  # actuator visualization by group
+        mjtByte  flags[mjNVISFLAG]        # visualization flags (indexed by mjtVisFlag)
 
 
     ctypedef struct mjvScene:                    # abstract scene passed to OpenGL renderer
@@ -204,6 +207,15 @@ cdef extern from "mjvisualize.h" nogil:
         int      ngeom                  # number of geoms currently in buffer
         mjvGeom* geoms                  # buffer for geoms
         int*     geomorder              # buffer for ordering geoms by distance to camera
+
+        # skin data
+        int      nskin                  # number of skins
+        int*     skinfacenum            # number of faces in skin
+        int*     skinvertadr            # address of skin vertices
+        int*     skinvertnum            # number of vertices in skin
+        float*   skinvert               # skin vertex data
+        float*   skinnormal             # skin normal data
+
 
         # OpenGL lights
         int      nlight                 # number of lights currently in buffer
@@ -230,12 +242,18 @@ cdef extern from "mjvisualize.h" nogil:
         int     flg_ticklabel[2]        # show grid tick labels (x,y)
         int     flg_extend              # automatically extend axis ranges to fit data
         int     flg_barplot             # isolated line segments (i.e. GL_LINES)
+        int     flg_selection           # vertical selection line
+        int     flg_symmetric           # symmetric y-axis
 
         # figure options
+        int     legendoff               # number of lines to offset legend
         int     gridsize[2]             # number of grid points in (x,y)
+        int     selection               # selection line x-value
+        int     highlight[2]            # if point is in legend rect, highlight line
         float   gridrgb[3]              # grid line rgb
         float   gridwidth               # grid line width
         float   figurergba[4]           # figure color and alpha
+        float   panergba[4]             # pane color and alpha
         float   legendrgba[4]           # legend color and alpha
         float   textrgb[3]              # text color
         float   range[2][2]             # axis ranges; (min>=max) automatic
@@ -251,4 +269,10 @@ cdef extern from "mjvisualize.h" nogil:
         float   linewidth[mjMAXLINE]                 # line width
         float   linedata[mjMAXLINE][2*mjMAXLINEPNT]  # line data (x,y)
         char    linename[mjMAXLINE][100]             # line name for legend
+
+        # output from renderer
+        int     xaxispixel[2]           # range of x-axis in pixels
+        int     yaxispixel[2]           # range of y-axis in pixels
+        float   xaxisdata[2]            # range of x-axis in data units
+        float   yaxisdata[2]            # range of y-axis in data units
 

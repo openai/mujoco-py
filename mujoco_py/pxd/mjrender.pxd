@@ -1,4 +1,7 @@
 cdef extern from "mjrender.h" nogil:
+    # Global constants
+    enum: mjNAUX
+    enum: mjMAXTEXTURE
 
     ctypedef enum mjtGridPos:            # grid position for overlay
         mjGRID_TOPLEFT      = 0,        # top left
@@ -35,10 +38,19 @@ cdef extern from "mjrender.h" nogil:
         float lineWidth                 # line width for wireframe rendering
         float shadowClip                # clipping radius for directional lights
         float shadowScale               # fraction of light cutoff for spot lights
+        float fogStart                  # fog start = stat.extent * vis.map.fogstart
+        float fogEnd                    # fog end = stat.extent * vis.map.fogend
+        float fogRGBA[4]                # fog rgba
         int shadowSize                  # size of shadow map texture
         int offWidth                    # width of offscreen buffer
         int offHeight                   # height of offscreen buffer
         int offSamples                  # number of offscreen buffer multisamples
+
+        # parameters specified at creation
+        int fontScale;                  # font scale
+        int auxWidth[mjNAUX]            # auxiliary buffer width
+        int auxHeight[mjNAUX]           # auxiliary buffer height
+        int auxSamples[mjNAUX]          # auxiliary buffer multisamples
 
         # offscreen rendering objects
         unsigned int offFBO             # offscreen framebuffer object
@@ -51,6 +63,12 @@ cdef extern from "mjrender.h" nogil:
         # shadow rendering objects
         unsigned int shadowFBO          # shadow map framebuffer object
         unsigned int shadowTex          # shadow map texture
+
+        # auxiliary buffers
+        unsigned int auxFBO[mjNAUX]     # auxiliary framebuffer object
+        unsigned int auxFBO_r[mjNAUX]   # auxiliary framebuffer object for resolving
+        unsigned int auxColor[mjNAUX]   # auxiliary color buffer
+        unsigned int auxColor_r[mjNAUX] # auxiliary color buffer for resolving
 
         # texture objects and info
         int ntexture                    # number of allocated textures
@@ -72,6 +90,13 @@ cdef extern from "mjrender.h" nogil:
         int     rangeHField             # all hfields from model
         int     rangeBuiltin            # all builtin geoms, with quality from model
         int     rangeFont               # all characters in font
+
+        # skin VBOs
+        int      nskin                  # number of skins
+        unsigned int* skinvertVBO       # skin vertex position VBOs
+        unsigned int* skinnormalVBO     # skin vertex normal VBOs
+        unsigned int* skintexcoordVBO   # skin vertex texture coordinate VBOs
+        unsigned int* skinfaceVBO       # skin face index VBOs
 
         # character info
         int     charWidth[127]          # character widths: normal and shadow

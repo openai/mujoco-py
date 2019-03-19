@@ -33,7 +33,7 @@ cdef class MjRenderContext(object):
 
     def __cinit__(self):
         maxgeom = 1000
-        mjv_makeScene(&self._scn, maxgeom)
+        mjv_makeScene(self._model_ptr, &self._scn, maxgeom)
         mjv_defaultCamera(&self._cam)
         mjv_defaultOption(&self._vopt)
         mjr_defaultContext(&self._con)

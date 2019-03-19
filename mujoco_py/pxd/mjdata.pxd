@@ -1,6 +1,3 @@
-include "mjmodel.pxd"
-
-
 cdef extern from "mjdata.h" nogil:
 
     #---------------------------- primitive types (mjt) ------------------------------------
@@ -137,6 +134,7 @@ cdef extern from "mjdata.h" nogil:
         mjtNum*   qpos                  # position                                 (nq x 1)
         mjtNum*   qvel                  # velocity                                 (nv x 1)
         mjtNum*   act                   # actuator activation                      (na x 1)
+        mjtNum*   qacc_warmstart        # acceleration used for warmstart          (nv x 1)
 
         # control
         mjtNum*   ctrl                  # control                                  (nu x 1)
@@ -184,8 +182,11 @@ cdef extern from "mjdata.h" nogil:
         # computed by mj_fwdPosition/mj_tendon
         int*      ten_wrapadr           # start address of tendon's path           (ntendon x 1)
         int*      ten_wrapnum           # number of wrap points in path            (ntendon x 1)
+        int*      ten_J_rownnz          # number of non-zeros in Jacobian row      (ntendon x 1)
+        int*      ten_J_rowadr          # row start address in colind array        (ntendon x 1)
+        int*      ten_J_colind          # column indices in sparse Jacobian        (ntendon x nv)
         mjtNum*   ten_length            # tendon lengths                           (ntendon x 1)
-        mjtNum*   ten_moment            # tendon moment arms                       (ntendon x nv)
+        mjtNum*   ten_J                 # tendon Jacobian                          (ntendon x nv)
         int*      wrap_obj              # geom id; -1: site; -2: pulley            (nwrap*2 x 1)
         mjtNum*   wrap_xpos             # Cartesian 3D points in all path          (nwrap*2 x 3)
 
@@ -210,18 +211,21 @@ cdef extern from "mjdata.h" nogil:
         int*      efc_id                # id of object of specified type           (njmax x 1)
         int*      efc_J_rownnz          # number of non-zeros in Jacobian row      (njmax x 1)
         int*      efc_J_rowadr          # row start address in colind array        (njmax x 1)
+        int*      efc_J_rowsuper        # number of subsequent rows in supernode   (njmax x 1)
         int*      efc_J_colind          # column indices in sparse Jacobian        (njmax x nv)
         int*      efc_JT_rownnz         # number of non-zeros in Jacobian row  T   (nv x 1)
         int*      efc_JT_rowadr         # row start address in colind array    T   (nv x 1)
+        int*      efc_JT_rowsuper       # number of subsequent rows in supernode T (nv x 1)
         int*      efc_JT_colind         # column indices in sparse Jacobian    T   (nv x njmax)
         mjtNum*   efc_solref            # constraint solver reference              (njmax x mjNREF)
         mjtNum*   efc_solimp            # constraint solver impedance              (njmax x mjNIMP)
-        mjtNum*   efc_margin            # inclusion margin (contact)               (njmax x 1)
-        mjtNum*   efc_frictionloss      # frictionloss (friction)                  (njmax x 1)
-        mjtNum*   efc_pos               # constraint position (equality, contact)  (njmax x 1)
         mjtNum*   efc_J                 # constraint Jacobian                      (njmax x nv)
         mjtNum*   efc_JT                # sparse constraint Jacobian transposed    (nv x njmax)
+        mjtNum*   efc_pos               # constraint position (equality, contact)  (njmax x 1)
+        mjtNum*   efc_margin            # inclusion margin (contact)               (njmax x 1)
+        mjtNum*   efc_frictionloss      # frictionloss (friction)                  (njmax x 1)
         mjtNum*   efc_diagApprox        # approximation to diagonal of A           (njmax x 1)
+        mjtNum*   efc_KBIP              # stiffness, damping, impedance, imp'      (njmax x 4)
         mjtNum*   efc_D                 # constraint mass                          (njmax x 1)
         mjtNum*   efc_R                 # inverse constraint mass                  (njmax x 1)
 
@@ -270,7 +274,6 @@ cdef extern from "mjdata.h" nogil:
         mjtNum*   efc_force             # constraint force in constraint space     (njmax x 1)
         int*      efc_state             # constraint state (mjtConstraintState)    (njmax x 1)
         mjtNum*   qfrc_constraint       # constraint force                         (nv x 1)
-        mjtNum*   qacc_warmstart        # acceleration used for warmstart          (nv x 1)
 
         # computed by mj_inverse
         mjtNum*   qfrc_inverse          # net external force; should equal:        (nv x 1)

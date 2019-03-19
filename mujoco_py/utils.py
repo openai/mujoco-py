@@ -16,7 +16,7 @@ You can get licenses at this page:
 If python tries to activate an invalid license, the process will exit.
 '''
 
-MISSING_MJPRO_MESSAGE = '''
+MISSING_MUJOCO_MESSAGE = '''
 You appear to be missing MuJoCo.  We expected to find the file here: {}
 
 This package only provides python bindings, the library must be installed separately.
@@ -75,20 +75,20 @@ def discover_mujoco():
     Currently assumes path is in ~/.mujoco
 
     Returns:
-    - mjpro_path (str): Path to MuJoCo Pro 1.50 directory.
+    - mujoco_path (str): Path to MuJoCo 2.0 directory.
     - key_path (str): Path to the MuJoCo license key.
     """
     key_path = os.getenv('MUJOCO_PY_MJKEY_PATH')
     if not key_path:
         key_path = join(expanduser('~'), '.mujoco', 'mjkey.txt')
-    mjpro_path = os.getenv('MUJOCO_PY_MJPRO_PATH')
-    if not mjpro_path:
-        mjpro_path = join(expanduser('~'), '.mujoco', 'mjpro150')
+    mujoco_path = os.getenv('MUJOCO_PY_MUJOCO_PATH')
+    if not mujoco_path:
+        mujoco_path = join(expanduser('~'), '.mujoco', 'mujoco200')
 
     # We get lots of github issues that seem to be missing these
     # so check that mujoco is really there and raise errors if not.
-    if not exists(mjpro_path):
-        message = MISSING_MJPRO_MESSAGE.format(mjpro_path)
+    if not exists(mujoco_path):
+        message = MISSING_MUJOCO_MESSAGE.format(mujoco_path)
         print(message, file=sys.stderr)
         raise Exception(message)
     if not exists(key_path):
@@ -96,4 +96,4 @@ def discover_mujoco():
         print(message, file=sys.stderr)
         raise Exception(message)
 
-    return (mjpro_path, key_path)
+    return (mujoco_path, key_path)
