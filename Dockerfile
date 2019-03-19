@@ -57,8 +57,8 @@ WORKDIR /mujoco_py
 # expire until we actually change the requirements.
 COPY ./requirements.txt /mujoco_py/
 COPY ./requirements.dev.txt /mujoco_py/
-RUN pip install -r requirements.txt
-RUN pip install -r requirements.dev.txt
+RUN pip install --no-cache-dir -r requirements.txt
+RUN pip install --no-cache-dir -r requirements.dev.txt
 
 # Delay moving in the entire code until the very end.
 ENTRYPOINT ["/mujoco_py/vendor/Xdummy-entrypoint"]
