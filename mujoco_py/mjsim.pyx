@@ -335,31 +335,98 @@ cdef class MjSim(object):
         else:
             raise ValueError("Unsupported format. Valid ones are 'xml' and 'mjb'")
 
-    def ray(self,
-            np.ndarray[np.float64_t, mode="c", ndim=1] pnt,
-            np.ndarray[np.float64_t, mode="c", ndim=1] vec,
-            include_static_geoms=True, exclude_body=-1):
+    def ray(self, pnt, vec, include_static_geoms=True, exclude_body=-1, group_filter=None):
         """
         Cast a ray into the scene, and return the first valid geom it intersects.
             pnt - origin point of the ray in world coordinates (X Y Z)
             vec - direction of the ray in world coordinates (X Y Z)
             include_static_geoms - if False, we exclude geoms that are children of worldbody.
             exclude_body - if this is a body ID, we exclude all children geoms of this body.
-        Returns (distance, geom_id) where
+            group_filter - a vector of booleans of length const.NGROUP
+                           which specifies what geom groups (stored in model.geom_group)
+                           to enable or disable.  If none, all groups are used
+        Returns (distance, geomid) where
             distance - distance along ray until first collision with geom
-            geom_id - id of the geom the ray collided with
+            geomid - id of the geom the ray collided with
         If no collision was found in the scene, return (-1, None)
 
         NOTE: sometimes self.forward() needs to be called before self.ray().
+
+        See self.ray_fast_group() and self.ray_fast_nogroup() for versions of this call
+        with more stringent type requirements.
         """
-        cdef int geom_id
         cdef mjtNum distance
         cdef mjtNum[::view.contiguous] pnt_view = pnt
         cdef mjtNum[::view.contiguous] vec_view = vec
 
-        distance = mj_ray(self.model.ptr, self.data.ptr,
-                          &pnt_view[0], &vec_view[0], NULL,
-                          1 if include_static_geoms else 0,
-                          exclude_body,
-                          &geom_id)
-        return (distance, geom_id)
+        if group_filter is None:
+            return self.ray_fast_nogroup(
+                np.asarray(pnt, dtype=np.float64),
+                np.asarray(vec, dtype=np.float64),
+                1 if include_static_geoms else 0,
+                exclude_body)
+        else:
+            return self.ray_fast_group(
+                np.asarray(pnt, dtype=np.float64),
+                np.asarray(vec, dtype=np.float64),
+                np.asarray(group_filter, dtype=np.uint8),
+                1 if include_static_geoms else 0,
+                exclude_body)
+
+    def ray_fast_group(self,
+            np.ndarray[np.float64_t, mode="c", ndim=1] pnt,
+            np.ndarray[np.float64_t, mode="c", ndim=1] vec,
+            np.ndarray[np.uint8_t, mode="c", ndim=1] geomgroup,
+            mjtByte flg_static=1,
+            int bodyexclude=-1):
+        """
+        Faster version of sim.ray(), which avoids extra copies,
+        but needs to be given all the correct type arrays.
+
+        See self.ray() for explanation of arguments
+        """
+        cdef int geomid
+        cdef mjtNum distance
+        cdef mjtNum[::view.contiguous] pnt_view = pnt
+        cdef mjtNum[::view.contiguous] vec_view = vec
+        cdef mjtByte[::view.contiguous] geomgroup_view = geomgroup
+
+        distance = mj_ray(self.model.ptr,
+                          self.data.ptr,
+                          &pnt_view[0],
+                          &vec_view[0],
+                          &geomgroup_view[0],
+                          flg_static,
+                          bodyexclude,
+                          &geomid)
+        return (distance, geomid)
+
+
+    def ray_fast_nogroup(self,
+            np.ndarray[np.float64_t, mode="c", ndim=1] pnt,
+            np.ndarray[np.float64_t, mode="c", ndim=1] vec,
+            mjtByte flg_static=1,
+            int bodyexclude=-1):
+        """
+        Faster version of sim.ray(), which avoids extra copies,
+        but needs to be given all the correct type arrays.
+
+        This version hardcodes the geomgroup to NULL.
+        (Can't easily express a signature that is "numpy array of specific type or None")
+
+        See self.ray() for explanation of arguments
+        """
+        cdef int geomid
+        cdef mjtNum distance
+        cdef mjtNum[::view.contiguous] pnt_view = pnt
+        cdef mjtNum[::view.contiguous] vec_view = vec
+
+        distance = mj_ray(self.model.ptr,
+                          self.data.ptr,
+                          &pnt_view[0],
+                          &vec_view[0],
+                          NULL,
+                          flg_static,
+                          bodyexclude,
+                          &geomid)
+        return (distance, geomid)
