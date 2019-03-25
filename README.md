@@ -68,6 +68,8 @@ print(sim.data.qpos)
 
 See the [full documentation](https://openai.github.io/mujoco-py/build/html/index.html) for advanced usage.
 
+## Troubleshooting
+
 ### Missing GLFW
 
 A common error when installing is:
@@ -83,6 +85,22 @@ Add the path to the mujoco bin directory to your dynamic loader:
     LD_LIBRARY_PATH=$HOME/.mujoco/mujoco200/bin pip install mujoco-py
 
 This is particularly useful on Ubuntu 14.04, which does not have a GLFW package.
+
+
+### Ubuntu installtion troubleshooting
+
+Because `mujoco_py` has compiled native code that needs to be linked to a supplied MuJoCo binary, it's installation 
+on linux can be more challenging than pure Python source packages.
+
+To install mujoco-py on Ubuntu, make sure you have the following libraries installed:
+
+    sudo apt install libosmesa6-dev libgl1-mesa-glx libglfw3
+   
+If you installed above libraries and you still see an error that `-lGL` cannot be found, most likely you need
+to create the symbolic link directly: 
+
+    sudo ln -s /usr/lib/x86_64-linux-gnu/libGL.so.1 /usr/lib/x86_64-linux-gnu/libGL.so
+
 
 ## Usage Examples
 
