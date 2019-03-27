@@ -38,9 +38,9 @@ cdef class MjRenderContext(object):
         mjv_defaultOption(&self._vopt)
         mjr_defaultContext(&self._con)
 
-    def __init__(self, MjSim sim, bint offscreen=True, int device_id=-1, opengl_backend=None):
+    def __init__(self, MjSim sim, bint offscreen=True, int device_id=-1, opengl_backend=None, quiet=False):
         self.sim = sim
-        self._setup_opengl_context(offscreen, device_id, opengl_backend)
+        self._setup_opengl_context(offscreen, device_id, opengl_backend, quiet=quiet)
         self.offscreen = offscreen
 
         # Ensure the model data has been updated so that there
@@ -87,13 +87,13 @@ cdef class MjRenderContext(object):
                 raise RuntimeError('Window rendering not supported')
         self.con = WrapMjrContext(&self._con)
 
-    def _setup_opengl_context(self, offscreen, device_id, opengl_backend):
+    def _setup_opengl_context(self, offscreen, device_id, opengl_backend, quiet=False):
         if opengl_backend is None and (not offscreen or sys.platform == 'darwin'):
             # default to glfw for onscreen viewing or mac (both offscreen/onscreen)
             opengl_backend = 'glfw'
 
         if opengl_backend == 'glfw':
-            self.opengl_context = GlfwContext(offscreen=offscreen)
+            self.opengl_context = GlfwContext(offscreen=offscreen, quiet=quiet)
         else:
             if device_id < 0:
                 if "GPUS" in os.environ:
