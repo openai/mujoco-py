@@ -276,6 +276,7 @@ class MjRenderContextWindow(MjRenderContext):
 
     def __init__(self, MjSim sim):
         super().__init__(sim, offscreen=False)
+        self.render_swap_callback = None
 
         assert isinstance(self.opengl_context, GlfwContext), (
             "Only GlfwContext supported for windowed rendering")
@@ -290,4 +291,6 @@ class MjRenderContextWindow(MjRenderContext):
 
         glfw.make_context_current(self.window)
         super().render(*glfw.get_framebuffer_size(self.window))
+        if self.render_swap_callback is not None:
+            self.render_swap_callback()
         glfw.swap_buffers(self.window)
