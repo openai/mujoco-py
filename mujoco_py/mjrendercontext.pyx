@@ -1,6 +1,7 @@
 from threading import Lock
 from mujoco_py.generated import const
 
+
 cdef class MjRenderContext(object):
     """
     Class that encapsulates rendering functionality for a
@@ -35,6 +36,7 @@ cdef class MjRenderContext(object):
         maxgeom = 1000
         mjv_makeScene(self._model_ptr, &self._scn, maxgeom)
         mjv_defaultCamera(&self._cam)
+        mjv_defaultPerturb(&self._pert)
         mjv_defaultOption(&self._vopt)
         mjr_defaultContext(&self._con)
 
@@ -55,8 +57,11 @@ cdef class MjRenderContext(object):
         self.cam = WrapMjvCamera(&self._cam)
         self.vopt = WrapMjvOption(&self._vopt)
         self.con = WrapMjrContext(&self._con)
+
         self._pert.active = 0
         self._pert.select = 0
+        self._pert.skinselect = -1
+
         self.pert = WrapMjvPerturb(&self._pert)
 
         self._markers = []
