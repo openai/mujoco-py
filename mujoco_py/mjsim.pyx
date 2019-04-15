@@ -105,6 +105,13 @@ cdef class MjSim(object):
         with wrap_mujoco_warning():
             mj_forward(self.model.ptr, self.data.ptr)
 
+    def set_constants(self):
+        """
+        Set constant fields of mjModel, corresponding to qpos0 configuration.
+        """
+        with wrap_mujoco_warning():
+            mj_setConst(self.model.ptr, self.data.ptr)
+
     def step(self, with_udd=True):
         """
         Advances the simulation by calling ``mj_step``.
