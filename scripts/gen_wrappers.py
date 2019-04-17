@@ -603,9 +603,26 @@ def main():
         raise RuntimeError("{replacement} should be used instead of {name}")\n""".format(
                     name=ptr_name, replacement=REPLACEMENT_BY_ORIGINAL[ptr_name]))
             else:
-                member_getters.append(
-                    '    @property\n    def {name}(self): return self._{name}'.format(name=ptr_name))
-
+                member_getters.append("""
+    @property
+    def {name}(self): return self._{name}""".format(name=ptr_name))
+                for (prefix, long_name, number) in [
+                    ('body', 'body', 'nbody'),
+                    ('jnt', 'joint', 'njnt'),
+                    ('geom', 'geom', 'ngeom'),
+                    ('site', 'site', 'nsite'),
+                    ('cam', 'camera', 'ncam'),
+                    ('light', 'light', 'nlight'),
+                    ('mesh', 'mesh', 'nmesh'),
+                    ('tendon', 'tendon', 'ntendon'),
+                    ('actuator', 'actuator', 'nu'),
+                    ('sensor', 'sensor', 'nsensor'),
+                ]:
+                    if ptr_name.startswith(prefix) and shape0 == number:
+                        member_getters.append("""
+    def get_{name}(self, name):
+        id = self.{long_name}_name2id(name)
+        return self._{name}[id]""".format(name=ptr_name, long_name=long_name))
         # Array types: handle the same way as pointers
         for array_name, array_type, array_size in fields['arrays']:
             if array_type in struct_dict:
