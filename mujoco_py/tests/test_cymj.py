@@ -16,6 +16,10 @@ from mujoco_py import (MjSim, load_model_from_xml,
 from mujoco_py import const, cymj
 from mujoco_py.tests.utils import compare_imgs
 import os
+import time
+from lockfile import LockFile
+import threading
+from multiprocessing import Queue
 
 
 BASIC_MODEL_XML = """
@@ -40,6 +44,16 @@ BASIC_MODEL_XML = """
     </sensor>
 </mujoco>
 """
+
+
+def remove_built_mujoco():
+    # Removes previously compiled mujoco_py files.
+    print("Removing previously compiled mujoco_py files.")
+    path = os.path.join(os.path.dirname(__file__), "..", "generated")
+    os.system(f"rm {path}/*.so")
+    os.system(f"rm -rf {path}/__pycache__")
+    os.system(f"rm -rf {path}/_pyxbld*")
+    os.system(f"rm -rf {path}/mujocopy-buildlock.lock")
 
 
 def test_nested():
@@ -623,24 +637,39 @@ def test_high_res():
     compare_imgs(img, 'test_rendering.freecam.png')
 
 
+
+def test_multithreading():
+    '''
+    Tests for importing mujoco_py from multiple processes.
+    '''
+    remove_built_mujoco()
+    threads = []
+    times = 3
+    queue = Queue()
+    for idx in range(times):
+        threads.append(threading.Thread(target=import_process, args=(queue, )))
+    for t in threads:
+        t.start()
+    for t in threads:
+        t.join()
+    for _ in range(times):
+        assert queue.get(), "One of threads failed."
+
+
 @pytest.mark.skipif(sys.platform.startswith("win"), reason="This test fails on windows.")
 def test_multiprocess():
     '''
     Tests for importing mujoco_py from multiple processes.
     '''
-    from mujoco_py import builder
-    cext_so_path = builder.get_so_file_path()
-    print("Removing old mujoco_py cext", cext_so_path)
-    try:
-        os.remove(cext_so_path)
-    except OSError:
-        pass
+    remove_built_mujoco()
     ctx = get_context('spawn')
     processes = []
     times = 3
     queue = ctx.Queue()
-    for idx in range(3):
+    for idx in range(times):
         processes.append(ctx.Process(target=import_process, args=(queue, )))
+    for _ in range(10):
+        os.system("python -c 'import mujoco_py'")
     for p in processes:
         p.start()
     for p in processes:
@@ -649,11 +678,57 @@ def test_multiprocess():
         assert queue.get(), "One of processes failed."
 
 
+@pytest.mark.skipif(sys.platform.startswith("win"), reason="This test fails on windows.")
+def test_multiprocess_with_killing():
+    '''
+    Kills a process in a middle of compilation and verifies that
+    other processes can resume compilation.
+    '''
+    remove_built_mujoco()
+    ctx = get_context('spawn')
+    processes = []
+    times = 3
+    queue = ctx.Queue()
+    for idx in range(times):
+        processes.append(ctx.Process(target=import_process, args=(queue, )))
+    processes[0].start()
+    # We wait 20s so the compilation already
+    # has started. Then we kill the process.
+    time.sleep(20)
+    for p in processes[1:]:
+        p.start()
+    processes[0].terminate()
+    for p in processes[1:]:
+        p.join()
+    for _ in range(times - 1):
+        assert queue.get(), "One of processes failed."
+
+
+def test_timeout():
+    '''Tests if build can progress even if there is a lock.'''
+    remove_built_mujoco()
+    path = os.path.join(os.path.dirname(__file__), "..", "generated")
+    # Create lock file.
+    lockpath = os.path.join(path, 'mujocopy-buildlock')
+    lock = LockFile(lockpath)
+    print("Acquiring lock in test.")
+    lock.acquire()
+    start = time.time()
+    compile_mujoco()
+    print(f"Compilation took {time.time() - start} sec.")
+    assert time.time() - start > 30, "Execution should take some " \
+                                     "time to compile mujoco_py"
+
+
+def compile_mujoco():
+    from mujoco_py import builder
+    mujoco_path, key_path = builder.discover_mujoco()
+    builder.load_cython_ext(mujoco_path)
+
+
 def import_process(queue):
     try:
-        from mujoco_py import builder
-        mujoco_path, key_path = builder.discover_mujoco()
-        builder.load_cython_ext(mujoco_path)
+        compile_mujoco()
     except Exception as e:
         queue.put(False)
     else:

@@ -17,8 +17,9 @@ from cffi import FFI
 from Cython.Build import cythonize
 from Cython.Distutils.old_build_ext import old_build_ext as build_ext
 from mujoco_py.version import get_version
-from lockfile import LockFile
+from lockfile import LockFile, LockTimeout
 import subprocess
+import time
 
 from mujoco_py.utils import discover_mujoco, MISSING_KEY_MESSAGE
 
@@ -85,27 +86,53 @@ The easy solution is to `import mujoco_py` _before_ `import glfw`.
     cext_so_path = builder.get_so_file_path()
 
     lockpath = os.path.join(os.path.dirname(cext_so_path), 'mujocopy-buildlock')
+    lock = LockFile(lockpath)
+    # max_attempts >= 3 is a good number of attempts.
+    # First, it might hang because
+    # it's locked before in the same thread and we have already acquired the lock.
+    # Second, because lock is acquired by other process.
+    # Then, in the worst case we will wait 3 iterations.
+    max_attempts = 3
+    for attempt in range(max_attempts):
+        try:
+            print(f"Attempting to compile mujoco_py ({attempt}/{max_attempts}). "
+                  f"Might take several minutes.")
+            if lock.i_am_locking() and attempt < max_attempts - 2:
+                print("Sleeping. This thread has already acquired the lock.")
+                time.sleep(30)
+                continue
+            try:
+                lock.acquire(timeout=180)
+            except LockTimeout:
+                # Processed that has acquired lock might be dead (e.g. due to being interrupted).
+                # Therefore, after timeout we should move forward with compilation anyway.
+                print("\nAcquiring lock despite of being taken. Timeout has occurred.\n")
+                lock.break_lock()
+                continue
 
-    with LockFile(lockpath):
-        mod = None
-        force_rebuild = os.environ.get('MUJOCO_PY_FORCE_REBUILD')
-        if force_rebuild:
-            # Try to remove the old file, ignore errors if it doesn't exist
-            print("Removing old mujoco_py cext", cext_so_path)
-            try:
-                os.remove(cext_so_path)
-            except OSError:
-                pass
-        if exists(cext_so_path):
-            try:
+            mod = None
+            force_rebuild = os.environ.get('MUJOCO_PY_FORCE_REBUILD')
+            if force_rebuild:
+                # Try to remove the old file, ignore errors if it doesn't exist
+                print("Removing old mujoco_py cext", cext_so_path)
+                try:
+                    os.remove(cext_so_path)
+                except OSError:
+                    pass
+            if exists(cext_so_path):
+                try:
+                    mod = load_dynamic_ext('cymj', cext_so_path)
+                except ImportError:
+                    print("Import error. Trying to rebuild mujoco_py.")
+            if mod is None:
+                cext_so_path = builder.build()
                 mod = load_dynamic_ext('cymj', cext_so_path)
-            except ImportError:
-                print("Import error. Trying to rebuild mujoco_py.")
-        if mod is None:
-            cext_so_path = builder.build()
-            mod = load_dynamic_ext('cymj', cext_so_path)
-    return mod
-
+        finally:
+            # This allows to release lock if it was
+            # left from other process.
+            lock.break_lock()
+        return mod
+    raise Exception("Failed to compile mujoco_py in multiple attempts.")
 
 def _ensure_set_env_var(var_name, lib_path):
     paths = os.environ.get(var_name, "").split(":")
@@ -498,10 +525,8 @@ def find_key():
 def activate():
     functions.mj_activate(key_path)
 
-
 mujoco_path, key_path = discover_mujoco()
 cymj = load_cython_ext(mujoco_path)
-
 
 # Trick to expose all mj* functions from mujoco in mujoco_py.*
 class dict2(object):
