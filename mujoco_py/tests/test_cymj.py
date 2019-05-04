@@ -7,7 +7,6 @@ from io import BytesIO, StringIO
 from multiprocessing import get_context
 from numbers import Number
 from numpy.testing import assert_array_equal, assert_array_almost_equal
-# from threading import Thread, Event
 from PIL import Image
 
 from mujoco_py import (MjSim, load_model_from_xml,
@@ -16,6 +15,7 @@ from mujoco_py import (MjSim, load_model_from_xml,
                        load_model_from_mjb)
 from mujoco_py import const, cymj
 from mujoco_py.tests.utils import compare_imgs
+import os
 
 
 BASIC_MODEL_XML = """
@@ -628,6 +628,13 @@ def test_multiprocess():
     '''
     Tests for importing mujoco_py from multiple processes.
     '''
+    from mujoco_py import builder
+    cext_so_path = builder.get_so_file_path()
+    print("Removing old mujoco_py cext", cext_so_path)
+    try:
+        os.remove(cext_so_path)
+    except OSError:
+        pass
     ctx = get_context('spawn')
     processes = []
     times = 3
