@@ -122,7 +122,7 @@ The easy solution is to `import mujoco_py` _before_ `import glfw`.
         finally:
             print("d %d" % attempt)
             lock.release()
-            print("e %d" % attempt)
+            print("e  %d" % attempt)
         return mod
     raise Exception("Failed to compile mujoco_py in multiple attempts.")
 
