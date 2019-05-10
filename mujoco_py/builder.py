@@ -19,7 +19,6 @@ from Cython.Distutils.old_build_ext import old_build_ext as build_ext
 from mujoco_py.version import get_version
 from lockfile import LockFile, LockTimeout
 import subprocess
-import time
 
 from mujoco_py.utils import discover_mujoco, MISSING_KEY_MESSAGE
 
@@ -512,8 +511,10 @@ def find_key():
 def activate():
     functions.mj_activate(key_path)
 
+
 mujoco_path, key_path = discover_mujoco()
 cymj = load_cython_ext(mujoco_path)
+
 
 # Trick to expose all mj* functions from mujoco in mujoco_py.*
 class dict2(object):
