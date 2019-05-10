@@ -81,23 +81,27 @@ The easy solution is to `import mujoco_py` _before_ `import glfw`.
     else:
         raise RuntimeError("Unsupported platform %s" % sys.platform)
 
-    builder = Builder(mujoco_path)
-    cext_so_path = builder.get_so_file_path()
-
-    lockpath = os.path.join(os.path.dirname(cext_so_path), 'mujocopy-buildlock')
+    lockpath = os.path.join(os.path.dirname(__file__),
+                            "generated",
+                            "mujocopy-buildlock")
     lock = LockFile(lockpath)
     print("Compiling mujoco_py. Might take several minutes.")
     for attempt in range(3):
         try:
+            print("attempt: %d" % attempt)
             lock.acquire(timeout=120)
         except LockTimeout:
             # Processed that has acquired lock might be dead (e.g. due to being interrupted).
             # Therefore, after timeout we should move forward with compilation anyway.
             print("\nAcquiring lock despite of it being taken. "
                   "Timeout has occurred.\n")
+            print("b %d" % attempt)
             lock.break_lock()
+            print("c %d" % attempt)
             continue
         try:
+            builder = Builder(mujoco_path)
+            cext_so_path = builder.get_so_file_path()
             mod = None
             force_rebuild = os.environ.get('MUJOCO_PY_FORCE_REBUILD')
             if force_rebuild:
@@ -116,7 +120,9 @@ The easy solution is to `import mujoco_py` _before_ `import glfw`.
                 cext_so_path = builder.build()
                 mod = load_dynamic_ext('cymj', cext_so_path)
         finally:
+            print("d %d" % attempt)
             lock.release()
+            print("e %d" % attempt)
         return mod
     raise Exception("Failed to compile mujoco_py in multiple attempts.")
 

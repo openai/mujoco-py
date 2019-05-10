@@ -62,6 +62,6 @@ RUN pip install --no-cache-dir -r requirements.dev.txt
 
 # Delay moving in the entire code until the very end.
 ENTRYPOINT ["/mujoco_py/vendor/Xdummy-entrypoint"]
-CMD ["pytest"]
+CMD ["pytest", "-s", "--verbose"]
 COPY . /mujoco_py
 RUN python setup.py install
