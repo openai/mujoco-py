@@ -46,7 +46,7 @@ BASIC_MODEL_XML = """
 """
 
 
-def remove_built_mujoco():
+def remove_mujoco_build():
     # Removes previously compiled mujoco_py files.
     print("Removing previously compiled mujoco_py files.")
     path = os.path.join(os.path.dirname(__file__), "..", "generated")
@@ -642,7 +642,7 @@ def test_multithreading():
     '''
     Tests for importing mujoco_py from multiple processes.
     '''
-    remove_built_mujoco()
+    remove_mujoco_build()
     threads = []
     times = 3
     queue = Queue()
@@ -661,7 +661,7 @@ def test_multiprocess():
     '''
     Tests for importing mujoco_py from multiple processes.
     '''
-    remove_built_mujoco()
+    remove_mujoco_build()
     ctx = get_context('spawn')
     processes = []
     times = 3
@@ -684,7 +684,7 @@ def test_multiprocess_with_killing():
     Kills a process in a middle of compilation and verifies that
     other processes can resume compilation.
     '''
-    remove_built_mujoco()
+    remove_mujoco_build()
     ctx = get_context('spawn')
     processes = []
     times = 3
@@ -706,13 +706,16 @@ def test_multiprocess_with_killing():
 
 def test_timeout():
     '''Tests if build can progress even if there is a lock.'''
-    remove_built_mujoco()
+    remove_mujoco_build()
     path = os.path.join(os.path.dirname(__file__), "..", "generated")
     # Create lock file.
     lockpath = os.path.join(path, 'mujocopy-buildlock')
-    lock = LockFile(lockpath)
     print("Acquiring lock in test.")
-    lock.acquire()
+    # The lock has to be aquired in a separate process or thread.
+    # Otherwise, we can double acquire it.
+    import ipdb
+    ipdb.set_trace()
+    os.system('python -c "from lockfile import LockFile;LockFile(\\"%s\\").acquire()"' % lockpath)
     start = time.time()
     compile_mujoco()
     print(f"Compilation took {time.time() - start} sec.")

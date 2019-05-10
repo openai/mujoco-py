@@ -87,29 +87,18 @@ The easy solution is to `import mujoco_py` _before_ `import glfw`.
 
     lockpath = os.path.join(os.path.dirname(cext_so_path), 'mujocopy-buildlock')
     lock = LockFile(lockpath)
-    # max_attempts >= 3 is a good number of attempts.
-    # First, it might hang because
-    # it's locked before in the same thread and we have already acquired the lock.
-    # Second, because lock is acquired by other process.
-    # Then, in the worst case we will wait 3 iterations.
-    max_attempts = 3
-    for attempt in range(max_attempts):
+    print("Compiling mujoco_py. Might take several minutes.")
+    for attempt in range(3):
         try:
-            print(f"Attempting to compile mujoco_py ({attempt}/{max_attempts}). "
-                  f"Might take several minutes.")
-            if lock.i_am_locking() and attempt < max_attempts - 2:
-                print("Sleeping. This thread has already acquired the lock.")
-                time.sleep(30)
-                continue
-            try:
-                lock.acquire(timeout=180)
-            except LockTimeout:
-                # Processed that has acquired lock might be dead (e.g. due to being interrupted).
-                # Therefore, after timeout we should move forward with compilation anyway.
-                print("\nAcquiring lock despite of being taken. Timeout has occurred.\n")
-                lock.break_lock()
-                continue
-
+            lock.acquire(timeout=120)
+        except LockTimeout:
+            # Processed that has acquired lock might be dead (e.g. due to being interrupted).
+            # Therefore, after timeout we should move forward with compilation anyway.
+            print("\nAcquiring lock despite of it being taken. "
+                  "Timeout has occurred.\n")
+            lock.break_lock()
+            continue
+        try:
             mod = None
             force_rebuild = os.environ.get('MUJOCO_PY_FORCE_REBUILD')
             if force_rebuild:
@@ -128,9 +117,7 @@ The easy solution is to `import mujoco_py` _before_ `import glfw`.
                 cext_so_path = builder.build()
                 mod = load_dynamic_ext('cymj', cext_so_path)
         finally:
-            # This allows to release lock if it was
-            # left from other process.
-            lock.break_lock()
+            lock.release()
         return mod
     raise Exception("Failed to compile mujoco_py in multiple attempts.")
 
