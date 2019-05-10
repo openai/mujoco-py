@@ -85,13 +85,13 @@ The easy solution is to `import mujoco_py` _before_ `import glfw`.
                             "generated",
                             "mujocopy-buildlock")
     lock = LockFile(lockpath)
-    print("Compiling mujoco_py. Might take several minutes.")
     for attempt in range(3):
         try:
             print("attempt: %d" % attempt)
             lock.acquire(timeout=120)
         except LockTimeout:
-            # Processed that has acquired lock might be dead (e.g. due to being interrupted).
+            # Processed that has acquired lock might be dead
+            # (e.g. due to being interrupted during execution).
             # Therefore, after timeout we should move forward with compilation anyway.
             print("\nAcquiring lock despite of it being taken. "
                   "Timeout has occurred.\n")
@@ -99,32 +99,42 @@ The easy solution is to `import mujoco_py` _before_ `import glfw`.
             lock.break_lock()
             print("c %d" % attempt)
             continue
-        try:
-            builder = Builder(mujoco_path)
-            cext_so_path = builder.get_so_file_path()
-            mod = None
-            force_rebuild = os.environ.get('MUJOCO_PY_FORCE_REBUILD')
-            if force_rebuild:
-                # Try to remove the old file, ignore errors if it doesn't exist
-                print("Removing old mujoco_py cext", cext_so_path)
-                try:
-                    os.remove(cext_so_path)
-                except OSError:
-                    pass
-            if exists(cext_so_path):
-                try:
-                    mod = load_dynamic_ext('cymj', cext_so_path)
-                except ImportError:
-                    print("Import error. Trying to rebuild mujoco_py.")
-            if mod is None:
-                cext_so_path = builder.build()
+        builder = Builder(mujoco_path)
+        cext_so_path = builder.get_so_file_path()
+        mod = None
+        force_rebuild = os.environ.get('MUJOCO_PY_FORCE_REBUILD')
+        if force_rebuild:
+            # Try to remove the old file, ignore errors if it doesn't exist
+            print("Removing old mujoco_py cext", cext_so_path)
+            try:
+                os.remove(cext_so_path)
+            except OSError:
+                pass
+        if exists(cext_so_path):
+            try:
                 mod = load_dynamic_ext('cymj', cext_so_path)
-        finally:
-            print("d %d" % attempt)
-            lock.release()
-            print("e  %d" % attempt)
+            except ImportError:
+                print("Import error. Trying to rebuild mujoco_py.")
+        if mod is None:
+            remove_mujoco_build()  # ensures that compile environment is clean.
+            print("Compiling mujoco_py. Might take several minutes.")
+            cext_so_path = builder.build()
+            mod = load_dynamic_ext('cymj', cext_so_path)
+        print("d %d" % attempt)
+        lock.release()
+        print("e  %d" % attempt)
         return mod
     raise Exception("Failed to compile mujoco_py in multiple attempts.")
+
+
+def remove_mujoco_build():
+    # Removes previously compiled mujoco_py files.
+    print("Removing previously compiled mujoco_py files.")
+    path = os.path.join(os.path.dirname(__file__), "..", "generated")
+    os.system(f"rm -f {path}/*.so")
+    os.system(f"rm -rf {path}/__pycache__")
+    os.system(f"rm -rf {path}/_pyxbld*")
+
 
 def _ensure_set_env_var(var_name, lib_path):
     paths = os.environ.get(var_name, "").split(":")

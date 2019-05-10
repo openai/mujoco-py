@@ -15,9 +15,9 @@ from mujoco_py import (MjSim, load_model_from_xml,
                        load_model_from_mjb)
 from mujoco_py import const, cymj
 from mujoco_py.tests.utils import compare_imgs
+from mujoco_py.builder import remove_mujoco_build
 import os
 import time
-from lockfile import LockFile
 import threading
 from multiprocessing import Queue
 
@@ -46,13 +46,10 @@ BASIC_MODEL_XML = """
 """
 
 
-def remove_mujoco_build():
+def remove_mujoco_build_and_lock():
     # Removes previously compiled mujoco_py files.
-    print("Removing previously compiled mujoco_py files.")
+    remove_mujoco_build()
     path = os.path.join(os.path.dirname(__file__), "..", "generated")
-    os.system(f"rm {path}/*.so")
-    os.system(f"rm -rf {path}/__pycache__")
-    os.system(f"rm -rf {path}/_pyxbld*")
     os.system(f"rm -rf {path}/mujocopy-buildlock.lock")
 
 
@@ -642,7 +639,7 @@ def test_multithreading():
     '''
     Tests for importing mujoco_py from multiple processes.
     '''
-    remove_mujoco_build()
+    remove_mujoco_build_and_lock()
     threads = []
     times = 3
     queue = Queue()
@@ -661,7 +658,7 @@ def test_multiprocess():
     '''
     Tests for importing mujoco_py from multiple processes.
     '''
-    remove_mujoco_build()
+    remove_mujoco_build_and_lock()
     ctx = get_context('spawn')
     processes = []
     times = 3
@@ -684,7 +681,7 @@ def test_multiprocess_with_killing():
     Kills a process in a middle of compilation and verifies that
     other processes can resume compilation.
     '''
-    remove_mujoco_build()
+    remove_mujoco_build_and_lock()
     ctx = get_context('spawn')
     processes = []
     times = 3
@@ -706,15 +703,13 @@ def test_multiprocess_with_killing():
 
 def test_timeout():
     '''Tests if build can progress even if there is a lock.'''
-    remove_mujoco_build()
+    remove_mujoco_build_and_lock()
     path = os.path.join(os.path.dirname(__file__), "..", "generated")
     # Create lock file.
     lockpath = os.path.join(path, 'mujocopy-buildlock')
     print("Acquiring lock in test.")
-    # The lock has to be aquired in a separate process or thread.
-    # Otherwise, we can double acquire it.
-    import ipdb
-    ipdb.set_trace()
+    # The lock has to be acquired in a separate process or thread.
+    # Lockfile allows to be double acquired in the same thread.
     os.system('python -c "from lockfile import LockFile;LockFile(\\"%s\\").acquire()"' % lockpath)
     start = time.time()
     compile_mujoco()
