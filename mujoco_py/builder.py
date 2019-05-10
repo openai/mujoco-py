@@ -87,7 +87,6 @@ The easy solution is to `import mujoco_py` _before_ `import glfw`.
     lock = LockFile(lockpath)
     for attempt in range(3):
         try:
-            print("attempt: %d" % attempt)
             lock.acquire(timeout=120)
         except LockTimeout:
             # Processed that has acquired lock might be dead
@@ -95,9 +94,7 @@ The easy solution is to `import mujoco_py` _before_ `import glfw`.
             # Therefore, after timeout we should move forward with compilation anyway.
             print("\nAcquiring lock despite of it being taken. "
                   "Timeout has occurred.\n")
-            print("b %d" % attempt)
             lock.break_lock()
-            print("c %d" % attempt)
             continue
         builder = Builder(mujoco_path)
         cext_so_path = builder.get_so_file_path()
@@ -120,9 +117,7 @@ The easy solution is to `import mujoco_py` _before_ `import glfw`.
             print("Compiling mujoco_py. Might take several minutes.")
             cext_so_path = builder.build()
             mod = load_dynamic_ext('cymj', cext_so_path)
-        print("d %d" % attempt)
         lock.release()
-        print("e  %d" % attempt)
         return mod
     raise Exception("Failed to compile mujoco_py in multiple attempts.")
 

@@ -63,6 +63,7 @@ def test_multiprocessing():
 
 
 def mp_test_create_destroy():
+    print("Running mp_test_create_destroy")
     model = load_model_from_xml(BASIC_MODEL_XML)
     pool = MjRenderPool(model, n_workers=2)
     del pool
@@ -74,6 +75,7 @@ def mp_test_create_destroy():
 
 
 def mp_test_rendering():
+    print("Running mp_test_rendering")
     model = load_model_from_xml(BASIC_MODEL_XML)
     pool = MjRenderPool(model, n_workers=3)
 
@@ -90,6 +92,7 @@ def mp_test_rendering():
 
 
 def mp_test_cameras():
+    print("Running mp_test_cameras")
     model = load_model_from_xml(BASIC_MODEL_XML)
     pool = MjRenderPool(model, n_workers=1)
 
@@ -103,6 +106,7 @@ def mp_test_cameras():
 
 
 def mp_test_modder():
+    print("Running mp_test_modder")
     model = load_model_from_xml(BASIC_MODEL_XML)
     pool = MjRenderPool(model, n_workers=2, modder=TextureModder)
 
@@ -135,6 +139,7 @@ def mp_test_modder():
 
 
 def mp_test_states():
+    print("Running mp_test_states")
     sim = MjSim(load_model_from_xml(BASIC_MODEL_XML))
 
     states = []
