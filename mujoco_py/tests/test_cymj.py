@@ -50,7 +50,9 @@ def remove_mujoco_build_and_lock():
     # Removes previously compiled mujoco_py files.
     remove_mujoco_build()
     path = os.path.join(os.path.dirname(__file__), "..", "generated")
-    os.remove(f"{path}/mujocopy-buildlock.lock")
+    fname = f"{path}/mujocopy-buildlock.lock"
+    if os.path.exists(fname):
+        os.remove(fname)
 
 
 def test_nested():
