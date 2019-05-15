@@ -115,6 +115,7 @@ The easy solution is to `import mujoco_py` _before_ `import glfw`.
         if mod is None:
             remove_mujoco_build()  # ensures that compile environment is clean.
             print("Compiling mujoco_py. Might take several minutes.")
+            builder = Builder(mujoco_path)
             cext_so_path = builder.build()
             mod = load_dynamic_ext('cymj', cext_so_path)
         lock.release()
