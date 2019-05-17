@@ -7,6 +7,7 @@ from mujoco_py.mjviewer import MjViewer, MjViewerBasic
 from mujoco_py.version import __version__, get_version
 import mujoco_py
 
+
 load_model_from_path = cymj.load_model_from_path
 load_model_from_xml = cymj.load_model_from_xml
 load_model_from_mjb = cymj.load_model_from_mjb
