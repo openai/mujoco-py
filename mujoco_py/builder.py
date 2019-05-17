@@ -1,15 +1,15 @@
 from cffi import FFI
 from string import ascii_lowercase
 import os
-import glob
 import sys
 from random import choice
 from mujoco_py.utils import discover_mujoco, MISSING_KEY_MESSAGE
 from os.path import exists, join
-from mujoco_py.utils import manually_link_libraries, load_dynamic_ext
+from mujoco_py.utils import manually_link_libraries, load_dynamic_ext, remove_mujoco_build
 import subprocess
 from subprocess import CalledProcessError
 import glob
+from shutil import move
 
 
 
@@ -180,23 +180,20 @@ def activate():
     functions.mj_activate(key_path)
 
 
-mujoco_path, key_path = discover_mujoco()
-compile_mujoco_path = os.path.join(os.path.dirname(__file__), "compile_mujoco.py")
-compile_success = False
-for attempt in range(3):
-    try:
-        subprocess.check_call(["python", compile_mujoco_path])
-        compile_success = True
-    except CalledProcessError:
-        pass
-if not compile_success:
-    raise Exception("Failed to compile mujoco.")
-
-so_path = os.join(os.path.dirname(__file__), "generated", "*.so")
-cext_so_path = glob.glob(so_path)
-assert len(cext_so_path) == 1, ("Expecting only one .so file under " + so_path)
-cext_so_path = cext_so_path[0]
-cymj = load_dynamic_ext('cymj', cext_so_path)
+def compile_with_multiple_attempts():
+    compile_mujoco_path = os.path.join(os.path.dirname(__file__), "compile_mujoco.py")
+    for attempt in range(3):
+        try:
+            subprocess.check_call(["python", compile_mujoco_path], timeout=150)
+            so_path = os.path.join(os.path.dirname(__file__), "generated", "*.so")
+            cext_so_path = glob.glob(so_path)
+            assert len(cext_so_path) == 1, ("Expecting only one .so file under " + so_path)
+            cext_so_path = cext_so_path[0]
+            cymj = load_dynamic_ext('cymj', cext_so_path)
+            return cymj
+        except (CalledProcessError, TimeoutError, ImportError) as _:
+            remove_mujoco_build()  # Cleans the installation.
+    raise Exception("Failed to compile mujoco_py.")
 
 
 # Trick to expose all mj* functions from mujoco in mujoco_py.*
@@ -204,6 +201,8 @@ class dict2(object):
     pass
 
 
+cymj = compile_with_multiple_attempts()
+mujoco_path, key_path = discover_mujoco()
 functions = dict2()
 for func_name in dir(cymj):
     if func_name.startswith("_mj"):

@@ -18,9 +18,8 @@ import subprocess
 # Ensures that mujoco_py is not imported.
 sys.modules['mujoco_py'] = None
 
-
-def load_dynamic_ext():
-    raise Exception("load_dynamic_ext should have been "
+def manually_link_libraries():
+    raise Exception("manually_link_libraries should have been "
                     "overridden by discover_mujoco from utils.py")
 
 
@@ -53,17 +52,6 @@ def get_nvidia_lib_dir():
     if len(paths) > 1:
         print("Choosing the latest nvidia driver: %s, among %s" % (paths[-1], str(paths)))
     return paths[-1]
-
-
-def remove_mujoco_build():
-    # Removes previously compiled mujoco_py files.
-    print("Removing previously compiled mujoco_py files.")
-    path = os.path.join(os.path.dirname(__file__), "generated")
-    for fname in glob.glob(f"{path}/*.so"):
-        os.remove(fname)
-    for dirname in glob.glob(f"{path}/_pyxbld*"):
-        shutil.rmtree(dirname, ignore_errors=True)
-    shutil.rmtree(f"{path}/__pycache__", ignore_errors=True)
 
 
 def _ensure_set_env_var(var_name, lib_path):
@@ -281,6 +269,11 @@ def main():
     else:
         raise RuntimeError("Unsupported platform %s" % sys.platform)
 
+    builder = Builder(mujoco_path)
+    cext_so_path = builder.get_so_file_path()
+    if exists(cext_so_path):
+        exit(0)
+
     lockpath = os.path.join(os.path.dirname(__file__),
                             "generated",
                             "mujocopy-buildlock")
@@ -298,24 +291,8 @@ def main():
         lock.break_lock()
         exit(-1)
     try:
-        builder = Builder(mujoco_path)
-        cext_so_path = builder.get_so_file_path()
-        mod = None
-        force_rebuild = os.environ.get('MUJOCO_PY_FORCE_REBUILD')
-        if force_rebuild:
-            # Try to remove the old file, ignore errors if it doesn't exist
-            remove_mujoco_build()
-        if exists(cext_so_path):
-            try:
-                load_dynamic_ext('cymj', cext_so_path)
-            except ImportError:
-                print("Import error. Trying to rebuild mujoco_py.")
-        if mod is None:
-            remove_mujoco_build()  # ensures that compile environment is clean.
-            print("Compiling mujoco_py. Might take several minutes.")
-            builder = Builder(mujoco_path)
-            cext_so_path = builder.build()
-            load_dynamic_ext('cymj', cext_so_path)
+        print("Compiling mujoco_py. Might take several minutes.")
+        builder.build()
     finally:
         lock.release()
     exit(0)

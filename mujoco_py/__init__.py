@@ -33,6 +33,6 @@ __all__ = ['MjSim', 'MjSimState',
 # Print out a warning if we can't find the key.
 # this is nicer than failing activation, which we can not do in python.
 # The mujoco library exits the process forcibly, in a way we can't try/catch.
-mujoco_py.compile_mujoco.find_key()
+mujoco_py.builder.find_key()
 if not os.environ.get('MUJOCO_PY_SKIP_ACTIVATE'):
-    mujoco_py.compile_mujoco.activate()
+    mujoco_py.builder.activate()

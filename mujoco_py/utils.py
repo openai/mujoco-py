@@ -6,7 +6,7 @@ import os
 import subprocess
 from os.path import abspath, dirname, exists, join, getmtime
 import shutil
-
+import glob
 import numpy as np
 
 MISSING_KEY_MESSAGE = '''
@@ -33,6 +33,7 @@ Which can be downloaded from the website
 
     https://www.roboti.us/index.html
 '''
+
 
 
 def remove_empty_lines(string):
@@ -141,3 +142,14 @@ def manually_link_libraries(mujoco_path, raw_cext_dll_path):
 
     os.rename(tmp_final_cext_dll_path, final_cext_dll_path)
     return final_cext_dll_path
+
+
+def remove_mujoco_build():
+    # Removes previously compiled mujoco_py files.
+    print("Removing previously compiled mujoco_py files.")
+    path = os.path.join(os.path.dirname(__file__), "generated")
+    for fname in glob.glob(f"{path}/*.so"):
+        os.remove(fname)
+    for dirname in glob.glob(f"{path}/_pyxbld*"):
+        shutil.rmtree(dirname, ignore_errors=True)
+    shutil.rmtree(f"{path}/__pycache__", ignore_errors=True)

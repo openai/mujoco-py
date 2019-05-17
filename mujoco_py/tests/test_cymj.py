@@ -14,8 +14,9 @@ from mujoco_py import (MjSim, load_model_from_xml,
                        ignore_mujoco_warnings,
                        load_model_from_mjb)
 from mujoco_py import const, cymj
+from mujoco_py.builder import compile_with_multiple_attempts
 from mujoco_py.tests.utils import compare_imgs
-from mujoco_py.compile_mujoco import remove_mujoco_build
+from mujoco_py.utils import remove_mujoco_build
 import os
 import time
 import threading
@@ -714,21 +715,15 @@ def test_timeout():
     # Lockfile allows to be double acquired in the same thread.
     os.system('python -c "from lockfile import LockFile;LockFile(\\"%s\\").acquire()"' % lockpath)
     start = time.time()
-    compile_mujoco()
+    compile_with_multiple_attempts()
     print(f"Compilation took {time.time() - start} sec.")
     assert time.time() - start > 30, "Execution should take some " \
                                      "time to compile mujoco_py"
 
 
-def compile_mujoco():
-    from mujoco_py import compile_mujoco
-    mujoco_path, key_path = compile_mujoco.discover_mujoco()
-    compile_mujoco.load_cython_ext(mujoco_path)
-
-
 def import_process(queue):
     try:
-        compile_mujoco()
+        compile_with_multiple_attempts()
     except Exception as e:
         queue.put(False)
     else:
