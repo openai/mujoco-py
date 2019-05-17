@@ -1,6 +1,6 @@
 #!/usr/bin/env python
 import os
-from mujoco_py.compile_mujoco import cymj, ignore_mujoco_warnings, functions, MujocoException
+from mujoco_py.builder import cymj, ignore_mujoco_warnings, functions, MujocoException, mujoco_path
 from mujoco_py.generated import const
 from mujoco_py.mjrenderpool import MjRenderPool
 from mujoco_py.mjviewer import MjViewer, MjViewerBasic

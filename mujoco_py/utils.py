@@ -1,7 +1,11 @@
 import sys
-import os
 import copy
 from os.path import join, expanduser, exists
+from importlib.machinery import ExtensionFileLoader
+import os
+import subprocess
+from os.path import abspath, dirname, exists, join, getmtime
+import shutil
 
 import numpy as np
 
@@ -78,12 +82,8 @@ def discover_mujoco():
     - mujoco_path (str): Path to MuJoCo 2.0 directory.
     - key_path (str): Path to the MuJoCo license key.
     """
-    key_path = os.getenv('MUJOCO_PY_MJKEY_PATH')
-    if not key_path:
-        key_path = join(expanduser('~'), '.mujoco', 'mjkey.txt')
-    mujoco_path = os.getenv('MUJOCO_PY_MUJOCO_PATH')
-    if not mujoco_path:
-        mujoco_path = join(expanduser('~'), '.mujoco', 'mujoco200')
+    key_path = join(expanduser('~'), '.mujoco', 'mjkey.txt')
+    mujoco_path = join(expanduser('~'), '.mujoco', 'mujoco200')
 
     # We get lots of github issues that seem to be missing these
     # so check that mujoco is really there and raise errors if not.
@@ -96,4 +96,48 @@ def discover_mujoco():
         print(message, file=sys.stderr)
         raise Exception(message)
 
-    return (mujoco_path, key_path)
+    return mujoco_path, key_path
+
+
+def load_dynamic_ext(name, path):
+    ''' Load compiled shared object and return as python module. '''
+    loader = ExtensionFileLoader(name, path)
+    return loader.load_module()
+
+
+def manually_link_libraries(mujoco_path, raw_cext_dll_path):
+    ''' Used to fix mujoco library linking on Mac '''
+    root, ext = os.path.splitext(raw_cext_dll_path)
+    final_cext_dll_path = root + '_final' + ext
+
+    # If someone else already built the final DLL, don't bother
+    # recreating it here, even though this should still be idempotent.
+    if (exists(final_cext_dll_path) and
+            getmtime(final_cext_dll_path) >= getmtime(raw_cext_dll_path)):
+        return final_cext_dll_path
+
+    tmp_final_cext_dll_path = final_cext_dll_path + '~'
+    shutil.copyfile(raw_cext_dll_path, tmp_final_cext_dll_path)
+
+    mj_bin_path = join(mujoco_path, 'bin')
+
+    # Fix the rpath of the generated library -- i lost the Stackoverflow
+    # reference here
+    from_mujoco_path = '@executable_path/libmujoco200.dylib'
+    to_mujoco_path = '%s/libmujoco200.dylib' % mj_bin_path
+    subprocess.check_call(['install_name_tool',
+                           '-change',
+                           from_mujoco_path,
+                           to_mujoco_path,
+                           tmp_final_cext_dll_path])
+
+    from_glfw_path = 'libglfw.3.dylib'
+    to_glfw_path = os.path.join(mj_bin_path, 'libglfw.3.dylib')
+    subprocess.check_call(['install_name_tool',
+                           '-change',
+                           from_glfw_path,
+                           to_glfw_path,
+                           tmp_final_cext_dll_path])
+
+    os.rename(tmp_final_cext_dll_path, final_cext_dll_path)
+    return final_cext_dll_path

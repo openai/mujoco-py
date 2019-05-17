@@ -25,7 +25,7 @@ import openvr
 import numpy as np
 import OpenGL.GL as gl
 from mujoco_py import functions
-from mujoco_py.compile_mujoco import mujoco_path
+from mujoco_py import mujoco_path
 from mujoco_py.cymj import (MjRenderContext, MjSim, load_model_from_xml,
                             PyMjrRect, PyMjvCamera)
 from mujoco_py.generated.const import (CAT_ALL, FB_OFFSCREEN, FONT_BIG,
