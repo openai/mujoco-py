@@ -1,6 +1,6 @@
 from threading import Lock
 import glfw
-from mujoco_py.builder import cymj
+from mujoco_py.compile_mujoco import cymj
 from mujoco_py.generated import const
 import time
 import copy

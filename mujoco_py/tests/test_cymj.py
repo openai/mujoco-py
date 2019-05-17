@@ -15,7 +15,7 @@ from mujoco_py import (MjSim, load_model_from_xml,
                        load_model_from_mjb)
 from mujoco_py import const, cymj
 from mujoco_py.tests.utils import compare_imgs
-from mujoco_py.builder import remove_mujoco_build
+from mujoco_py.compile_mujoco import remove_mujoco_build
 import os
 import time
 import threading
@@ -721,9 +721,9 @@ def test_timeout():
 
 
 def compile_mujoco():
-    from mujoco_py import builder
-    mujoco_path, key_path = builder.discover_mujoco()
-    builder.load_cython_ext(mujoco_path)
+    from mujoco_py import compile_mujoco
+    mujoco_path, key_path = compile_mujoco.discover_mujoco()
+    compile_mujoco.load_cython_ext(mujoco_path)
 
 
 def import_process(queue):

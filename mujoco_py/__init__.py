@@ -1,6 +1,6 @@
 #!/usr/bin/env python
 import os
-from mujoco_py.builder import cymj, ignore_mujoco_warnings, functions, MujocoException
+from mujoco_py.compile_mujoco import cymj, ignore_mujoco_warnings, functions, MujocoException
 from mujoco_py.generated import const
 from mujoco_py.mjrenderpool import MjRenderPool
 from mujoco_py.mjviewer import MjViewer, MjViewerBasic
@@ -33,6 +33,6 @@ __all__ = ['MjSim', 'MjSimState',
 # Print out a warning if we can't find the key.
 # this is nicer than failing activation, which we can not do in python.
 # The mujoco library exits the process forcibly, in a way we can't try/catch.
-mujoco_py.builder.find_key()
+mujoco_py.compile_mujoco.find_key()
 if not os.environ.get('MUJOCO_PY_SKIP_ACTIVATE'):
-    mujoco_py.builder.activate()
+    mujoco_py.compile_mujoco.activate()

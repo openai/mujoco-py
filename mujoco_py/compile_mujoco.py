@@ -2,9 +2,6 @@ import distutils
 import os
 import shutil
 import sys
-from distutils.core import Extension
-from distutils.dist import Distribution
-from distutils.sysconfig import customize_compiler
 from os.path import abspath, dirname, exists, join, getmtime
 from random import choice
 from shutil import move
@@ -22,6 +19,8 @@ import subprocess
 
 from mujoco_py.utils import discover_mujoco, MISSING_KEY_MESSAGE
 
+with open(join(dirname(__file__), "version.py")) as version_file:
+    exec(version_file.read())
 
 def get_nvidia_lib_dir():
     exists_nvidia_smi = subprocess.call("type nvidia-smi", shell=True,
@@ -37,7 +36,6 @@ def get_nvidia_lib_dir():
         return None
     if len(paths) > 1:
         print("Choosing the latest nvidia driver: %s, among %s" % (paths[-1], str(paths)))
-
     return paths[-1]
 
 
@@ -85,9 +83,11 @@ The easy solution is to `import mujoco_py` _before_ `import glfw`.
                             "generated",
                             "mujocopy-buildlock")
     lock = LockFile(lockpath)
-    for attempt in range(3):
+    # XXXX 2 -> 3
+    # 80 -> 150
+    for attempt in range(2):
         try:
-            lock.acquire(timeout=120)
+            lock.acquire(timeout=80)
         except LockTimeout:
             # Processed that has acquired lock might be dead
             # (e.g. due to being interrupted during execution).
@@ -102,11 +102,7 @@ The easy solution is to `import mujoco_py` _before_ `import glfw`.
         force_rebuild = os.environ.get('MUJOCO_PY_FORCE_REBUILD')
         if force_rebuild:
             # Try to remove the old file, ignore errors if it doesn't exist
-            print("Removing old mujoco_py cext", cext_so_path)
-            try:
-                os.remove(cext_so_path)
-            except OSError:
-                pass
+            remove_mujoco_build()
         if exists(cext_so_path):
             try:
                 mod = load_dynamic_ext('cymj', cext_so_path)
@@ -161,13 +157,22 @@ class custom_build_ext(build_ext):
     """
 
     def build_extensions(self):
+        print("aaa")
+        if "customize_compiler" in globals():
+            del globals()["customize_compiler"]
+        from distutils.sysconfig import customize_compiler
+        print("bbbb")
         customize_compiler(self.compiler)
+        print("cccc")
 
         try:
             self.compiler.compiler_so.remove("-Wstrict-prototypes")
+            print("dddd")
         except (AttributeError, ValueError):
             pass
+        self.force = True
         build_ext.build_extensions(self)
+        print("eeee")
 
 
 def fix_shared_library(so_file, name, library_path):
@@ -226,6 +231,9 @@ class MujocoExtensionBuilder():
         self.mujoco_path = mujoco_path
         python_version = str(sys.version_info.major) + str(sys.version_info.minor)
         self.version = '%s_%s_%s' % (get_version(), python_version, self.build_base())
+        if "Extension" in globals():
+            del globals()["Extension"]
+        from distutils.core import Extension
         self.extension = Extension(
             'mujoco_py.cymj',
             sources=[join(self.CYMJ_DIR_PATH, "cymj.pyx")],
@@ -253,6 +261,9 @@ class MujocoExtensionBuilder():
         return self.__class__.__name__.lower()
 
     def _build_impl(self):
+        if "Distribution" in globals():
+            del globals()["Distribution"]
+        from distutils.dist import Distribution
         dist = Distribution({
             "script_name": None,
             "script_args": ["build_ext"]
@@ -542,3 +553,6 @@ for func_name in dir(cymj):
 
 # Set user-defined callbacks that raise assertion with message
 cymj.set_warning_callback(user_warning_raise_exception)
+
+if __name__ == "__main__":
+    pass
