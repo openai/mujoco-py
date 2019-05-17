@@ -36,7 +36,7 @@ pull:
 
 test: build
 	# run it interactive mode so we can abort with CTRL+C
-	$(DOCKER) run --rm -i $(DOCKER_NAME) pytest
+	$(DOCKER) run --rm -i $(DOCKER_NAME) pytest -s --verbose mujoco_py/tests/test_cymj.py -k test_multithreading
 
 test_gpu: build push
 	$(eval NODE="$(shell cirrascale-cli reserve -g 1080ti -t 10m)")

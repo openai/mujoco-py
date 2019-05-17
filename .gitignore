@@ -1,3 +1,5 @@
+mujoco_py/generated/*.local*
+mujoco_py/generated/mujocopy-buildlock.lock
 mujoco-py-**
 mjkey.txt
 mujoco_py/generated/cymj*
