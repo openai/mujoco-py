@@ -310,7 +310,8 @@ class MacExtensionBuilder(MujocoExtensionBuilder):
             # Known-working versions of GCC on mac
             c_compilers = ['/usr/local/bin/gcc-6',
                            '/usr/local/bin/gcc-7',
-                           '/usr/local/bin/gcc-8']
+                           '/usr/local/bin/gcc-8',
+                           '/usr/local/bin/gcc-9']
             available_c_compiler = None
             for c_compiler in c_compilers:
                 if distutils.spawn.find_executable(c_compiler) is not None:
