@@ -77,6 +77,7 @@ cdef class PyMjVFS(object):
     
     
     cdef np.ndarray _filesize
+    cdef np.ndarray _filename
     
     def __cinit__(self):
         self.ptr = <mjVFS*> PyMem_Malloc(sizeof(mjVFS))
@@ -96,6 +97,7 @@ cdef class PyMjVFS(object):
         
         
         self._filesize = _wrap_int_1d(&p.filesize[0], 200)
+        self._filename = _wrap_char_2d(&p.filename[0][0], 200, 100)
         
     @property
     def nfile(self): return self.ptr.nfile
@@ -103,6 +105,8 @@ cdef class PyMjVFS(object):
     def nfile(self, int x): self.ptr.nfile = x
     @property
     def filesize(self): return self._filesize
+    @property
+    def filename(self): return self._filename
 
 cdef PyMjVFS WrapMjVFS(mjVFS* p):
     cdef PyMjVFS o = PyMjVFS()
@@ -3791,6 +3795,10 @@ cdef class PyMjvFigure(object):
     cdef np.ndarray _yaxispixel
     cdef np.ndarray _xaxisdata
     cdef np.ndarray _yaxisdata
+    cdef np.ndarray _range
+    cdef np.ndarray _linergb
+    cdef np.ndarray _linedata
+    cdef np.ndarray _linename
     
     def __cinit__(self):
         self.ptr = NULL
@@ -3823,6 +3831,10 @@ cdef class PyMjvFigure(object):
         self._yaxispixel = _wrap_int_1d(&p.yaxispixel[0], 2)
         self._xaxisdata = _wrap_float_1d(&p.xaxisdata[0], 2)
         self._yaxisdata = _wrap_float_1d(&p.yaxisdata[0], 2)
+        self._range = _wrap_float_2d(&p.range[0][0], 2, 2)
+        self._linergb = _wrap_float_2d(&p.linergb[0][0], 100, 3)
+        self._linedata = _wrap_float_2d(&p.linedata[0][0], 100, 2000)
+        self._linename = _wrap_char_2d(&p.linename[0][0], 100, 100)
         
     @property
     def flg_legend(self): return self.ptr.flg_legend
@@ -3894,6 +3906,14 @@ cdef class PyMjvFigure(object):
     def xaxisdata(self): return self._xaxisdata
     @property
     def yaxisdata(self): return self._yaxisdata
+    @property
+    def range(self): return self._range
+    @property
+    def linergb(self): return self._linergb
+    @property
+    def linedata(self): return self._linedata
+    @property
+    def linename(self): return self._linename
 
 cdef PyMjvFigure WrapMjvFigure(mjvFigure* p):
     cdef PyMjvFigure o = PyMjvFigure()
