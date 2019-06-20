@@ -2,7 +2,7 @@
 
 ###### const from defines ######
 MINVAL = 1e-15                      # minimum value in any denominator
-PI = 3.141592653589793              #
+PI = 3.141592653589793              # 
 MAXVAL = 10000000000.0              # maximum value in qpos, qvel, qacc
 MINMU = 1e-05                       # minimum friction coefficient
 MINIMP = 0.0001                     # minimum constraint impedance
