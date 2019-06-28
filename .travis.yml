@@ -10,6 +10,7 @@ matrix:
         - docker build -t image-under-test .
       script:
         - docker run --rm image-under-test
+
     - name: "pip install mujoco-py"
       language: python
       before_install:
@@ -18,3 +19,48 @@ matrix:
         - sudo apt install libosmesa6-dev libgl1-mesa-glx  # libglfw3
         # - sudo ln -s /usr/lib/x86_64-linux-gnu/libGL.so.1 /usr/lib/x86_64-linux-gnu/libGL.so
       script: pip install mujoco-py
+
+    - name: "pip install mujoco-py==2.0.2.2"
+      language: python
+      before_install:
+        # https://github.com/openai/mujoco-py#ubuntu-installtion-troubleshooting
+        - sudo apt-get update
+        - sudo apt install libosmesa6-dev libgl1-mesa-glx  # libglfw3
+        # - sudo ln -s /usr/lib/x86_64-linux-gnu/libGL.so.1 /usr/lib/x86_64-linux-gnu/libGL.so
+      script: pip install mujoco-py==2.0.2.2
+
+    - name: "pip install mujoco-py==2.0.2.1"
+      language: python
+      before_install:
+        # https://github.com/openai/mujoco-py#ubuntu-installtion-troubleshooting
+        - sudo apt-get update
+        - sudo apt install libosmesa6-dev libgl1-mesa-glx  # libglfw3
+        # - sudo ln -s /usr/lib/x86_64-linux-gnu/libGL.so.1 /usr/lib/x86_64-linux-gnu/libGL.so
+      script: pip install mujoco-py==2.0.2.1
+
+    - name: "pip install mujoco-py==2.0.2.0"
+      language: python
+      before_install:
+        # https://github.com/openai/mujoco-py#ubuntu-installtion-troubleshooting
+        - sudo apt-get update
+        - sudo apt install libosmesa6-dev libgl1-mesa-glx  # libglfw3
+        # - sudo ln -s /usr/lib/x86_64-linux-gnu/libGL.so.1 /usr/lib/x86_64-linux-gnu/libGL.so
+      script: pip install mujoco-py==2.0.2.0
+
+    - name: "pip install mujoco-py==2.0.2.0a1"
+      language: python
+      before_install:
+        # https://github.com/openai/mujoco-py#ubuntu-installtion-troubleshooting
+        - sudo apt-get update
+        - sudo apt install libosmesa6-dev libgl1-mesa-glx  # libglfw3
+        # - sudo ln -s /usr/lib/x86_64-linux-gnu/libGL.so.1 /usr/lib/x86_64-linux-gnu/libGL.so
+      script: pip install mujoco-py==2.0.2.0a1
+
+    - name: "pip install mujoco-py==1.50.1.0"
+      language: python
+      before_install:
+        # https://github.com/openai/mujoco-py#ubuntu-installtion-troubleshooting
+        - sudo apt-get update
+        - sudo apt install libosmesa6-dev libgl1-mesa-glx  # libglfw3
+        # - sudo ln -s /usr/lib/x86_64-linux-gnu/libGL.so.1 /usr/lib/x86_64-linux-gnu/libGL.so
+      script: pip install mujoco-py==1.50.1.0
