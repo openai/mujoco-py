@@ -1,6 +1,4 @@
-sudo: required
 language: generic
-dist: trusty
 
 before_install:
 - curl $MUJOCO_FOR_LINUX | tar -xz ./mjkey.txt
