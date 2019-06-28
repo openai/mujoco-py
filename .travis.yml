@@ -2,9 +2,18 @@ sudo: required
 language: generic
 dist: trusty
 
-before_install:
-- curl $MUJOCO_FOR_LINUX | tar -xz ./mjkey.txt
-- docker build -t image-under-test .
-
-script:
-- docker run --rm image-under-test
+matrix:
+  include:
+    - name: "Test on Docker"
+      before_install:
+        - curl $MUJOCO_FOR_LINUX | tar -xz ./mjkey.txt
+        - docker build -t image-under-test .
+      script:
+        - docker run --rm image-under-test
+    - name: "pip install mujoco-py"
+      language: python
+      before_install:
+        # https://github.com/openai/mujoco-py#ubuntu-installtion-troubleshooting
+        - sudo apt install libosmesa6-dev libgl1-mesa-glx libglfw3
+        - sudo ln -s /usr/lib/x86_64-linux-gnu/libGL.so.1 /usr/lib/x86_64-linux-gnu/libGL.so
+      script: pip install mujoco-py
