@@ -150,8 +150,6 @@ cdef class MjRenderContext(object):
                 self.cam.type = const.CAMERA_FIXED
             self.cam.fixedcamid = camera_id
 
-        self.opengl_context.set_buffer_size(width, height)
-
         mjv_updateScene(self._model_ptr, self._data_ptr, &self._vopt,
                         &self._pert, &self._cam, mjCAT_ALL, &self._scn)
 
