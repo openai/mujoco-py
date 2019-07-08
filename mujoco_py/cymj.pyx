@@ -53,6 +53,7 @@ cdef extern from "gl/glshim.h":
 # This is the python callback function.  We save it in the global() context
 # so we can access it from a C wrapper function (c_warning_callback)
 cdef object py_warning_callback
+cdef object py_error_callback
 # This is the saved exception.  Because the C callback can not propagate
 # exceptions, this must be set to None before calling into MuJoCo, and then
 # inspected afterwards.
@@ -97,6 +98,36 @@ def get_warning_callback():
     '''
     global py_warning_callback
     return py_warning_callback
+
+
+cdef void c_error_callback(const char *msg) with gil:
+    '''
+    Wraps the error callback so that we can pass a python function to the callback.
+    MuJoCo error handlers are expected to terminate the program and never return.
+    '''
+    global py_error_callback
+    (<object> py_error_callback)(msg)
+
+
+def set_error_callback(err_callback):
+    '''
+    Set a user-defined error callback.  It should take in a string message
+        (the warning string) and terminate the program.
+    See c_warning_callback, which is the C wrapper to the user defined function
+    '''
+    global py_error_callback
+    global mju_user_error
+    py_error_callback = err_callback
+    mju_user_error = c_error_callback
+
+
+def get_error_callback():
+    '''
+    Returns the user-defined warning callback, for use in e.g. a context
+    manager.
+    '''
+    global py_error_callback
+    return py_error_callback
 
 
 class wrap_mujoco_warning(object):
