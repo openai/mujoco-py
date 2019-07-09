@@ -61,6 +61,7 @@ cdef object py_error_callback
 #   with wrap_mujoco_warning():
 #       mj_somefunc()
 cdef object py_warning_exception = None
+cdef object py_error_exception = None
 
 
 cdef void c_warning_callback(const char *msg) with gil:
@@ -106,7 +107,12 @@ cdef void c_error_callback(const char *msg) with gil:
     MuJoCo error handlers are expected to terminate the program and never return.
     '''
     global py_error_callback
-    (<object> py_error_callback)(msg)
+
+    try:
+        (<object> py_error_callback)(msg)
+    except Exception as e:
+        global py_error_exception
+        py_error_exception = e
 
 
 def set_error_callback(err_callback):
@@ -140,10 +146,17 @@ class wrap_mujoco_warning(object):
     def __enter__(self):
         global py_warning_exception
         py_warning_exception = None
+        global py_error_exception
+        py_error_exception = None
     def __exit__(self, type, value, traceback):
         global py_warning_exception
+        global py_error_exception
+
         if py_warning_exception is not None:
             raise py_warning_exception
+
+        if py_error_exception is not None:
+            raise py_error_exception
 
 
 def load_model_from_path(str path):
