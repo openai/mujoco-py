@@ -348,6 +348,24 @@ def test_mj_error_called():
     assert error_message == "error"
 
 
+def test_mj_error_raises():
+    def error_callback(msg):
+        raise RuntimeError(msg.decode())
+
+    cymj.set_error_callback(error_callback)
+
+    called = False
+
+    try:
+        with cymj.wrap_mujoco_warning():
+            functions.mju_error("error")
+    except RuntimeError as e:
+        assert e.args[0] == "error"
+        called = True
+
+    assert called
+
+
 def test_ignore_mujoco_warnings():
     # Two boxes on a plane need more than 1 contact (nconmax)
     xml = '''
