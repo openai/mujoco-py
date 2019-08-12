@@ -111,7 +111,7 @@ class GlfwContext(OpenGLContext):
             # HAX: When running on a Mac with retina screen, the size
             # sometimes doubles
             width, height = glfw.get_framebuffer_size(self.window)
-            if target_width != width:
+            if target_width != width and "darwin" in sys.platform.lower():
                 glfw.set_window_size(self.window, target_width // 2, target_height // 2)
 
     @staticmethod
