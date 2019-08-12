@@ -50,7 +50,6 @@ tmp*
 cymj.c
 **/.git
 .eggs/
-*.c
 *.so
 .python-version
 /build
