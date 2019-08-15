@@ -14,8 +14,8 @@ This library has been updated to be compatible with MuJoCo version 2.0 released 
 
 The following platforms are currently supported:
 
-- Linux with Python 3.6. See [the `Dockerfile`](Dockerfile) for the canonical list of system dependencies.
-- OS X with Python 3.6.
+- Linux with Python 3.6+. See [the `Dockerfile`](Dockerfile) for the canonical list of system dependencies.
+- OS X with Python 3.6+.
 
 The following platforms are DEPRECATED and unsupported:
 
