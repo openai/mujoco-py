@@ -14,8 +14,8 @@ This library has been updated to be compatible with MuJoCo version 2.0 released 
 
 The following platforms are currently supported:
 
-- Linux with Python 3.6. See [the `Dockerfile`](Dockerfile) for the canonical list of system dependencies.
-- OS X with Python 3.6.
+- Linux with Python 3.6+. See [the `Dockerfile`](Dockerfile) for the canonical list of system dependencies.
+- OS X with Python 3.6+.
 
 The following platforms are DEPRECATED and unsupported:
 
@@ -70,6 +70,36 @@ See the [full documentation](https://openai.github.io/mujoco-py/build/html/index
 
 ## Troubleshooting
 
+### You're on MacOS and you see `clang: error: unsupported option '-fopenmp'`
+
+If this happend during installation or just running `python -c "import mujoco_py"` then the issue seems to be related to [this](https://github.com/velocyto-team/velocyto.R/issues/2#issuecomment-341165967) and the TL;DR is that for macOS the default compiler Apple clang LLVM does not support openmp. So you can try to install another clang/llvm installation. For example (requires [brew](https://brew.sh/)):
+
+```bash
+brew install llvm
+brew install boost
+brew install hdf5
+
+# Add this to your .bashrc/.zshrc:
+export PATH="/usr/local/opt/llvm/bin:$PATH"
+
+export CC="/usr/local/opt/llvm/bin/clang"
+export CXX="/usr/local/opt/llvm/bin/clang++"
+export CXX11="/usr/local/opt/llvm/bin/clang++"
+export CXX14="/usr/local/opt/llvm/bin/clang++"
+export CXX17="/usr/local/opt/llvm/bin/clang++"
+export CXX1X="/usr/local/opt/llvm/bin/clang++"
+
+export LDFLAGS="-L/usr/local/opt/llvm/lib"
+export CPPFLAGS="-I/usr/local/opt/llvm/include"
+```
+
+**Note:** Don't forget to source your `.bashrc/.zshrc` after editing it and try to install `mujoco-py` again:
+
+```bash
+# Make sure your python environment is activated
+pip install -U 'mujoco-py<2.1,>=2.0'
+```
+
 ### Missing GLFW
 
 A common error when installing is:
@@ -89,15 +119,15 @@ This is particularly useful on Ubuntu 14.04, which does not have a GLFW package.
 
 ### Ubuntu installtion troubleshooting
 
-Because `mujoco_py` has compiled native code that needs to be linked to a supplied MuJoCo binary, it's installation 
+Because `mujoco_py` has compiled native code that needs to be linked to a supplied MuJoCo binary, it's installation
 on linux can be more challenging than pure Python source packages.
 
 To install mujoco-py on Ubuntu, make sure you have the following libraries installed:
 
     sudo apt install libosmesa6-dev libgl1-mesa-glx libglfw3
-   
+
 If you installed above libraries and you still see an error that `-lGL` cannot be found, most likely you need
-to create the symbolic link directly: 
+to create the symbolic link directly:
 
     sudo ln -s /usr/lib/x86_64-linux-gnu/libGL.so.1 /usr/lib/x86_64-linux-gnu/libGL.so
 

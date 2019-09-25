@@ -1,13 +1,15 @@
-from threading import Lock
+import copy
 import glfw
+import imageio
+import numpy as np
+import time
+import sys
+
 from mujoco_py.builder import cymj
 from mujoco_py.generated import const
-import time
-import copy
-from multiprocessing import Process, Queue
 from mujoco_py.utils import rec_copy, rec_assign
-import numpy as np
-import imageio
+from multiprocessing import Process, Queue
+from threading import Lock
 
 
 class MjViewerBasic(cymj.MjRenderContextWindow):
@@ -49,7 +51,8 @@ class MjViewerBasic(cymj.MjRenderContextWindow):
         if self.window is None:
             return
         elif glfw.window_should_close(self.window):
-            exit(0)
+            glfw.terminate()
+            sys.exit(0)
 
         with self._gui_lock:
             super().render()
@@ -60,7 +63,8 @@ class MjViewerBasic(cymj.MjRenderContextWindow):
         if action == glfw.RELEASE and key == glfw.KEY_ESCAPE:
             print("Pressed ESC")
             print("Quitting.")
-            exit(0)
+            glfw.terminate()
+            sys.exit(0)
 
     def _cursor_pos_callback(self, window, xpos, ypos):
         if not (self._button_left_pressed or self._button_right_pressed):
@@ -205,10 +209,10 @@ class MjViewer(MjViewerBasic):
         self._markers[:] = []
         self._overlay.clear()
 
-    def _read_pixels_as_in_window(self):
+    def _read_pixels_as_in_window(self, resolution=None):
         # Reads pixels with markers and overlay from the same camera as screen.
-        resolution = glfw.get_framebuffer_size(
-            self.sim._render_context_window.window)
+        if resolution is None:
+            resolution = glfw.get_framebuffer_size(self.sim._render_context_window.window)
 
         resolution = np.array(resolution)
         resolution = resolution * min(1000 / np.min(resolution), 1)

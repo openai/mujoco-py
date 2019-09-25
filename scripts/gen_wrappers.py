@@ -1,3 +1,5 @@
+#!/usr/bin/env python
+
 import codecs
 import os
 import pycparser
@@ -28,6 +30,7 @@ def get_struct_dict(struct, struct_name, array_shapes):
     struct_dict = OrderedDict()
     struct_dict[struct_name] = OrderedDict([('scalars', []),
                                             ('arrays', []),
+                                            ('arrays2d', []),
                                             ('ptrs', []),
                                             ('depends_on_model', False)])
     for child in struct.children():
@@ -37,17 +40,22 @@ def get_struct_dict(struct, struct_name, array_shapes):
         if isinstance(child_type, ArrayDecl):
             if hasattr(decl.type.type, "names"):
                 array_type = ' '.join(decl.type.type.names)
-            else:
-                # TODO: support 2d arrays in cython.
-                print("skipping 2d array: %s" % child_name)
+                array_size = extract_size_info(decl.dim)
+                struct_dict[struct_name]['arrays'].append((child_name,
+                                                           array_type,
+                                                           array_size))
+            elif isinstance(decl.type, PtrDecl):
+                print("skipping pointer array: %s.%s" % (struct_name, child_name))
                 continue
-            if isinstance(decl.dim, pycparser.c_ast.ID):
-                array_size = decl.dim.name
+            elif hasattr(decl.type.type.type, "names"):
+                # assuming a 2d array
+                array_type = ' '.join(decl.type.type.type.names)
+                s1 = extract_size_info(decl.dim)
+                s2 = extract_size_info(decl.type.dim)
+                struct_dict[struct_name]['arrays2d'].append((child_name, array_type, (s1, s2)))
             else:
-                array_size = int(decl.dim.value)
-            struct_dict[struct_name]['arrays'].append((child_name,
-                                                       array_type,
-                                                       array_size))
+                print("skipping unknown array case: %s.%s\n%s" % (struct_name, child_name, child))
+
         elif isinstance(child_type, TypeDecl):
             if isinstance(decl.type, pycparser.c_ast.Struct):
                 fixed_name = decl.declname
@@ -85,6 +93,30 @@ def get_struct_dict(struct, struct_name, array_shapes):
 
     assert isinstance(struct_dict, OrderedDict), 'Must be deterministic'
     return struct_dict
+
+
+def extract_size_info(node):
+    """
+    Try to extract what integer value (or named reference) `node` contains.
+    Can handle
+
+        pycparser.c_ast.Constant
+        pycparser.c_ast.BinaryOp(op="*", left, right)
+        pycparser.c_ast.ID
+
+    as long as `left` and `right` are either `Constant` or BinaryOp's that ultimately evaluate to constants.
+
+    :param node: The AST node representing an integer constant.
+    :return: The value
+    """
+    if isinstance(node, pycparser.c_ast.ID):
+        return node.name
+    elif isinstance(node, BinaryOp):
+        if node.op == "*":
+            return extract_size_info(node.left) * extract_size_info(node.right)
+    elif isinstance(node, pycparser.c_ast.Constant):
+        return int(node.value)
+    raise NotImplementedError(str(node))
 
 
 def get_full_scr_lines(HEADER_DIR, HEADER_FILES):
@@ -331,6 +363,7 @@ def _add_getters(obj_type):
 
 def get_const_from_define(full_src_lines):
     define_code = []
+    seen = set()
 
     for line in full_src_lines:
         define = "#define"
@@ -359,7 +392,13 @@ def get_const_from_define(full_src_lines):
                         val = val[:-1]
 
                     val = float(val)
-                    new_line = var[2:] + " = " + str(val)
+                    varname = var[2:]
+                    if varname in seen:
+                        print("Already seen {name}, skipping".format(name=varname))
+                        continue
+                    seen.add(varname)
+
+                    new_line = varname + " = " + str(val)
                     new_line += " " * (35 - len(new_line))
                     new_line += " # " + comment
                     define_code.append(new_line)
@@ -632,6 +671,31 @@ def main():
                 member_getters.append(
                     '    @property\n    def {name}(self): return self._{name}'.format(name=array_name))
                 needed_1d_wrappers.add(array_type)
+
+        # 2D-Array types: handle the same way as pointers
+        for array_name, array_type, array_size in fields['arrays2d']:
+            if array_type in struct_dict:
+                print("Skipping 2d array of structs {name}.{arr_name}: <{arr_type}[:{arr_size0},:{arr_size1}]>".format(
+                    name=name,
+                    arr_name=array_name,
+                    arr_type=array_type,
+                    arr_size0=array_size[0],
+                    arr_size1=array_size[1])
+                )
+                continue
+            else:
+                member_decls.append(
+                    '    cdef np.ndarray _{}'.format(array_name))
+                member_initializers.append(
+                    '        self._{array_name} = _wrap_{array_type}_2d(&p.{array_name}[0][0], {size0}, {size1})'.format(
+                        array_name=array_name,
+                        array_type=array_type.replace(' ', '_'),
+                        size0=array_size[0],
+                        size1=array_size[1],
+                    ))
+                member_getters.append(
+                    '    @property\n    def {name}(self): return self._{name}'.format(name=array_name))
+                needed_2d_wrappers.add(array_type)
 
         member_getters = '\n'.join(member_getters)
         member_decls = '\n' + '\n'.join(member_decls) if member_decls else ''

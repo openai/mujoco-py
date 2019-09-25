@@ -14,7 +14,7 @@ from mujoco_py import (MjSim, load_model_from_xml,
                        load_model_from_path, MjSimState,
                        ignore_mujoco_warnings,
                        load_model_from_mjb)
-from mujoco_py import const, cymj
+from mujoco_py import const, cymj, functions
 from mujoco_py.tests.utils import compare_imgs
 
 
@@ -332,6 +332,38 @@ def test_mj_warning_raises():
     with pytest.raises(Exception):
         # This should raise an exception due to the mujoco warning callback
         sim.step()
+
+
+def test_mj_error_called():
+    error_message = None
+
+    def error_callback(msg):
+        nonlocal error_message
+        error_message = msg.decode()
+
+    cymj.set_error_callback(error_callback)
+
+    functions.mju_error("error")
+
+    assert error_message == "error"
+
+
+def test_mj_error_raises():
+    def error_callback(msg):
+        raise RuntimeError(msg.decode())
+
+    cymj.set_error_callback(error_callback)
+
+    called = False
+
+    try:
+        with cymj.wrap_mujoco_warning():
+            functions.mju_error("error")
+    except RuntimeError as e:
+        assert e.args[0] == "error"
+        called = True
+
+    assert called
 
 
 def test_ignore_mujoco_warnings():

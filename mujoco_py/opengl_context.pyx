@@ -40,12 +40,12 @@ class GlfwContext(OpenGLContext):
     _INIT_HEIGHT = 1000
     _GLFW_IS_INITIALIZED = False
 
-    def __init__(self, offscreen=False):
+    def __init__(self, offscreen=False, quiet=False):
         GlfwContext._init_glfw()
 
         self._width = self._INIT_WIDTH
         self._height = self._INIT_HEIGHT
-        self.window = self._create_window(offscreen)
+        self.window = self._create_window(offscreen, quiet=quiet)
         self._set_window_size(self._width, self._height)
 
     @staticmethod
@@ -73,14 +73,16 @@ class GlfwContext(OpenGLContext):
         self._width = width
         self._height = height
 
-    def _create_window(self, offscreen):
+    def _create_window(self, offscreen, quiet=False):
         if offscreen:
-            print("Creating offscreen glfw")
+            if not quiet:
+                print("Creating offscreen glfw")
             glfw.window_hint(glfw.VISIBLE, 0)
             glfw.window_hint(glfw.DOUBLEBUFFER, 0)
             init_width, init_height = self._INIT_WIDTH, self._INIT_HEIGHT
         else:
-            print("Creating window glfw")
+            if not quiet:
+                print("Creating window glfw")
             glfw.window_hint(glfw.SAMPLES, 4)
             glfw.window_hint(glfw.VISIBLE, 1)
             glfw.window_hint(glfw.DOUBLEBUFFER, 1)
@@ -111,7 +113,7 @@ class GlfwContext(OpenGLContext):
             # HAX: When running on a Mac with retina screen, the size
             # sometimes doubles
             width, height = glfw.get_framebuffer_size(self.window)
-            if target_width != width:
+            if target_width != width and "darwin" in sys.platform.lower():
                 glfw.set_window_size(self.window, target_width // 2, target_height // 2)
 
     @staticmethod
