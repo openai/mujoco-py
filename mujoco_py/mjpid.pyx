@@ -4,7 +4,7 @@ from mujoco_py.generated import const
 """
   Kp == Kp
   Ki == Kp/Ti
-  Kd == Kp/Td
+  Kd == Kp*Td
 
   In this situation, Kp is a knob to tune the agressiveness, wheras Ti and Td will
   change the response time of the system in a predictable way. Lower Ti or Td means
@@ -14,16 +14,15 @@ from mujoco_py.generated import const
   clamp on integral term: INTEGRAL_MAX_CLAMP helps on saturation problem in I.
   derivative smoothing term: DERIVATIVE_GAIN_SMOOTHING reduces high frequency noise in D.
 
-  set in user="kp Ti Td iClamp errBand iSmooth" in mujoco xml.
+  set in user="Ti Td iClamp errBand iSmooth" in mujoco xml.
 """
 cdef enum USER_DEFINED_ACTUATOR_PARAMS:
-    PROPORTIONAL_GAIN = 0,
-    INTEGRAL_TIME_CONSTANT = 1,
-    DERIVATIVE_TIME_CONSTANT = 2,
-    INTEGRAL_MAX_CLAMP = 3,
+    INTEGRAL_TIME_CONSTANT = 0,
+    DERIVATIVE_TIME_CONSTANT = 1,
+    INTEGRAL_MAX_CLAMP = 2,
 
-    ERROR_DEADBAND = 4,
-    DERIVATIVE_GAIN_SMOOTHING = 5
+    ERROR_DEADBAND = 3,
+    DERIVATIVE_GAIN_SMOOTHING = 4
 
 cdef enum USER_DEFINED_CONTROLLER_DATA:
     INTEGRAL_ERROR = 0,
@@ -40,8 +39,8 @@ cdef mjtNum c_pid_bias(const mjModel* m, const mjData* d, int id) with gil:
     cdef double dt_in_sec = m.opt.timestep
 
     cdef double error = d.ctrl[id] - d.actuator_length[id]
-
-    cdef double Kp = m.actuator_user[id * m.nuser_actuator + PROPORTIONAL_GAIN]
+    # for position control, Kp is actuator_gainprm[0]
+    cdef double Kp = m.actuator_gainprm[id * const.NGAIN]
     cdef double error_deadband = m.actuator_user[id * m.nuser_actuator + ERROR_DEADBAND]
     cdef double integral_max_clamp = m.actuator_user[id * m.nuser_actuator + INTEGRAL_MAX_CLAMP]
     cdef double integral_time_const = m.actuator_user[id * m.nuser_actuator + INTEGRAL_TIME_CONSTANT]
@@ -71,9 +70,7 @@ cdef mjtNum c_pid_bias(const mjModel* m, const mjData* d, int id) with gil:
     if integral_time_const != 0:
         integral_error_term = integral_error / integral_time_const
 
-    cdef double derivative_error_term = 0.0
-    if derivate_time_const != 0:
-        derivative_error_term = derivative_error / derivate_time_const
+    cdef double derivative_error_term = derivative_error * derivate_time_const
 
     f = Kp * (error + integral_error_term + derivative_error_term)
     # print(id, error, integral_error_term, derivative_error_term, derivative_error, dt_in_sec,
@@ -94,29 +91,6 @@ def set_pid_control(m, d):
 
     for i in range(m.nuserdata):
         d.userdata[i] = 0.0
-
-    for i in range(m.nu):
-        m.actuator_gaintype[i] = const.GAIN_USER
-        m.actuator_biastype[i] = const.BIAS_USER
-
-        # if user does not set, will chose default settings.
-        # for kp, it tries to use m.actuator_gainprm[i][0]
-        if m.actuator_user[i][PROPORTIONAL_GAIN] <= 0.0:
-            m.actuator_user[i][PROPORTIONAL_GAIN] = m.actuator_gainprm[i][0]
-
-        if m.actuator_user[i][INTEGRAL_TIME_CONSTANT] <= 0.0:
-            m.actuator_user[i][INTEGRAL_TIME_CONSTANT] = 20
-
-        if m.actuator_user[i][INTEGRAL_MAX_CLAMP] <= 0.0:
-            m.actuator_user[i][INTEGRAL_MAX_CLAMP] = 10
-
-        m.actuator_user[i][ERROR_DEADBAND] = 0.0
-
-        if m.actuator_user[i][DERIVATIVE_GAIN_SMOOTHING] <= 0.0:
-            m.actuator_user[i][DERIVATIVE_GAIN_SMOOTHING] = 0.1
-
-        if m.actuator_user[i][DERIVATIVE_TIME_CONSTANT] <= 0.0:
-            m.actuator_user[i][DERIVATIVE_TIME_CONSTANT] = 25
 
     mjcb_act_gain = c_zero_gains
     mjcb_act_bias = c_pid_bias
