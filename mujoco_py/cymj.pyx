@@ -14,7 +14,6 @@ from tempfile import TemporaryDirectory
 import numpy as np
 from cython cimport view
 from cython.parallel import parallel, prange
-
 from mujoco_py.generated import const
 
 include "generated/wrappers.pxi"
@@ -23,6 +22,7 @@ include "mjsim.pyx"
 include "mjsimstate.pyx"
 include "mjrendercontext.pyx"
 include "mjbatchrenderer.pyx"
+include "mjpid.pyx"
 
 cdef extern from "gl/glshim.h":
 
