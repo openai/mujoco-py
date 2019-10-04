@@ -7,6 +7,7 @@ import tempfile
 import sys
 from collections import namedtuple
 from libc.stdlib cimport malloc, free
+from libc.math cimport fabs, fmax, fmin
 from libc.string cimport strncpy
 from numbers import Number
 from tempfile import TemporaryDirectory
@@ -63,6 +64,75 @@ cdef object py_error_callback
 cdef object py_warning_exception = None
 cdef object py_error_exception = None
 
+"""
+  Kp == Kp
+  Ki == Kp/Ti
+  Kd == Kp/Td
+
+  New parameters: 1,2,3,5,6
+"""
+cdef enum User_Defined_Actuator_Field:
+    Proportional_Gain = 0,
+    Integral_Time_Constant = 1,
+    Derivative_Time_Constant = 2,
+    Integral_Max_Clamp = 3,
+
+    Corrective_Effort_Limit = 4,
+    Error_DeadBand = 5,
+    Derivative_Gain_Smoothing = 6
+
+cdef enum User_Defined_States:
+    Integral_Error = 0,
+    Last_Error = 1,
+    Derivative_Error_Last = 2,
+    NUM_USER_DATA_PER_ACT = 3,
+
+cdef mjtNum c_zero_gains(const mjModel* m, const mjData* d, int id) with gil:
+    return 0.0
+
+cdef mjtNum c_pid_bias(const mjModel* m, const mjData* d, int id) with gil:
+    cdef double dt_in_sec = m.opt.timestep
+    # cdef double dt2 = m.
+
+    cdef double error = d.ctrl[id] - d.actuator_length[id]
+    cdef double Kp = m.actuator_user[id * m.nuser_actuator + Proportional_Gain]
+    cdef double error_deadband = m.actuator_user[id * m.nuser_actuator + Error_DeadBand]
+    cdef double integral_max_clamp = m.actuator_user[id * m.nuser_actuator + Integral_Max_Clamp]
+    cdef double integral_time_const = m.actuator_user[id * m.nuser_actuator + Integral_Time_Constant]
+    cdef double derivative_gain_smoothing = m.actuator_user[id * m.nuser_actuator + Derivative_Gain_Smoothing]
+    cdef double derivate_time_const = m.actuator_user[id * m.nuser_actuator + Derivative_Time_Constant]
+    cdef double corrective_effort_limit = m.actuator_user[id * m.nuser_actuator + Corrective_Effort_Limit]
+
+    if fabs(error) < error_deadband:
+        error = 0.0
+
+    #print(id, Kp, error)
+    integral_error = d.userdata[id * NUM_USER_DATA_PER_ACT + Integral_Error]
+    integral_error += error * dt_in_sec
+    integral_error = fmax(-integral_max_clamp, fmin(integral_max_clamp, integral_error))
+
+    last_error = d.userdata[id * NUM_USER_DATA_PER_ACT + Last_Error]
+    cdef double derivative_error = (error - last_error) / dt_in_sec
+
+    derivative_error_last = d.userdata[id * NUM_USER_DATA_PER_ACT + Derivative_Error_Last]
+
+    derivative_error = (1.0 - derivative_gain_smoothing) * derivative_error_last + \
+        derivative_gain_smoothing * derivative_error
+
+    cdef double integral_error_term = 0.0
+    if (integral_time_const != 0):
+        integral_error_term = integral_error / integral_time_const
+
+    cdef double derivative_error_term = derivate_time_const * derivative_error
+
+    f = Kp * (error + integral_error_term + derivative_error_term)
+    print(id, error, integral_error_term, derivative_error_term, derivative_error, dt_in_sec,
+        last_error, integral_error, derivative_error_last)
+
+    d.userdata[id * NUM_USER_DATA_PER_ACT + Last_Error] = error
+    d.userdata[id * NUM_USER_DATA_PER_ACT + Derivative_Error_Last] = derivative_error
+    d.userdata[id * NUM_USER_DATA_PER_ACT + Integral_Error] = integral_error
+    return fmax(-corrective_effort_limit, fmin(corrective_effort_limit, f))
 
 cdef void c_warning_callback(const char *msg) with gil:
     '''
@@ -78,6 +148,29 @@ cdef void c_warning_callback(const char *msg) with gil:
     except Exception as e:
         global py_warning_exception
         py_warning_exception = e
+
+
+def set_pid_control(m, d):
+    global mjcb_act_gain
+    global mjcb_act_bias
+
+    #m.nuserdata = m.nu * (Derivative_Error_Last + 1)
+    for i in range(m.nuser_actuator):
+        d.userdata[i] = 0.0
+
+    for i in range(m.nu):
+        m.actuator_gaintype[i] = const.GAIN_USER
+        m.actuator_biastype[i] = const.BIAS_USER
+
+        m.actuator_user[i][Proportional_Gain] = m.actuator_gainprm[i][0]
+        m.actuator_user[i][Integral_Time_Constant] = 20
+        m.actuator_user[i][Integral_Max_Clamp] = 10
+        m.actuator_user[i][Derivative_Gain_Smoothing] = 0.1
+        m.actuator_user[i][Derivative_Time_Constant] = 0.02
+        m.actuator_user[i][Corrective_Effort_Limit] = max(abs(m.actuator_forcerange[i][0]), abs(m.actuator_forcerange[i][1]))
+
+    mjcb_act_gain = c_zero_gains
+    mjcb_act_bias = c_pid_bias
 
 
 def set_warning_callback(warn):
