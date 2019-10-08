@@ -17,12 +17,13 @@ from mujoco_py.generated import const
   set in user="Ti Td iClamp errBand iSmooth" in mujoco xml.
 """
 cdef enum USER_DEFINED_ACTUATOR_PARAMS:
-    INTEGRAL_TIME_CONSTANT = 0,
-    DERIVATIVE_TIME_CONSTANT = 1,
+    PROPORTIONAL_GAIN = 0,
+    INTEGRAL_TIME_CONSTANT = 1,
     INTEGRAL_MAX_CLAMP = 2,
+    DERIVATIVE_TIME_CONSTANT = 3,
+    DERIVATIVE_GAIN_SMOOTHING = 4,
+    ERROR_DEADBAND = 5,
 
-    ERROR_DEADBAND = 3,
-    DERIVATIVE_GAIN_SMOOTHING = 4
 
 cdef enum USER_DEFINED_CONTROLLER_DATA:
     INTEGRAL_ERROR = 0,
@@ -37,19 +38,19 @@ cdef mjtNum c_zero_gains(const mjModel* m, const mjData* d, int id) with gil:
 
 cdef mjtNum c_pid_bias(const mjModel* m, const mjData* d, int id) with gil:
     cdef double dt_in_sec = m.opt.timestep
-
     cdef double error = d.ctrl[id] - d.actuator_length[id]
-    # for position control, Kp is actuator_gainprm[0]
-    cdef double Kp = m.actuator_gainprm[id * const.NGAIN]
-    cdef double error_deadband = m.actuator_user[id * m.nuser_actuator + ERROR_DEADBAND]
-    cdef double integral_max_clamp = m.actuator_user[id * m.nuser_actuator + INTEGRAL_MAX_CLAMP]
-    cdef double integral_time_const = m.actuator_user[id * m.nuser_actuator + INTEGRAL_TIME_CONSTANT]
-    cdef double derivative_gain_smoothing = \
-        m.actuator_user[id * m.nuser_actuator + DERIVATIVE_GAIN_SMOOTHING]
-    cdef double derivate_time_const = m.actuator_user[id * m.nuser_actuator + DERIVATIVE_TIME_CONSTANT]
+    cdef int NGAIN = int(const.NGAIN)
 
-    cdef double corrective_effort_limit = fmax(
-            fabs(m.actuator_forcerange[id * 2]), fabs(m.actuator_forcerange[id * 2 + 1]))
+    cdef double Kp = m.actuator_gainprm[id * NGAIN + PROPORTIONAL_GAIN]
+    cdef double error_deadband = m.actuator_gainprm[id * NGAIN + ERROR_DEADBAND]
+    cdef double integral_max_clamp = m.actuator_gainprm[id * NGAIN + INTEGRAL_MAX_CLAMP]
+    cdef double integral_time_const = m.actuator_gainprm[id * NGAIN + INTEGRAL_TIME_CONSTANT]
+    cdef double derivative_gain_smoothing = \
+        m.actuator_gainprm[id * NGAIN  + DERIVATIVE_GAIN_SMOOTHING]
+    cdef double derivate_time_const = m.actuator_gainprm[id * NGAIN + DERIVATIVE_TIME_CONSTANT]
+
+    cdef double effort_limit_low = m.actuator_forcerange[id * 2]
+    cdef double effort_limit_high = m.actuator_forcerange[id * 2 + 1]
 
     if fabs(error) < error_deadband:
         error = 0.0
@@ -73,13 +74,13 @@ cdef mjtNum c_pid_bias(const mjModel* m, const mjData* d, int id) with gil:
     cdef double derivative_error_term = derivative_error * derivate_time_const
 
     f = Kp * (error + integral_error_term + derivative_error_term)
-    # print(id, error, integral_error_term, derivative_error_term, derivative_error, dt_in_sec,
-    #    last_error, integral_error, derivative_error_last)
+    print(id, d.ctrl[id], d.actuator_length[id], error, integral_error_term, derivative_error_term,
+        derivative_error, dt_in_sec, last_error, integral_error, derivative_error_last, f)
 
     d.userdata[id * NUM_USER_DATA_PER_ACT + LAST_ERROR] = error
     d.userdata[id * NUM_USER_DATA_PER_ACT + DERIVATIVE_ERROR_LAST] = derivative_error
     d.userdata[id * NUM_USER_DATA_PER_ACT + INTEGRAL_ERROR] = integral_error
-    return fmax(-corrective_effort_limit, fmin(corrective_effort_limit, f))
+    return fmax(effort_limit_low, fmin(effort_limit_high, f))
 
 
 def set_pid_control(m, d):
