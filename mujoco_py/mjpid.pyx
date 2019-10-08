@@ -74,8 +74,8 @@ cdef mjtNum c_pid_bias(const mjModel* m, const mjData* d, int id) with gil:
     cdef double derivative_error_term = derivative_error * derivate_time_const
 
     f = Kp * (error + integral_error_term + derivative_error_term)
-    print(id, d.ctrl[id], d.actuator_length[id], error, integral_error_term, derivative_error_term,
-        derivative_error, dt_in_sec, last_error, integral_error, derivative_error_last, f)
+    # print(id, d.ctrl[id], d.actuator_length[id], error, integral_error_term, derivative_error_term,
+    #    derivative_error, dt_in_sec, last_error, integral_error, derivative_error_last, f)
 
     d.userdata[id * NUM_USER_DATA_PER_ACT + LAST_ERROR] = error
     d.userdata[id * NUM_USER_DATA_PER_ACT + DERIVATIVE_ERROR_LAST] = derivative_error
