@@ -491,8 +491,6 @@ def build_callback_fn(function_string, userdata_names=[]):
     return module.lib.__fun
 
 
-
-
 def find_key():
     ''' Try to find the key file, if missing, print out a big message '''
     if exists(key_path):
