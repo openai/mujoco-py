@@ -1,26 +1,26 @@
 import distutils
+import glob
 import os
 import shutil
+import subprocess
 import sys
 from distutils.core import Extension
 from distutils.dist import Distribution
 from distutils.sysconfig import customize_compiler
+from importlib.machinery import ExtensionFileLoader
 from os.path import abspath, dirname, exists, join, getmtime
 from random import choice
 from shutil import move
 from string import ascii_lowercase
-from importlib.machinery import ExtensionFileLoader
-import glob
 
+import fasteners
 import numpy as np
-from cffi import FFI
 from Cython.Build import cythonize
 from Cython.Distutils.old_build_ext import old_build_ext as build_ext
-from mujoco_py.version import get_version
-from lockfile import LockFile
-import subprocess
+from cffi import FFI
 
 from mujoco_py.utils import discover_mujoco, MISSING_KEY_MESSAGE
+from mujoco_py.version import get_version
 
 
 def get_nvidia_lib_dir():
@@ -86,7 +86,7 @@ The easy solution is to `import mujoco_py` _before_ `import glfw`.
 
     lockpath = os.path.join(os.path.dirname(cext_so_path), 'mujocopy-buildlock')
 
-    with LockFile(lockpath):
+    with fasteners.InterProcessLock(lockpath):
         mod = None
         force_rebuild = os.environ.get('MUJOCO_PY_FORCE_REBUILD')
         if force_rebuild:
@@ -104,6 +104,7 @@ The easy solution is to `import mujoco_py` _before_ `import glfw`.
         if mod is None:
             cext_so_path = builder.build()
             mod = load_dynamic_ext('cymj', cext_so_path)
+
     return mod
 
 
@@ -119,7 +120,7 @@ def _ensure_set_env_var(var_name, lib_path):
 
 
 def load_dynamic_ext(name, path):
-    ''' Load compiled shared object and return as python module. '''
+    """ Load compiled shared object and return as python module. """
     loader = ExtensionFileLoader(name, path)
     return loader.load_module()
 
@@ -144,7 +145,7 @@ class custom_build_ext(build_ext):
 
 
 def fix_shared_library(so_file, name, library_path):
-    ''' Used to fixup shared libraries on Linux '''
+    """ Used to fixup shared libraries on Linux """
     subprocess.check_call(['patchelf', '--remove-rpath', so_file])
     ldd_output = subprocess.check_output(['ldd', so_file]).decode('utf-8')
 
@@ -154,7 +155,7 @@ def fix_shared_library(so_file, name, library_path):
 
 
 def manually_link_libraries(mujoco_path, raw_cext_dll_path):
-    ''' Used to fix mujoco library linking on Mac '''
+    """ Used to fix mujoco library linking on Mac """
     root, ext = os.path.splitext(raw_cext_dll_path)
     final_cext_dll_path = root + '_final' + ext
 
@@ -488,8 +489,6 @@ def build_callback_fn(function_string, userdata_names=[]):
     # Now that the module is loaded into memory, we can actually delete it
     build_fn_cleanup(name)
     return module.lib.__fun
-
-
 
 
 def find_key():

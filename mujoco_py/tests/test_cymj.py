@@ -1,19 +1,25 @@
-import numpy as np
-import pytest
+import glob
+import os
+import shutil
 import sys
+import time
 import unittest
-
 from io import BytesIO, StringIO
 from multiprocessing import get_context
 from numbers import Number
-from numpy.testing import assert_array_equal, assert_array_almost_equal
+
+import numpy as np
+import pytest
 # from threading import Thread, Event
 from PIL import Image
+from numpy.testing import assert_array_equal, assert_array_almost_equal
 
-from mujoco_py import (MjSim, load_model_from_xml,
-                       load_model_from_path, MjSimState,
-                       ignore_mujoco_warnings,
-                       load_model_from_mjb)
+from mujoco_py import (
+    MjSim, load_model_from_xml,
+    load_model_from_path, MjSimState,
+    ignore_mujoco_warnings,
+    load_model_from_mjb
+)
 from mujoco_py import const, cymj, functions
 from mujoco_py.tests.utils import compare_imgs
 
@@ -40,6 +46,26 @@ BASIC_MODEL_XML = """
     </sensor>
 </mujoco>
 """
+
+
+def remove_mujoco_build():
+    # Removes previously compiled mujoco_py files.
+    print("Removing previously compiled mujoco_py files.")
+    path = os.path.join(os.path.dirname(__file__), "generated")
+    for fname in glob.glob(f"{path}/*.so"):
+        os.remove(fname)
+    for dirname in glob.glob(f"{path}/_pyxbld*"):
+        shutil.rmtree(dirname, ignore_errors=True)
+    shutil.rmtree(f"{path}/__pycache__", ignore_errors=True)
+
+
+def remove_mujoco_build_and_lock():
+    # Removes previously compiled mujoco_py files.
+    remove_mujoco_build()
+    path = os.path.join(os.path.dirname(__file__), "..", "generated")
+    fname = f"{path}/mujocopy-buildlock.lock"
+    if os.path.exists(fname):
+        os.remove(fname)
 
 
 def test_nested():
@@ -149,6 +175,7 @@ def test_mj_sim_buffers():
          "foo_2": np.array([foo, foo, foo])}
     with pytest.raises(AssertionError):
         sim.step()
+
 
 def test_data_attribute_getters():
     model = load_model_from_xml(BASIC_MODEL_XML)
@@ -657,20 +684,47 @@ def test_high_res():
 
 @pytest.mark.skipif(sys.platform.startswith("win"), reason="This test fails on windows.")
 def test_multiprocess():
-    '''
+    """
     Tests for importing mujoco_py from multiple processes.
-    '''
+    """
+    remove_mujoco_build_and_lock()
     ctx = get_context('spawn')
     processes = []
     times = 3
     queue = ctx.Queue()
-    for idx in range(3):
+    for idx in range(5):
         processes.append(ctx.Process(target=import_process, args=(queue, )))
     for p in processes:
         p.start()
     for p in processes:
         p.join()
     for _ in range(times):
+        assert queue.get(), "One of processes failed."
+
+
+@pytest.mark.skipif(sys.platform.startswith("win"), reason="This test fails on windows.")
+def test_multiprocess_with_killing():
+    """
+    Kills a process in a middle of compilation and verifies that
+    other processes can resume compilation.
+    """
+    remove_mujoco_build_and_lock()
+    ctx = get_context('spawn')
+    processes = []
+    times = 3
+    queue = ctx.Queue()
+    for idx in range(times):
+        processes.append(ctx.Process(target=import_process, args=(queue, )))
+    processes[0].start()
+    # We wait 20s so the compilation already
+    # has started. Then we kill the process.
+    time.sleep(20)
+    for p in processes[1:]:
+        p.start()
+    processes[0].terminate()
+    for p in processes[1:]:
+        p.join()
+    for _ in range(times - 1):
         assert queue.get(), "One of processes failed."
 
 

@@ -1,12 +1,12 @@
 __all__ = ['__version__', 'get_version']
 
-version_info = (2, 0, 2, 6)
+version_info = (2, 0, 2, 7)
 # format:
 # ('mujoco_major', 'mujoco_minor', 'mujoco_py_major', 'mujoco_py_minor')
 
 
 def get_version():
-    "Returns the version as a human-format string."
+    """ Returns the version as a human-format string. """
     return '%d.%d.%d.%d' % version_info
 
 
