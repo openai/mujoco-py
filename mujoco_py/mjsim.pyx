@@ -127,6 +127,7 @@ cdef class MjSim(object):
             for _ in range(self.nsubsteps):
                 self.substep_callback()
                 mj_step(self.model.ptr, self.data.ptr)
+            mj_rnePostConstraint(self.model.ptr, self.data.ptr)
 
     def render(self, width=None, height=None, *, camera_name=None, depth=False,
                mode='offscreen', device_id=-1, segmentation=False):
