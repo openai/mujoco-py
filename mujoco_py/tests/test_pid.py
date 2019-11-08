@@ -36,11 +36,11 @@ PID_ACTUATOR = """
 """
 
 P_ONLY_ACTUATOR = """
-	<general ctrlrange='-1 1' gaintype="user" biastype="user" forcerange="-100 100" gainprm="200" joint="hinge" name="a-hinge"/>
+	<general ctrlrange='-1 1' gaintype="user" biastype="user" gainprm="200" joint="hinge" name="a-hinge"/>
 """
 
 POSITION_ACTUATOR = """
-	<position ctrlrange='-1 1' forcerange="-100 100" kp=200 joint="hinge" name="a-hinge"/>
+	<position ctrlrange='-1 1' kp=200 joint="hinge" name="a-hinge"/>
 """
 
 
@@ -87,8 +87,8 @@ def test_mj_proptional_only():
 	sim.data.qpos[0] = sim2.data.qpos[0] = init_pos
 	sim.data.ctrl[0] = sim2.data.ctrl[0] = 0
 
-	for i in range(20):
+	for i in range(2000):
 		print(i, sim.data.qpos[0], sim2.data.qpos[0])
 		sim.step()
 		sim2.step()
-		assert abs(sim.data.qpos[0] - sim2.data.qpos[0]) <= 1e-5, "%d step violates" % i
+		assert abs(sim.data.qpos[0] - sim2.data.qpos[0]) <= 1e-7, "%d step violates" % i
