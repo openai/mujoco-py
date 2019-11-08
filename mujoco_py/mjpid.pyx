@@ -80,7 +80,10 @@ cdef mjtNum c_pid_bias(const mjModel* m, const mjData* d, int id) with gil:
     d.userdata[id * NUM_USER_DATA_PER_ACT + IDX_LAST_ERROR] = error
     d.userdata[id * NUM_USER_DATA_PER_ACT + IDX_DERIVATIVE_ERROR_LAST] = derivative_error
     d.userdata[id * NUM_USER_DATA_PER_ACT + IDX_INTEGRAL_ERROR] = integral_error
-    return fmax(effort_limit_low, fmin(effort_limit_high, f))
+    
+    if effort_limit_low != 0.0 and effort_limit_high != 0.0:
+        f = fmax(effort_limit_low, fmin(effort_limit_high, f))
+    return f
 
 
 def set_pid_control(m, d):
