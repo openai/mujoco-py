@@ -252,7 +252,7 @@ class MjViewer(MjViewerBasic):
         self.add_overlay(const.GRID_TOPLEFT, "Switch camera (#cams = %d)" % (self._ncam + 1),
                                              "[Tab] (camera ID = %d)" % self.cam.fixedcamid)
         self.add_overlay(const.GRID_TOPLEFT, "[C]ontact forces", "Off" if self.vopt.flags[
-                         10] == 1 else "On")
+                         const.VIS_CONTACTPOINT] == 1 else "On")
         self.add_overlay(
             const.GRID_TOPLEFT, "Referenc[e] frames", "Off" if self.vopt.frame == 1 else "On")
         self.add_overlay(const.GRID_TOPLEFT,
@@ -340,7 +340,7 @@ class MjViewer(MjViewerBasic):
             self._run_speed *= 2.0
         elif key == glfw.KEY_C:  # Displays contact forces.
             vopt = self.vopt
-            vopt.flags[10] = vopt.flags[11] = not vopt.flags[10]
+            vopt.flags[const.VIS_CONTACTPOINT] = vopt.flags[const.VIS_CONTACTFORCE] = not vopt.flags[const.VIS_CONTACTPOINT]
         elif key == glfw.KEY_D:  # turn off / turn on rendering every frame.
             self._render_every_frame = not self._render_every_frame
         elif key == glfw.KEY_E:
