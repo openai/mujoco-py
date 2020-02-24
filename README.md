@@ -117,9 +117,9 @@ Add the path to the mujoco bin directory to your dynamic loader:
 This is particularly useful on Ubuntu 14.04, which does not have a GLFW package.
 
 
-### Ubuntu installtion troubleshooting
+### Ubuntu installation troubleshooting
 
-Because `mujoco_py` has compiled native code that needs to be linked to a supplied MuJoCo binary, it's installation
+Because `mujoco_py` has compiled native code that needs to be linked to a supplied MuJoCo binary, its installation
 on linux can be more challenging than pure Python source packages.
 
 To install mujoco-py on Ubuntu, make sure you have the following libraries installed:
