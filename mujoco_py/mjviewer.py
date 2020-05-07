@@ -340,7 +340,7 @@ class MjViewer(MjViewerBasic):
             self._run_speed *= 2.0
         elif key == glfw.KEY_C:  # Displays contact forces.
             vopt = self.vopt
-            vopt.flags[13] = vopt.flags[14] = not vopt.flags[13]
+            vopt.flags[const.VIS_CONTACTPOINT] = vopt.flags[const.VIS_CONTACTFORCE] = not vopt.flags[const.VIS_CONTACTPOINT]
         elif key == glfw.KEY_D:  # turn off / turn on rendering every frame.
             self._render_every_frame = not self._render_every_frame
         elif key == glfw.KEY_E:
