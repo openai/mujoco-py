@@ -129,7 +129,7 @@ cdef class MjSim(object):
                 mj_step(self.model.ptr, self.data.ptr)
 
     def render(self, width=None, height=None, *, camera_name=None, depth=False,
-               mode='offscreen', device_id=-1):
+               mode='offscreen', device_id=-1, segmentation=False):
         """
         Renders view from a camera and returns image as an `numpy.ndarray`.
 
@@ -161,9 +161,9 @@ cdef class MjSim(object):
                     render_context = self._render_context_offscreen
 
                 render_context.render(
-                    width=width, height=height, camera_id=camera_id)
+                    width=width, height=height, camera_id=camera_id, segmentation=segmentation)
                 return render_context.read_pixels(
-                    width, height, depth=depth)
+                    width, height, depth=depth, segmentation=segmentation)
         elif mode == 'window':
             if self._render_context_window is None:
                 from mujoco_py.mjviewer import MjViewer
