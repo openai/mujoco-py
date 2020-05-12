@@ -97,8 +97,12 @@ cdef extern from "mjvisualize.h" nogil:
         mjRND_SHADOW        = 0,        # shadows
         mjRND_WIREFRAME,                # wireframe
         mjRND_REFLECTION,               # reflections
-        mjRND_FOG,                      # fog
+        mjRND_ADDITIVE,                 # additive
         mjRND_SKYBOX,                   # skybox
+        mjRND_FOG,                      # fog
+        mjRND_HAZE,                     # haze
+        mjRND_SEGMENT,                  # segment
+        mjRND_IDCOLOR,                  # color
 
     enum: mjNRNDFLAG                      # number of rendering flags
 
