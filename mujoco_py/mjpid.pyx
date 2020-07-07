@@ -3,6 +3,7 @@ from mujoco_py.generated import const
 import numpy as np
 
 """
+  PID Controller Implementation
   Kp == Kp
   Ki == Kp/Ti
   Kd == Kp*Td
@@ -86,35 +87,35 @@ cdef mjtNum c_pid_bias(const mjModel*m, const mjData*d, int id):
     return f
 
 """ 
-   Inverse Dynamics (ID) Controller
-   
-   qacc:               Joint acceleration.
-   qfrc_applied:       Torques applied directly to the joints.
-   xfrc_applied:       Cartesian forces applied directly to bodies.
-   qfrc_actuator:      Torques applied directly to the actuators.
-   Jx'*xfrc_applied:   Joint torque resulting from cartesian forces (xfrc_applied).
-   
-   qfrc_inverse gives the joint torques necessary to achieve a desired joint acceleration (qacc) given 
-   internal and external forces and torques. ID control solves the following torque balance by calling
-   mjinverse(model, data):
-   
+    Inverse Dynamics (ID) Controller
+    
+    qacc:               Joint acceleration.
+    qfrc_applied:       Torques applied directly to the joints.
+    xfrc_applied:       Cartesian forces applied directly to bodies.
+    qfrc_actuator:      Torques applied directly to the actuators.
+    Jx'*xfrc_applied:   Joint torque resulting from cartesian forces (xfrc_applied).
+    
+    qfrc_inverse gives the joint torques necessary to achieve a desired joint acceleration (qacc) given 
+    internal and external forces and torques. ID control solves the following torque balance by calling
+    mjinverse(model, data):
+    
        qfrc_inverse = qfrc_applied + Jx'*xfrc_applied + qfrc_actuator
-   The error in desired joint acceleration is wrapped using a PD controller.
-   To provide a smooth reference signal for the ID controller, an Exponential Moving Average (EMA) is
-   used on the reference control signal (ctrl_ema). 
-   """
-cdef enum USER_DEFINED_ID_ACTUATOR_PARAMS:
-    IDX_ID_PROPORTIONAL_GAIN = 0,
-    IDX_ID_DERIVATIVE_GAIN = 1,
-    IDX_ID_EMA_SMOOTH = 2,
+    The error in desired joint acceleration is wrapped using a PD controller.
+    To provide a smooth reference signal for the ID controller, an Exponential Moving Average (EMA) is
+    used on the reference control signal (ctrl_ema). 
+"""
+cdef enum USER_DEFINED_INV_DYN_ACTUATOR_PARAMS:
+    IDX_INV_DYN_PROPORTIONAL_GAIN = 0,  # Kp, proportional gain
+    IDX_INV_DYN_DERIVATIVE_GAIN = 1,  #Kd, derivative gain
+    IDX_INV_DYN_EMA_SMOOTH = 2,  #Exponential moving average smoothing factor
 
-cdef enum USER_DEFINED_ID_CONTROLLER_DATA:
-    IDX_CTRL_REF = 0
+cdef enum USER_DEFINED_INV_DYN_CONTROLLER_DATA:
+    IDX_INV_DYN_CTRL_REF = 0  # stored value of EMA-smoothed control
 
-cdef mjtNum c_id_bias(const mjModel*m, const mjData*d, int id):
+cdef mjtNum c_inv_dyn_bias(const mjModel*m, const mjData*d, int id):
     cdef int NGAIN = int(const.NGAIN)
-    ctrl_ema = d.userdata[id * NUM_USER_DATA_PER_ACT + IDX_CTRL_REF]
-    ema_smooth = m.actuator_gainprm[id * NGAIN + IDX_ID_EMA_SMOOTH]
+    ctrl_ema = d.userdata[id * NUM_USER_DATA_PER_ACT + IDX_INV_DYN_CTRL_REF]
+    ema_smooth = m.actuator_gainprm[id * NGAIN + IDX_INV_DYN_EMA_SMOOTH]
     cdef double effort_limit_low = m.actuator_forcerange[id * 2]
     cdef double effort_limit_high = m.actuator_forcerange[id * 2 + 1]
 
@@ -128,8 +129,8 @@ cdef mjtNum c_id_bias(const mjModel*m, const mjData*d, int id):
     qvel_error = qvel_des - d.qvel[id]
 
     # PD gains for desired acceleration
-    kp = m.actuator_gainprm[id * NGAIN + IDX_ID_PROPORTIONAL_GAIN]
-    kd = m.actuator_gainprm[id * NGAIN + IDX_ID_DERIVATIVE_GAIN]
+    kp = m.actuator_gainprm[id * NGAIN + IDX_INV_DYN_PROPORTIONAL_GAIN]
+    kd = m.actuator_gainprm[id * NGAIN + IDX_INV_DYN_DERIVATIVE_GAIN]
 
     # Set desired acceleration of all DoFs (model.nv) to zero except the target actuator [id]
     qacc_des = np.zeros(m.nv)
@@ -151,7 +152,7 @@ cdef mjtNum c_id_bias(const mjModel*m, const mjData*d, int id):
         f = fmax(effort_limit_low, fmin(effort_limit_high, f))
 
     # Save smooth control signal in userdata
-    d.userdata[id * NUM_USER_DATA_PER_ACT + IDX_CTRL_REF] = ctrl_ema
+    d.userdata[id * NUM_USER_DATA_PER_ACT + IDX_INV_DYN_CTRL_REF] = ctrl_ema
 
     return f
 
@@ -161,7 +162,7 @@ cdef enum USER_DEFINED_ACTUATOR_DATA:
 
 cdef mjtNum c_custom_bias(const mjModel*m, const mjData*d, int id) with gil:
     """
-    Switches between PID and ID type custom bias computation based on the
+    Switches between PID and Inverse Dynamics (ID) type custom bias computation based on the
     defined actuator's actuator_user field.
     user="1": ID
     default: PID
@@ -173,7 +174,7 @@ cdef mjtNum c_custom_bias(const mjModel*m, const mjData*d, int id) with gil:
     controller_type = m.actuator_user[id * m.nuser_actuator + IDX_CONTROLLER_TYPE]
 
     if controller_type == CONTROLLER_TYPE_INVERSE_DYNAMICS:
-        return c_id_bias(m, d, id)
+        return c_inv_dyn_bias(m, d, id)
     return c_pid_bias(m, d, id)
 
 def set_pid_control(m, d):
