@@ -170,7 +170,7 @@ cdef mjtNum c_custom_bias(const mjModel*m, const mjData*d, int id) with gil:
     :param id: actuator ID
     :return: Custom actuator force
     """
-    controller_type = m.actuator_user[id * m.nuser_actuator + IDX_CONTROLLER_TYPE]
+    controller_type = int(m.actuator_user[id * m.nuser_actuator + IDX_CONTROLLER_TYPE])
 
     if controller_type == CONTROLLER_TYPE_INVERSE_DYNAMICS:
         return c_inv_dyn_bias(m, d, id)
