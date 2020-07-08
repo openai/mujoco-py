@@ -142,10 +142,9 @@ cdef mjtNum c_inv_dyn_bias(const mjModel*m, const mjData*d, int id):
 
     # Compute the inverse dynamics and get the joint torque
     mj_inverse(m, d)
-    joint_torque = d.qfrc_inverse[id]
 
     # Write the joint torque
-    f = joint_torque
+    f = d.qfrc_inverse[id]
 
     # Clip joint torque to be within forcerange if specified
     if effort_limit_low != 0.0 or effort_limit_high != 0.0:
