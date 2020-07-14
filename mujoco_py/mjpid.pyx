@@ -22,26 +22,100 @@ cdef enum USER_DEFINED_ACTUATOR_PARAMS:
     IDX_PROPORTIONAL_GAIN = 0,
     IDX_INTEGRAL_TIME_CONSTANT = 1,
     IDX_INTEGRAL_MAX_CLAMP = 2,
-    IDX_PROPORTIONAL_GAIN_V = 3,
-    IDX_INTEGRAL_TIME_CONSTANT_V = 4,
-    IDX_INTEGRAL_MAX_CLAMP_V = 5,
-    IDX_EMA_SMOOTH_V = 6,
+    IDX_DERIVATIVE_TIME_CONSTANT = 3,
+    IDX_DERIVATIVE_GAIN_SMOOTHING = 4,
+    IDX_ERROR_DEADBAND = 5,
 
 
 cdef enum USER_DEFINED_CONTROLLER_DATA:
     IDX_INTEGRAL_ERROR = 0,
-    IDX_INTEGRAL_ERROR_V = 1,
-    IDX_LAST_ERROR = 2,
-    IDX_LAST_ERROR_V = 3,
-    IDX_STORED_EMA_SMOOTH_V = 4,
+    IDX_LAST_ERROR = 1,
+    IDX_DERIVATIVE_ERROR_LAST = 2,
+    # Needs to be max() of userdata needed for all control modes. 5 needed for cascasded PI
     NUM_USER_DATA_PER_ACT = 5,
 
-cdef int CONTROLLER_TYPE_INVERSE_DYNAMICS = 1,
 
-cdef mjtNum c_zero_gains(const mjModel*m, const mjData*d, int id) with gil:
+cdef int CONTROLLER_TYPE_PI_CASCADE = 1,
+
+cdef mjtNum c_zero_gains(const mjModel* m, const mjData* d, int id) with gil:
     return 0.0
 
+
 cdef mjtNum c_pid_bias(const mjModel*m, const mjData*d, int id):
+    cdef double dt_in_sec = m.opt.timestep
+    cdef double error = d.ctrl[id] - d.actuator_length[id]
+    cdef int NGAIN = int(const.NGAIN)
+
+    cdef double Kp = m.actuator_gainprm[id * NGAIN + IDX_PROPORTIONAL_GAIN]
+    cdef double error_deadband = m.actuator_gainprm[id * NGAIN + IDX_ERROR_DEADBAND]
+    cdef double integral_max_clamp = m.actuator_gainprm[id * NGAIN + IDX_INTEGRAL_MAX_CLAMP]
+    cdef double integral_time_const = m.actuator_gainprm[id * NGAIN + IDX_INTEGRAL_TIME_CONSTANT]
+    cdef double derivative_gain_smoothing = \
+        m.actuator_gainprm[id * NGAIN + IDX_DERIVATIVE_GAIN_SMOOTHING]
+    cdef double derivate_time_const = m.actuator_gainprm[id * NGAIN + IDX_DERIVATIVE_TIME_CONSTANT]
+
+    cdef double effort_limit_low = m.actuator_forcerange[id * 2]
+    cdef double effort_limit_high = m.actuator_forcerange[id * 2 + 1]
+
+    if fabs(error) < error_deadband:
+        error = 0.0
+
+    integral_error = d.userdata[id * NUM_USER_DATA_PER_ACT + IDX_INTEGRAL_ERROR]
+    integral_error += error * dt_in_sec
+    integral_error = fmax(-integral_max_clamp, fmin(integral_max_clamp, integral_error))
+
+    last_error = d.userdata[id * NUM_USER_DATA_PER_ACT + IDX_LAST_ERROR]
+    cdef double derivative_error = (error - last_error) / dt_in_sec
+
+    derivative_error_last = d.userdata[id * NUM_USER_DATA_PER_ACT + IDX_DERIVATIVE_ERROR_LAST]
+
+    derivative_error = (1.0 - derivative_gain_smoothing) * derivative_error_last + \
+                       derivative_gain_smoothing * derivative_error
+
+    cdef double integral_error_term = 0.0
+    if integral_time_const != 0:
+        integral_error_term = integral_error / integral_time_const
+
+    cdef double derivative_error_term = derivative_error * derivate_time_const
+
+    f = Kp * (error + integral_error_term + derivative_error_term)
+    # print(id, d.ctrl[id], d.actuator_length[id], error, integral_error_term, derivative_error_term,
+    #    derivative_error, dt_in_sec, last_error, integral_error, derivative_error_last, f)
+
+    d.userdata[id * NUM_USER_DATA_PER_ACT + IDX_LAST_ERROR] = error
+    d.userdata[id * NUM_USER_DATA_PER_ACT + IDX_DERIVATIVE_ERROR_LAST] = derivative_error
+    d.userdata[id * NUM_USER_DATA_PER_ACT + IDX_INTEGRAL_ERROR] = integral_error
+
+    if effort_limit_low != 0.0 or effort_limit_high != 0.0:
+        f = fmax(effort_limit_low, fmin(effort_limit_high, f))
+    return f
+
+"""
+    Cascaded PI controller
+
+    Two cascaded PI controllers for tracking position and velocity error.
+"""
+
+
+cdef enum USER_DEFINED_ACTUATOR_PARAMS_CASCADE:
+    IDX_CAS_PROPORTIONAL_GAIN = 0,
+    IDX_CAS_INTEGRAL_TIME_CONSTANT = 1,
+    IDX_CAS_INTEGRAL_MAX_CLAMP = 2,
+    IDX_CAS_PROPORTIONAL_GAIN_V = 3,
+    IDX_CAS_INTEGRAL_TIME_CONSTANT_V = 4,
+    IDX_CAS_INTEGRAL_MAX_CLAMP_V = 5,
+    IDX_CAS_EMA_SMOOTH_V = 6,
+
+
+cdef enum USER_DEFINED_CONTROLLER_DATA_CASCADE:
+    IDX_CAS_INTEGRAL_ERROR = 0,
+    IDX_CAS_INTEGRAL_ERROR_V = 1,
+    IDX_CAS_LAST_ERROR = 2,
+    IDX_CAS_LAST_ERROR_V = 3,
+    IDX_CAS_STORED_EMA_SMOOTH_V = 4,
+
+
+cdef mjtNum c_pi_cascade_bias(const mjModel*m, const mjData*d, int id):
 
     # Get time
     cdef double dt_in_sec = m.opt.timestep
@@ -51,16 +125,16 @@ cdef mjtNum c_pid_bias(const mjModel*m, const mjData*d, int id):
     ########## Position PI Loop
 
     # Compute error from d.ctrl[id] setpoint
-    cdef double error = d.ctrl[id] - d.actuator_length[id]
+    cdef double error_p_cas = d.ctrl[id] - d.actuator_length[id]
 
     # Proportional term
-    cdef double Kp = m.actuator_gainprm[id * NGAIN + IDX_PROPORTIONAL_GAIN]
+    cdef double Kp_cas = m.actuator_gainprm[id * NGAIN + IDX_CAS_PROPORTIONAL_GAIN]
 
     # Integral Error
-    cdef double integral_max_clamp = m.actuator_gainprm[id * NGAIN + IDX_INTEGRAL_MAX_CLAMP]
-    cdef double integral_time_const = m.actuator_gainprm[id * NGAIN + IDX_INTEGRAL_TIME_CONSTANT]
-    integral_error = d.userdata[id * NUM_USER_DATA_PER_ACT + IDX_INTEGRAL_ERROR]
-    integral_error += error * dt_in_sec
+    cdef double integral_max_clamp = m.actuator_gainprm[id * NGAIN + IDX_CAS_INTEGRAL_MAX_CLAMP]
+    cdef double integral_time_const = m.actuator_gainprm[id * NGAIN + IDX_CAS_INTEGRAL_TIME_CONSTANT]
+    integral_error = d.userdata[id * NUM_USER_DATA_PER_ACT + IDX_CAS_INTEGRAL_ERROR]
+    integral_error += error_p_cas * dt_in_sec
 
     integral_error = fmax(-integral_max_clamp, fmin(integral_max_clamp, integral_error))
     cdef double integral_error_term = 0.0
@@ -68,12 +142,12 @@ cdef mjtNum c_pid_bias(const mjModel*m, const mjData*d, int id):
         integral_error_term = integral_error / integral_time_const
 
     # Save errors
-    d.userdata[id * NUM_USER_DATA_PER_ACT + IDX_LAST_ERROR] = error
-    d.userdata[id * NUM_USER_DATA_PER_ACT + IDX_INTEGRAL_ERROR] = integral_error
+    d.userdata[id * NUM_USER_DATA_PER_ACT + IDX_CAS_LAST_ERROR] = error_p_cas
+    d.userdata[id * NUM_USER_DATA_PER_ACT + IDX_CAS_INTEGRAL_ERROR] = integral_error
 
     # If P gain on position loop is zero, only use the velocity controller
-    if Kp != 0:
-        des_vel = Kp * (error + integral_error_term)
+    if Kp_cas != 0:
+        des_vel = Kp_cas * (error_p_cas + integral_error_term)
     else:
         des_vel = d.ctrl[id]
 
@@ -86,23 +160,23 @@ cdef mjtNum c_pid_bias(const mjModel*m, const mjData*d, int id):
 
     ########## Velocity PI Loop
 
-    ctrl_ema_V = d.userdata[id * NUM_USER_DATA_PER_ACT + IDX_STORED_EMA_SMOOTH_V]
-    ema_smooth_V = m.actuator_gainprm[id * NGAIN + IDX_EMA_SMOOTH_V]
+    ctrl_ema_V = d.userdata[id * NUM_USER_DATA_PER_ACT + IDX_CAS_STORED_EMA_SMOOTH_V]
+    ema_smooth_V = m.actuator_gainprm[id * NGAIN + IDX_CAS_EMA_SMOOTH_V]
 
     ctrl_ema_V = (ema_smooth_V * ctrl_ema_V) + (1 - ema_smooth_V) * des_vel
 
-    d.userdata[id * NUM_USER_DATA_PER_ACT + IDX_STORED_EMA_SMOOTH_V] = ctrl_ema_V
+    d.userdata[id * NUM_USER_DATA_PER_ACT + IDX_CAS_STORED_EMA_SMOOTH_V] = ctrl_ema_V
 
     # Compute error from d.ctrl[id] setpoint
     cdef double error_V = ctrl_ema_V - d.actuator_velocity[id]
 
     # Proportional term
-    cdef double Kp_V = m.actuator_gainprm[id * NGAIN + IDX_PROPORTIONAL_GAIN_V]
+    cdef double Kp_V = m.actuator_gainprm[id * NGAIN + IDX_CAS_PROPORTIONAL_GAIN_V]
 
     # Integral Error
-    cdef double integral_max_clamp_V = m.actuator_gainprm[id * NGAIN + IDX_INTEGRAL_MAX_CLAMP_V]
-    cdef double integral_time_const_V = m.actuator_gainprm[id * NGAIN + IDX_INTEGRAL_TIME_CONSTANT_V]
-    integral_error_V = d.userdata[id * NUM_USER_DATA_PER_ACT + IDX_INTEGRAL_ERROR_V]
+    cdef double integral_max_clamp_V = m.actuator_gainprm[id * NGAIN + IDX_CAS_INTEGRAL_MAX_CLAMP_V]
+    cdef double integral_time_const_V = m.actuator_gainprm[id * NGAIN + IDX_CAS_INTEGRAL_TIME_CONSTANT_V]
+    integral_error_V = d.userdata[id * NUM_USER_DATA_PER_ACT + IDX_CAS_INTEGRAL_ERROR_V]
     integral_error_V += error_V * dt_in_sec
     integral_error_V = fmax(-integral_max_clamp_V, fmin(integral_max_clamp_V, integral_error_V))
 
@@ -119,82 +193,15 @@ cdef mjtNum c_pid_bias(const mjModel*m, const mjData*d, int id):
         f = fmax(effort_limit_low_V, fmin(effort_limit_high_V, f))
 
     # Save errors
-    d.userdata[id * NUM_USER_DATA_PER_ACT + IDX_LAST_ERROR_V] = error_V
-    d.userdata[id * NUM_USER_DATA_PER_ACT + IDX_INTEGRAL_ERROR_V] = integral_error_V
+    d.userdata[id * NUM_USER_DATA_PER_ACT + IDX_CAS_LAST_ERROR_V] = error_V
+    d.userdata[id * NUM_USER_DATA_PER_ACT + IDX_CAS_INTEGRAL_ERROR_V] = integral_error_V
 
 
     f += d.qfrc_bias[id]
 
     return f
 
-""" 
-    Inverse Dynamics (ID) Controller
-    
-    qacc:               Joint acceleration.
-    qfrc_applied:       Torques applied directly to the joints.
-    xfrc_applied:       Cartesian forces applied directly to bodies.
-    qfrc_actuator:      Torques applied directly to the actuators.
-    Jx'*xfrc_applied:   Joint torque resulting from cartesian forces (xfrc_applied).
-    
-    qfrc_inverse gives the joint torques necessary to achieve a desired joint acceleration (qacc) given 
-    internal and external forces and torques. ID control solves the following torque balance by calling
-    mjinverse(model, data):
-    
-       qfrc_inverse = qfrc_applied + Jx'*xfrc_applied + qfrc_actuator
-    The error in desired joint acceleration is wrapped using a PD controller.
-    To provide a smooth reference signal for the ID controller, an Exponential Moving Average (EMA) is
-    used on the reference control signal (ctrl_ema). 
-"""
-cdef enum USER_DEFINED_INV_DYN_ACTUATOR_PARAMS:
-    IDX_INV_DYN_PROPORTIONAL_GAIN = 0,  # Kp, proportional gain
-    IDX_INV_DYN_DERIVATIVE_GAIN = 1,  #Kd, derivative gain
-    IDX_INV_DYN_EMA_SMOOTH = 2,  #Exponential moving average smoothing factor
 
-cdef enum USER_DEFINED_INV_DYN_CONTROLLER_DATA:
-    IDX_INV_DYN_CTRL_REF = 0  # stored value of EMA-smoothed control
-
-cdef mjtNum c_inv_dyn_bias(const mjModel*m, const mjData*d, int id):
-    cdef int NGAIN = int(const.NGAIN)
-    ctrl_ema = d.userdata[id * NUM_USER_DATA_PER_ACT + IDX_INV_DYN_CTRL_REF]
-    ema_smooth = m.actuator_gainprm[id * NGAIN + IDX_INV_DYN_EMA_SMOOTH]
-    cdef double effort_limit_low = m.actuator_forcerange[id * 2]
-    cdef double effort_limit_high = m.actuator_forcerange[id * 2 + 1]
-
-    # Apply an Exponential Moving Average (EMA) to desired control
-    ctrl_ema = (ema_smooth * ctrl_ema) + (1 - ema_smooth) * d.ctrl[id]
-
-    qpos_des = ctrl_ema
-    qvel_des = 0
-
-    qpos_error = qpos_des - d.qpos[id]
-    qvel_error = qvel_des - d.qvel[id]
-
-    # PD gains for desired acceleration
-    kp = m.actuator_gainprm[id * NGAIN + IDX_INV_DYN_PROPORTIONAL_GAIN]
-    kd = m.actuator_gainprm[id * NGAIN + IDX_INV_DYN_DERIVATIVE_GAIN]
-
-    # Set desired acceleration of all DoFs (model.nv) to zero except the target actuator [id]
-    qacc_des = np.zeros(m.nv)
-    qacc_des[id] = kp * qpos_error + kd * qvel_error
-
-    # Set the target forward dyanmics
-    for i in range(m.nv):
-        d.qacc[i] = qacc_des[i]
-
-    # Compute the inverse dynamics and get the joint torque
-    mj_inverse(m, d)
-    # print('test')
-    # Write the joint torque
-    f = d.qfrc_inverse[id]
-
-    # Clip joint torque to be within forcerange if specified
-    if effort_limit_low != 0.0 or effort_limit_high != 0.0:
-        f = fmax(effort_limit_low, fmin(effort_limit_high, f))
-
-    # Save smooth control signal in userdata
-    d.userdata[id * NUM_USER_DATA_PER_ACT + IDX_INV_DYN_CTRL_REF] = ctrl_ema
-
-    return f
 
 cdef enum USER_DEFINED_ACTUATOR_DATA:
     IDX_CONTROLLER_TYPE = 0
@@ -202,9 +209,9 @@ cdef enum USER_DEFINED_ACTUATOR_DATA:
 
 cdef mjtNum c_custom_bias(const mjModel*m, const mjData*d, int id) with gil:
     """
-    Switches between PID and Inverse Dynamics (ID) type custom bias computation based on the
+    Switches between PID and Cascaded PI type custom bias computation based on the
     defined actuator's actuator_user field.
-    user="1": ID
+    user="1": Cascade PI
     default: PID
     :param m: mjModel
     :param d:  mjData
@@ -213,8 +220,8 @@ cdef mjtNum c_custom_bias(const mjModel*m, const mjData*d, int id) with gil:
     """
     controller_type = int(m.actuator_user[id * m.nuser_actuator + IDX_CONTROLLER_TYPE])
 
-    if controller_type == CONTROLLER_TYPE_INVERSE_DYNAMICS:
-        return c_inv_dyn_bias(m, d, id)
+    if controller_type == CONTROLLER_TYPE_PI_CASCADE:
+        return c_pi_cascade_bias(m, d, id)
     return c_pid_bias(m, d, id)
 
 def set_pid_control(m, d):
