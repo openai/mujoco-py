@@ -30,7 +30,7 @@ cdef enum USER_DEFINED_CONTROLLER_DATA:
     IDX_INTEGRAL_ERROR = 0,
     IDX_LAST_ERROR = 1,
     IDX_DERIVATIVE_ERROR_LAST = 2,
-    # Needs to be max() of userdata needed for all control modes. 5 needed for cascasded PI
+    # Needs to be max() of userdata needed for all control modes. 5 needed for cascaded PI
     NUM_USER_DATA_PER_ACT = 5,
 
 cdef int CONTROLLER_TYPE_PI_CASCADE = 1,
@@ -56,33 +56,43 @@ cdef struct PIDParameters:
     double derivative_time_const
     PIDErrors previous_errors
 
+cdef mjtNum c_zero_gains(const mjModel*m, const mjData*d, int id) with gil:
+    return 0.0
+
 cdef PIDOutput _pid(PIDParameters parameters):
+    """
+    A general purpose PID controller implemented in the standard form. 
+    :param parameters: PID parameters
+    :return: A PID output struct containing the control output and the error state
+    """
+
     cdef double error = parameters.setpoint - parameters.feedback
 
+    # clamp error that's within the error deadband
     if fabs(error) < parameters.error_deadband:
         error = 0.0
 
-    integral_error = parameters.previous_errors.integral_error
-    integral_error += error * parameters.dt_seconds
-    integral_error = fmax(-parameters.integral_max_clamp, fmin(parameters.integral_max_clamp, integral_error))
-
+    # compute derivative error
     cdef double derivative_error = (error - parameters.previous_errors.error) / parameters.dt_seconds
 
     derivative_error = (1.0 - parameters.derivative_gain_smoothing) * parameters.previous_errors.derivative_error + \
                        parameters.derivative_gain_smoothing * derivative_error
 
+    cdef double derivative_error_term = derivative_error * parameters.derivative_time_const
+    
+    # update and clamp integral error
+    integral_error = parameters.previous_errors.integral_error
+    integral_error += error * parameters.dt_seconds
+    integral_error = fmax(-parameters.integral_max_clamp, fmin(parameters.integral_max_clamp, integral_error))
+
     cdef double integral_error_term = 0.0
     if parameters.integral_time_const != 0:
         integral_error_term = integral_error / parameters.integral_time_const
 
-    cdef double derivative_error_term = derivative_error * parameters.derivative_time_const
 
     f = parameters.Kp * (error + integral_error_term + derivative_error_term)
 
     return PIDOutput(output=f, errors=PIDErrors(error=error, derivative_error=derivative_error, integral_error=integral_error))
-
-cdef mjtNum c_zero_gains(const mjModel*m, const mjData*d, int id) with gil:
-    return 0.0
 
 cdef mjtNum c_pid_bias(const mjModel*m, const mjData*d, int id):
     cdef double dt_in_sec = m.opt.timestep
@@ -116,12 +126,6 @@ cdef mjtNum c_pid_bias(const mjModel*m, const mjData*d, int id):
     if effort_limit_low != 0.0 or effort_limit_high != 0.0:
         f = fmax(effort_limit_low, fmin(effort_limit_high, f))
     return f
-
-"""
-    Cascaded PI controller
-
-    Two cascaded PI controllers for tracking position and velocity error.
-"""
 
 cdef enum USER_DEFINED_ACTUATOR_PARAMS_CASCADE:
     IDX_CAS_PROPORTIONAL_GAIN = 0,
