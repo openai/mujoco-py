@@ -216,11 +216,13 @@ cdef mjtNum c_pi_cascade_bias(const mjModel*m, const mjData*d, int id):
     cdef double effort_limit_high = m.actuator_forcerange[id * 2 + 1]
 
     f = vel_output.output
-    if effort_limit_low != 0.0 or effort_limit_high != 0.0:
-        f = fmax(effort_limit_low, fmin(effort_limit_high, f))
 
     # gravity compensation
     f += d.qfrc_bias[id]
+    
+    if effort_limit_low != 0.0 or effort_limit_high != 0.0:
+        f = fmax(effort_limit_low, fmin(effort_limit_high, f))
+
     return f
 
 cdef enum USER_DEFINED_ACTUATOR_DATA:

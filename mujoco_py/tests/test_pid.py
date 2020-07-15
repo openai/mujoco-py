@@ -36,7 +36,7 @@ PID_ACTUATOR = """
 """
 
 CASCADED_PID_ACTUATOR = """
-	<general ctrlrange='-1 1' gaintype="user" biastype="user" forcerange="-100 100" gainprm="5 0 0 10 .1 1.5 .97 3.14" joint="hinge" name="a-hinge" user="1"/>
+	<general ctrlrange='-1 1' gaintype="user" biastype="user" forcerange="-3 3" gainprm="5 0 0 10 .1 1.5 .97 3" joint="hinge" name="a-hinge" user="1"/>
 """
 
 P_ONLY_ACTUATOR = """
@@ -55,6 +55,7 @@ def test_mj_pid():
 
     Here we set Kp = 200, Ti = 10, Td = 0.1 (also iClamp = 10.0, dSmooth be 0.1)
     """
+    random.seed(30)
     xml = MODEL_XML.format(actuator=PID_ACTUATOR, nuser_actuator=1)
     model = load_model_from_xml(xml)
     sim = MjSim(model)
@@ -69,11 +70,11 @@ def test_mj_pid():
     sim.data.ctrl[0] = pos
     print('desired position:', pos)
 
-    for _ in range(100):
+    for _ in range(1000):
         sim.step()
 
     print('final pos', sim.data.qpos[0])
-    assert abs(sim.data.qpos[0] - pos) < 0.01
+    assert abs(sim.data.qpos[0] - pos) < 1e-4
 
 
 def test_mj_proportional_only():
@@ -106,15 +107,16 @@ def test_cascaded_pid():
 
     Here we set Kp = 5 for the position control loop and Kp =  10 for the velocity control
     Ti = 0.1 and integral_max_clamp=1.5.
-    EMA smoothing constant is set to 0.97.
+    EMA smoothing constant is set to 0.97, and velocity limit is 3 rad/s
     """
+    random.seed(30)
     xml = MODEL_XML.format(actuator=CASCADED_PID_ACTUATOR, nuser_actuator=1)
     model = load_model_from_xml(xml)
     sim = MjSim(model)
     cymj.set_pid_control(sim.model, sim.data)
 
     # pertubation of pole to be unbalanced
-    init_pos = 0.1 * (random.random() - 0.5)
+    init_pos = 0.1 * (random.random() - 1.0)
     print('init pos', init_pos)
     sim.data.qpos[0] = init_pos
 
@@ -122,11 +124,16 @@ def test_cascaded_pid():
     sim.data.ctrl[0] = desired_pos
     print('desired position:', desired_pos)
 
+    max_torque = 0
+
     for _ in range(1000):
         sim.step()
+        if abs(sim.data.actuator_force[0]) > max_torque:
+            max_torque = abs(sim.data.actuator_force[0])
 
     print('final pos', sim.data.qpos[0])
-    assert abs(sim.data.qpos[0] - desired_pos) < 0.01
+    assert abs(sim.data.qpos[0] - desired_pos) < 1e-3
+    assert max_torque <= 3  # torque limit set on the actuator
 
 
 def test_mjsize_exception():
