@@ -181,7 +181,7 @@ cdef mjtNum c_pi_cascade_bias(const mjModel*m, const mjData*d, int id):
         des_vel = d.ctrl[id]
 
     # Clamp max angular velocity
-    max_qvel = m.actuator_gainprm[id * NUM_USER_DATA_PER_ACT + IDX_CAS_MAX_VEL]
+    max_qvel = m.actuator_gainprm[id * NGAIN + IDX_CAS_MAX_VEL]
     des_vel = fmax(-max_qvel, fmin(max_qvel, des_vel))
 
     # Apply Exponential Moving Average smoothing to the velocity setpoint
