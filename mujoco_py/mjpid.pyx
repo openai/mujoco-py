@@ -1,37 +1,5 @@
 from libc.math cimport fabs, fmax, fmin
 from mujoco_py.generated import const
-import numpy as np
-
-"""
-  PID Controller Implementation
-  Kp == Kp
-  Ki == Kp/Ti
-  Kd == Kp*Td
-
-  In this situation, Kp is a knob to tune the agressiveness, wheras Ti and Td will
-  change the response time of the system in a predictable way. Lower Ti or Td means
-  that the system will respond to error more quickly/agressively.
-
-  error deadband: if set will shrink error within to 0.0
-  clamp on integral term:  helps on saturation problem in I.
-  derivative smoothing term:  reduces high frequency noise in D.
-
-  set in gainprm="Kp Ti Td iClamp errBand iSmooth" in mujoco xml.
-"""
-cdef enum USER_DEFINED_ACTUATOR_PARAMS:
-    IDX_PROPORTIONAL_GAIN = 0,
-    IDX_INTEGRAL_TIME_CONSTANT = 1,
-    IDX_INTEGRAL_MAX_CLAMP = 2,
-    IDX_DERIVATIVE_TIME_CONSTANT = 3,
-    IDX_DERIVATIVE_GAIN_SMOOTHING = 4,
-    IDX_ERROR_DEADBAND = 5,
-
-cdef enum USER_DEFINED_CONTROLLER_DATA:
-    IDX_INTEGRAL_ERROR = 0,
-    IDX_LAST_ERROR = 1,
-    IDX_DERIVATIVE_ERROR_LAST = 2,
-    # Needs to be max() of userdata needed for all control modes. 5 needed for cascaded PI
-    NUM_USER_DATA_PER_ACT = 5,
 
 cdef int CONTROLLER_TYPE_PI_CASCADE = 1,
 
@@ -62,6 +30,18 @@ cdef mjtNum c_zero_gains(const mjModel*m, const mjData*d, int id) with gil:
 cdef PIDOutput _pid(PIDParameters parameters):
     """
     A general purpose PID controller implemented in the standard form. 
+    Kp == Kp
+    Ki == Kp/Ti
+    Kd == Kp*Td
+    
+    In this situation, Kp is a knob to tune the agressiveness, wheras Ti and Td will
+    change the response time of the system in a predictable way. Lower Ti or Td means
+    that the system will respond to error more quickly/agressively.
+    
+    error deadband: if set will shrink error within to 0.0
+    clamp on integral term:  helps on saturation problem in I.
+    derivative smoothing term:  reduces high frequency noise in D.
+    
     :param parameters: PID parameters
     :return: A PID output struct containing the control output and the error state
     """
@@ -79,7 +59,7 @@ cdef PIDOutput _pid(PIDParameters parameters):
                        parameters.derivative_gain_smoothing * derivative_error
 
     cdef double derivative_error_term = derivative_error * parameters.derivative_time_const
-    
+
     # update and clamp integral error
     integral_error = parameters.previous_errors.integral_error
     integral_error += error * parameters.dt_seconds
@@ -89,12 +69,29 @@ cdef PIDOutput _pid(PIDParameters parameters):
     if parameters.integral_time_const != 0:
         integral_error_term = integral_error / parameters.integral_time_const
 
-
     f = parameters.Kp * (error + integral_error_term + derivative_error_term)
 
     return PIDOutput(output=f, errors=PIDErrors(error=error, derivative_error=derivative_error, integral_error=integral_error))
 
+cdef enum USER_DEFINED_ACTUATOR_PARAMS:
+    IDX_PROPORTIONAL_GAIN = 0,
+    IDX_INTEGRAL_TIME_CONSTANT = 1,
+    IDX_INTEGRAL_MAX_CLAMP = 2,
+    IDX_DERIVATIVE_TIME_CONSTANT = 3,
+    IDX_DERIVATIVE_GAIN_SMOOTHING = 4,
+    IDX_ERROR_DEADBAND = 5,
+
+cdef enum USER_DEFINED_CONTROLLER_DATA:
+    IDX_INTEGRAL_ERROR = 0,
+    IDX_LAST_ERROR = 1,
+    IDX_DERIVATIVE_ERROR_LAST = 2,
+    # Needs to be max() of userdata needed for all control modes. 5 needed for cascaded PI
+    NUM_USER_DATA_PER_ACT = 5,
+
 cdef mjtNum c_pid_bias(const mjModel*m, const mjData*d, int id):
+    """
+    To activate PID, set gainprm="Kp Ti Td iClamp errBand iSmooth" in a general type actuator in mujoco xml
+    """
     cdef double dt_in_sec = m.opt.timestep
     cdef double error = d.ctrl[id] - d.actuator_length[id]
     cdef int NGAIN = int(const.NGAIN)
@@ -147,11 +144,9 @@ cdef enum USER_DEFINED_CONTROLLER_DATA_CASCADE:
 cdef mjtNum c_pi_cascade_bias(const mjModel*m, const mjData*d, int id):
     """
     A cascaded PID controller implementation that can control position
-    and velocity setpoints for a given actuator.
-    :param m: Mujoco model
-    :param d: Mujoco data
-    :param id: Actuator ID
-    :return: actuator Torque
+    and velocity setpoints for a given actuator. To activate, set 
+    gainprm="Kp_pos Ti_pos max_clamp_pos Kp_vel Ti_vel max_clamp_vel ema_smooth_factor vel_limit" 
+    in a general type actuator in mujoco xml
     """
     cdef double dt_in_sec = m.opt.timestep
     cdef int NGAIN = int(const.NGAIN)
