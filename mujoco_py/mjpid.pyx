@@ -93,11 +93,7 @@ cdef mjtNum c_pid_bias(const mjModel*m, const mjData*d, int id):
     To activate PID, set gainprm="Kp Ti Td iClamp errBand iSmooth" in a general type actuator in mujoco xml
     """
     cdef double dt_in_sec = m.opt.timestep
-    cdef double error = d.ctrl[id] - d.actuator_length[id]
     cdef int NGAIN = int(const.NGAIN)
-
-    cdef double effort_limit_low = m.actuator_forcerange[id * 2]
-    cdef double effort_limit_high = m.actuator_forcerange[id * 2 + 1]
 
     result = _pid(parameters=PIDParameters(
         dt_seconds=dt_in_sec,
@@ -120,6 +116,10 @@ cdef mjtNum c_pid_bias(const mjModel*m, const mjData*d, int id):
     d.userdata[id * NUM_USER_DATA_PER_ACT + IDX_INTEGRAL_ERROR] = result.errors.integral_error
 
     f = result.output
+
+    cdef double effort_limit_low = m.actuator_forcerange[id * 2]
+    cdef double effort_limit_high = m.actuator_forcerange[id * 2 + 1]
+    
     if effort_limit_low != 0.0 or effort_limit_high != 0.0:
         f = fmax(effort_limit_low, fmin(effort_limit_high, f))
     return f
