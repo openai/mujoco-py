@@ -81,12 +81,11 @@ cdef enum USER_DEFINED_ACTUATOR_PARAMS:
     IDX_DERIVATIVE_GAIN_SMOOTHING = 4,
     IDX_ERROR_DEADBAND = 5,
 
-cdef enum USER_DEFINED_CONTROLLER_DATA:
+cdef enum USER_DEFINED_CONTROLLER_DATA_PID:
     IDX_INTEGRAL_ERROR = 0,
     IDX_LAST_ERROR = 1,
     IDX_DERIVATIVE_ERROR_LAST = 2,
-    # Needs to be max() of userdata needed for all control modes. 5 needed for cascaded PI
-    NUM_USER_DATA_PER_ACT = 5,
+    NUM_USER_DATA_PER_ACT_PID = 3,
 
 cdef mjtNum c_pid_bias(const mjModel*m, const mjData*d, int id):
     """
@@ -137,9 +136,10 @@ cdef enum USER_DEFINED_ACTUATOR_PARAMS_CASCADE:
 cdef enum USER_DEFINED_CONTROLLER_DATA_CASCADE:
     IDX_CAS_INTEGRAL_ERROR = 0,
     IDX_CAS_INTEGRAL_ERROR_V = 1,
-    IDX_CAS_LAST_ERROR = 2,
-    IDX_CAS_LAST_ERROR_V = 3,
-    IDX_CAS_STORED_EMA_SMOOTH_V = 4,
+    IDX_CAS_STORED_EMA_SMOOTH_V = 2,
+    NUM_USER_DATA_PER_ACT_CAS = 3,
+
+cdef NUM_USER_DATA_PER_ACT = max(int(NUM_USER_DATA_PER_ACT_PID), int(NUM_USER_DATA_PER_ACT_CAS))
 
 cdef mjtNum c_pi_cascade_bias(const mjModel*m, const mjData*d, int id):
     """
@@ -180,7 +180,6 @@ cdef mjtNum c_pi_cascade_bias(const mjModel*m, const mjData*d, int id):
             )))
 
         # Save errors
-        d.userdata[id * NUM_USER_DATA_PER_ACT + IDX_CAS_LAST_ERROR] = pos_output.errors.error
         d.userdata[id * NUM_USER_DATA_PER_ACT + IDX_CAS_INTEGRAL_ERROR] = pos_output.errors.integral_error
         des_vel = Kp_cas * (pos_output.errors.error + pos_output.errors.integral_error)
     else:
@@ -216,7 +215,6 @@ cdef mjtNum c_pi_cascade_bias(const mjModel*m, const mjData*d, int id):
         )))
 
     # Save errors
-    d.userdata[id * NUM_USER_DATA_PER_ACT + IDX_CAS_LAST_ERROR_V] = vel_output.errors.error
     d.userdata[id * NUM_USER_DATA_PER_ACT + IDX_CAS_INTEGRAL_ERROR_V] = vel_output.errors.integral_error
 
     # Limit max torque at the output
