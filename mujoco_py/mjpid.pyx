@@ -144,9 +144,17 @@ cdef enum USER_DEFINED_CONTROLLER_DATA_CASCADE:
 cdef mjtNum c_pi_cascade_bias(const mjModel*m, const mjData*d, int id):
     """
     A cascaded PID controller implementation that can control position
-    and velocity setpoints for a given actuator. To activate, set 
-    gainprm="Kp_pos Ti_pos max_clamp_pos Kp_vel Ti_vel max_clamp_vel ema_smooth_factor vel_limit" 
-    in a general type actuator in mujoco xml
+    and velocity setpoints for a given actuator.
+    
+    Currently, the cascaded controller is implemented as PI controllers for both the position and 
+    the velocity terms and therefore require Kp, Ti and max_clamp_integral parameters to be 
+    specified for both. Additionally, an exponential moving average smoothing is applied to the 
+    velocity component for added stability, and the controller is gravity compensated via the 
+    `qfrc_bias` term.
+
+    These are provided as part of gainprm in the following order: `gainprm="Kp_pos Ti_pos 
+    max_clamp_pos Kp_vel Ti_vel max_clamp_vel ema_smooth_factor max_vel"`, where ema_smooth_factor 
+    denotes the EMA smoothing factor and max_vel is a velocity constraint applied to the velocity setpoint. 
     """
     cdef double dt_in_sec = m.opt.timestep
     cdef int NGAIN = int(const.NGAIN)
@@ -219,7 +227,7 @@ cdef mjtNum c_pi_cascade_bias(const mjModel*m, const mjData*d, int id):
 
     # gravity compensation
     f += d.qfrc_bias[id]
-    
+
     if effort_limit_low != 0.0 or effort_limit_high != 0.0:
         f = fmax(effort_limit_low, fmin(effort_limit_high, f))
 
