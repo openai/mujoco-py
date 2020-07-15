@@ -35,8 +35,8 @@ PID_ACTUATOR = """
 	<general ctrlrange='-1 1' gaintype="user" biastype="user" forcerange="-100 100" gainprm="200 10 10.0 0.1 0.1 0" joint="hinge" name="a-hinge"/>
 """
 
-INVERSE_DYN_ACTUATOR = """
-	<general ctrlrange='-1 1' gaintype="user" biastype="user" forcerange="-100 100" gainprm="200 0.1 0.97" joint="hinge" name="a-hinge" user="1"/>
+CASCADED_PID_ACTUATOR = """
+	<general ctrlrange='-1 1' gaintype="user" biastype="user" forcerange="-100 100" gainprm="5 0 0 10 .1 1.5 .97 3.14" joint="hinge" name="a-hinge" user="1"/>
 """
 
 P_ONLY_ACTUATOR = """
@@ -99,14 +99,16 @@ def test_mj_proportional_only():
         assert abs(sim.data.qpos[0] - sim2.data.qpos[0]) <= 1e-7, "%d step violates" % i
 
 
-def test_mj_inverse_dyn():
+def test_cascaded_pid():
     """
-    To enable Inverse dynamics control in the mujoco, please
-    refer to the setting in the INVERSE_DYN_ACTUATOR. user param should be set to 1
+    To enable Cascaded PID control in the mujoco, please
+    refer to the setting in the CASCADED_PID_ACTUATOR. user param should be set to 1
 
-    Here we set Kp = 200, Td = 0.1 and EMA coefficient to 0.97
+    Here we set Kp = 5 for the position control loop and Kp =  10 for the velocity control
+    Ti = 0.1 and integral_max_clamp=1.5.
+    EMA smoothing constant is set to 0.97.
     """
-    xml = MODEL_XML.format(actuator=INVERSE_DYN_ACTUATOR, nuser_actuator=1)
+    xml = MODEL_XML.format(actuator=CASCADED_PID_ACTUATOR, nuser_actuator=1)
     model = load_model_from_xml(xml)
     sim = MjSim(model)
     cymj.set_pid_control(sim.model, sim.data)
@@ -120,7 +122,7 @@ def test_mj_inverse_dyn():
     sim.data.ctrl[0] = desired_pos
     print('desired position:', desired_pos)
 
-    for _ in range(100):
+    for _ in range(1000):
         sim.step()
 
     print('final pos', sim.data.qpos[0])
@@ -129,7 +131,7 @@ def test_mj_inverse_dyn():
 
 def test_mjsize_exception():
     """nuser_actuator must be set large enough to use custom controllers."""
-    xml = MODEL_XML.format(actuator=INVERSE_DYN_ACTUATOR, nuser_actuator=0)
+    xml = MODEL_XML.format(actuator=CASCADED_PID_ACTUATOR, nuser_actuator=0)
     model = load_model_from_xml(xml)
     sim = MjSim(model)
     with pytest.raises(Exception):
