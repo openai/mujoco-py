@@ -181,7 +181,7 @@ cdef mjtNum c_pi_cascade_bias(const mjModel*m, const mjData*d, int id):
 
         # Save errors
         d.userdata[id * NUM_USER_DATA_PER_ACT + IDX_CAS_INTEGRAL_ERROR] = pos_output.errors.integral_error
-        des_vel = Kp_cas * (pos_output.errors.error + pos_output.errors.integral_error)
+        des_vel = pos_output.output
     else:
         # If P gain on position loop is zero, only use the velocity controller
         des_vel = d.ctrl[id]
