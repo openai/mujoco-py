@@ -131,9 +131,13 @@ class MjViewer(MjViewerBasic):
     ----------
     sim : :class:`.MjSim`
         The simulator to display.
+    custom_key_press_callback : fn(int) -> Any
+        Optional callback for key presses during simulation. At every call to
+        :meth:`.key_callback`, it receives the glfw key that was pressed. This is
+        useful e.g. for implementing custom key bindings outside of mujoco-py during simulation.
     """
 
-    def __init__(self, sim):
+    def __init__(self, sim, custom_key_press_callback=None):
         super().__init__(sim)
 
         self._ncam = sim.model.ncam
@@ -164,6 +168,8 @@ class MjViewer(MjViewerBasic):
         self._time_per_render = 1 / 60.0
         self._hide_overlay = False  # hide the entire overlay.
         self._user_overlay = {}
+
+        self._custom_key_press_callback = custom_key_press_callback
 
     def render(self):
         """
@@ -368,6 +374,10 @@ class MjViewer(MjViewerBasic):
                                     geom_idx, 3] = self.sim.extras[geom_idx]
         elif key in (glfw.KEY_0, glfw.KEY_1, glfw.KEY_2, glfw.KEY_3, glfw.KEY_4):
             self.vopt.geomgroup[key - glfw.KEY_0] ^= 1
+
+        if callable(self._custom_key_press_callback):
+            self._custom_key_press_callback(key)
+
         super().key_callback(window, key, scancode, action, mods)
 
 # Separate Process to save video. This way visualization is
