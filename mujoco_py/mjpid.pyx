@@ -121,6 +121,10 @@ cdef mjtNum c_pid_bias(const mjModel*m, const mjData*d, int id):
     
     if effort_limit_low != 0.0 or effort_limit_high != 0.0:
         f = fmax(effort_limit_low, fmin(effort_limit_high, f))
+
+    if id == 3:
+        print(id, d.ctrl[id], f, d.qpos[id], d.qvel[id], d.qacc[id])
+
     return f
 
 cdef enum USER_DEFINED_ACTUATOR_PARAMS_CASCADE:
@@ -137,7 +141,8 @@ cdef enum USER_DEFINED_CONTROLLER_DATA_CASCADE:
     IDX_CAS_INTEGRAL_ERROR = 0,
     IDX_CAS_INTEGRAL_ERROR_V = 1,
     IDX_CAS_STORED_EMA_SMOOTH_V = 2,
-    NUM_USER_DATA_PER_ACT_CAS = 3,
+    IDX_CAS_LAST_ERROR = 3,
+    NUM_USER_DATA_PER_ACT_CAS = 4,
 
 cdef NUM_USER_DATA_PER_ACT = max(int(NUM_USER_DATA_PER_ACT_PID), int(NUM_USER_DATA_PER_ACT_CAS))
 
@@ -161,26 +166,36 @@ cdef mjtNum c_pi_cascade_bias(const mjModel*m, const mjData*d, int id):
 
     cdef double Kp_cas = m.actuator_gainprm[id * NGAIN + IDX_CAS_PROPORTIONAL_GAIN]
 
+    # Apply Exponential Moving Average smoothing to the velocity setpoint
+    ctrl_ema_vel = d.userdata[id * NUM_USER_DATA_PER_ACT + IDX_CAS_STORED_EMA_SMOOTH_V]
+    smoothing_factor = m.actuator_gainprm[id * NGAIN + IDX_CAS_EMA_SMOOTH_V]
+
+    smoothed_pos_setpoint = (smoothing_factor * ctrl_ema_vel) + (1 - smoothing_factor) * d.ctrl[id]
+
+    d.userdata[id * NUM_USER_DATA_PER_ACT + IDX_CAS_STORED_EMA_SMOOTH_V] = smoothed_pos_setpoint
+
     if Kp_cas != 0:
         # Run a position PID loop and use the result to set a desired velocity signal
         pos_output = _pid(parameters=PIDParameters(
             dt_seconds=dt_in_sec,
-            setpoint=d.ctrl[id],
+            setpoint=smoothed_pos_setpoint,
             feedback=d.actuator_length[id],
             Kp=Kp_cas,
             error_deadband=0.0,
-            integral_max_clamp=m.actuator_gainprm[id * NGAIN + IDX_CAS_INTEGRAL_MAX_CLAMP],
-            integral_time_const=m.actuator_gainprm[id * NGAIN + IDX_CAS_INTEGRAL_TIME_CONSTANT],
-            derivative_gain_smoothing=0.0,
-            derivative_time_const=0.0,
+            integral_max_clamp=0,
+            integral_time_const=0,
+            derivative_gain_smoothing=m.actuator_gainprm[id * NGAIN + IDX_CAS_INTEGRAL_MAX_CLAMP],
+            derivative_time_const=m.actuator_gainprm[id * NGAIN + IDX_CAS_INTEGRAL_TIME_CONSTANT],
             previous_errors=PIDErrors(
-                error=0.0,
-                derivative_error=0.0,
-                integral_error=d.userdata[id * NUM_USER_DATA_PER_ACT + IDX_CAS_INTEGRAL_ERROR],
+                error=d.userdata[id * NUM_USER_DATA_PER_ACT + IDX_CAS_LAST_ERROR],
+                derivative_error=d.userdata[id * NUM_USER_DATA_PER_ACT + IDX_CAS_INTEGRAL_ERROR],
+                integral_error=0.0,
             )))
 
         # Save errors
-        d.userdata[id * NUM_USER_DATA_PER_ACT + IDX_CAS_INTEGRAL_ERROR] = pos_output.errors.integral_error
+        d.userdata[id * NUM_USER_DATA_PER_ACT + IDX_CAS_INTEGRAL_ERROR] = pos_output.errors.derivative_error
+        d.userdata[id * NUM_USER_DATA_PER_ACT + IDX_CAS_LAST_ERROR] = pos_output.errors.error
+
         des_vel = pos_output.output
     else:
         # If P gain on position loop is zero, only use the velocity controller
@@ -190,17 +205,11 @@ cdef mjtNum c_pi_cascade_bias(const mjModel*m, const mjData*d, int id):
     max_qvel = m.actuator_gainprm[id * NGAIN + IDX_CAS_MAX_VEL]
     des_vel = fmax(-max_qvel, fmin(max_qvel, des_vel))
 
-    # Apply Exponential Moving Average smoothing to the velocity setpoint
-    ctrl_ema_vel = d.userdata[id * NUM_USER_DATA_PER_ACT + IDX_CAS_STORED_EMA_SMOOTH_V]
-    smoothing_factor = m.actuator_gainprm[id * NGAIN + IDX_CAS_EMA_SMOOTH_V]
 
-    smoothed_vel_setpoint = (smoothing_factor * ctrl_ema_vel) + (1 - smoothing_factor) * des_vel
-
-    d.userdata[id * NUM_USER_DATA_PER_ACT + IDX_CAS_STORED_EMA_SMOOTH_V] = smoothed_vel_setpoint
 
     vel_output = _pid(parameters=PIDParameters(
         dt_seconds=dt_in_sec,
-        setpoint=smoothed_vel_setpoint,
+        setpoint=des_vel,
         feedback=d.actuator_velocity[id],
         Kp=m.actuator_gainprm[id * NGAIN + IDX_CAS_PROPORTIONAL_GAIN_V],
         error_deadband=0.0,
@@ -228,6 +237,9 @@ cdef mjtNum c_pi_cascade_bias(const mjModel*m, const mjData*d, int id):
 
     if effort_limit_low != 0.0 or effort_limit_high != 0.0:
         f = fmax(effort_limit_low, fmin(effort_limit_high, f))
+
+    if id == 3:
+        print(id, d.ctrl[id], des_vel, ctrl_ema_vel, f, d.qpos[id], d.qvel[id], d.qacc[id])
 
     return f
 
