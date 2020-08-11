@@ -340,7 +340,6 @@ cdef mjtNum c_pdpi_cascade_bias(const mjModel*m, const mjData*d, int id):
 
     return f
 
-
 cdef enum USER_DEFINED_ACTUATOR_DATA:
     IDX_CONTROLLER_TYPE = 0
     NUM_ACTUATOR_DATA = 1
