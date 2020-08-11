@@ -122,9 +122,6 @@ cdef mjtNum c_pid_bias(const mjModel*m, const mjData*d, int id):
     if effort_limit_low != 0.0 or effort_limit_high != 0.0:
         f = fmax(effort_limit_low, fmin(effort_limit_high, f))
 
-    # if id == 3:
-    #     print(id, d.ctrl[id], f, d.qpos[id], d.qvel[id], d.qacc[id])
-
     return f
 
 cdef enum USER_DEFINED_ACTUATOR_PARAMS_CASCADE:
@@ -237,9 +234,6 @@ cdef mjtNum c_pi_cascade_bias(const mjModel*m, const mjData*d, int id):
 
     if effort_limit_low != 0.0 or effort_limit_high != 0.0:
         f = fmax(effort_limit_low, fmin(effort_limit_high, f))
-
-    # if id == 3:
-    #     print(id, d.ctrl[id], des_vel, ctrl_ema_vel, f, d.qpos[id], d.qvel[id], d.qacc[id])
 
     return f
 
