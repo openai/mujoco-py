@@ -345,7 +345,8 @@ cdef mjtNum c_custom_bias(const mjModel*m, const mjData*d, int id) with gil:
     """
     Switches between PID and Cascaded PI type custom bias computation based on the
     defined actuator's actuator_user field.
-    user="1": Cascade PI
+    user="1": Cascade PI-PI
+    user="2": Cascade PD-PI
     default: PID
     :param m: mjModel
     :param d:  mjData
