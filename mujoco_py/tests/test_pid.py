@@ -16,6 +16,8 @@ MODEL_XML = """
 	<option gravity="0 0 -9.81" integrator="RK4" timestep="0.001"/>
 	<size nstack="3000"/>
 	<worldbody>
+        <camera name="camera1" pos="3 0 0" zaxis="1 0 0" />
+
 		<geom name="rail" pos="0 0 0" quat="0.707 0 0.707 0" rgba="0.3 0.3 0.7 1" size="0.02 1" type="capsule"/>
 		<body name="cart" pos="0 0 0">
 			<geom name="cart" pos="0 0 0" quat="0.707 0 0.707 0" size="0.1 0.1" type="capsule"/>
@@ -35,8 +37,16 @@ PID_ACTUATOR = """
 	<general ctrlrange='-1 1' gaintype="user" biastype="user" forcerange="-100 100" gainprm="200 10 10.0 0.1 0.1 0" joint="hinge" name="a-hinge"/>
 """
 
-CASCADED_PID_ACTUATOR = """
+CASCADED_PIPI_ACTUATOR = """
 	<general ctrlrange='-1 1' gaintype="user" biastype="user" forcerange="-3 3" gainprm="5 0 0 10 .1 1.5 .97 3" joint="hinge" name="a-hinge" user="1"/>
+"""
+
+CASCADED_PDPI_ACTUATOR = """
+	<general ctrlrange='-1 1' gaintype="user" biastype="user" forcerange="-3 3" gainprm="10 .1 1 10 .1 1.5 .97 3" joint="hinge" name="a-hinge" user="2"/>
+"""
+
+CASCADED_PDPI_ACTUATOR_NO_D = """
+	<general ctrlrange='-1 1' gaintype="user" biastype="user" forcerange="-3 3" gainprm="10 0 0 10 .1 1.5 .97 3" joint="hinge" name="a-hinge" user="2"/>
 """
 
 P_ONLY_ACTUATOR = """
@@ -100,17 +110,17 @@ def test_mj_proportional_only():
         assert abs(sim.data.qpos[0] - sim2.data.qpos[0]) <= 1e-7, "%d step violates" % i
 
 
-def test_cascaded_pid():
+def test_cascaded_pipi():
     """
-    To enable Cascaded PID control in the mujoco, please
-    refer to the setting in the CASCADED_PID_ACTUATOR. user param should be set to 1
+    To enable Cascaded PIPI control in the mujoco, please
+    refer to the setting in the CASCADED_PIPI_ACTUATOR. user param should be set to 1
 
     Here we set Kp = 5 for the position control loop and Kp =  10 for the velocity control
     Ti = 0.1 and integral_max_clamp=1.5.
     EMA smoothing constant is set to 0.97, and velocity limit is 3 rad/s
     """
     random.seed(30)
-    xml = MODEL_XML.format(actuator=CASCADED_PID_ACTUATOR, nuser_actuator=1)
+    xml = MODEL_XML.format(actuator=CASCADED_PIPI_ACTUATOR, nuser_actuator=1)
     model = load_model_from_xml(xml)
     sim = MjSim(model)
     cymj.set_pid_control(sim.model, sim.data)
@@ -134,11 +144,59 @@ def test_cascaded_pid():
     print('final pos', sim.data.qpos[0])
     assert abs(sim.data.qpos[0] - desired_pos) < 1e-3
     assert max_torque <= 3  # torque limit set on the actuator
+    
+def test_cascaded_pdpi():
+    """
+    To enable Cascaded PDPI control in the mujoco, please
+    refer to the setting in the CASCADED_PDPI_ACTUATOR. user param should be set to 2
+
+    Here we set Kp = 5 for the position control loop and Kp =  10 for the velocity control
+    Ti = 0.1 and integral_max_clamp=1.5.
+    EMA smoothing constant is set to 0.97, and velocity limit is 3 rad/s
+    """
+    random.seed(30)
+    xml = MODEL_XML.format(actuator=CASCADED_PDPI_ACTUATOR, nuser_actuator=1)
+    model = load_model_from_xml(xml)
+    sim = MjSim(model)
+    cymj.set_pid_control(sim.model, sim.data)
+    
+    """
+    sim2 uses the same Kp gain on the position loop as sim1 but does not have any derivative gain. 
+    It is expected that given this Kp gain, the pole will be unstable without any derivative gain 
+    and fail to hold the desired position. 
+    """
+    xml = MODEL_XML.format(actuator=CASCADED_PDPI_ACTUATOR_NO_D, nuser_actuator=1)
+    model2 = load_model_from_xml(xml)
+    sim2 = MjSim(model2)
+    # viewer = MjViewer(sim)
+    cymj.set_pid_control(sim2.model, sim2.data)
+
+    # pertubation of pole to be unbalanced
+    init_pos = 0.1 * (random.random() - 1.0)
+    print('init pos', init_pos)
+    sim.data.qpos[0] = sim2.data.qpos[0] = init_pos
+
+    desired_pos = 0.0
+    sim.data.ctrl[0] = sim2.data.ctrl[0] = desired_pos
+    print('desired position:', desired_pos)
+
+    max_torque = 0
+
+    for _ in range(2000):
+        sim.step()
+        sim2.step()
+        if abs(sim.data.actuator_force[0]) > max_torque:
+            max_torque = abs(sim.data.actuator_force[0])
+        
+    print('final pos', sim.data.qpos[0])
+    assert abs(sim2.data.qpos[0] - desired_pos) > 1e-3
+    assert abs(sim.data.qpos[0] - desired_pos) < 1e-3
+    assert max_torque <= 3  # torque limit set on the actuator
 
 
 def test_mjsize_exception():
     """nuser_actuator must be set large enough to use custom controllers."""
-    xml = MODEL_XML.format(actuator=CASCADED_PID_ACTUATOR, nuser_actuator=0)
+    xml = MODEL_XML.format(actuator=CASCADED_PIPI_ACTUATOR, nuser_actuator=0)
     model = load_model_from_xml(xml)
     sim = MjSim(model)
     with pytest.raises(Exception):
