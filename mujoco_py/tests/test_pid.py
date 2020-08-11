@@ -189,8 +189,8 @@ def test_cascaded_pdpi():
             max_torque = abs(sim.data.actuator_force[0])
         
     print('final pos', sim.data.qpos[0])
-    assert abs(sim2.data.qpos[0] - desired_pos) > 1e-3
-    assert abs(sim.data.qpos[0] - desired_pos) < 1e-3
+    assert abs(sim2.data.qpos[0] - desired_pos) > 1e-3 # Verify instability without D
+    assert abs(sim.data.qpos[0] - desired_pos) < 1e-3 # Verify stability with D
     assert max_torque <= 3  # torque limit set on the actuator
 
 
