@@ -228,8 +228,6 @@ cdef mjtNum c_pipi_cascade_bias(const mjModel*m, const mjData*d, int id):
     if effort_limit_low != 0.0 or effort_limit_high != 0.0:
         f = fmax(effort_limit_low, fmin(effort_limit_high, f))
 
-    print("pipi loop")    
-
     return f
 
 cdef enum USER_DEFINED_ACTUATOR_PARAMS_PIPI_CASCADE:
@@ -329,8 +327,7 @@ cdef mjtNum c_pdpi_cascade_bias(const mjModel*m, const mjData*d, int id):
     cdef double effort_limit_low = m.actuator_forcerange[id * 2]
     cdef double effort_limit_high = m.actuator_forcerange[id * 2 + 1]
 
-    f = vel_output_pdpi.output
-    print("pdpi loop")    
+    f = vel_output_pdpi.output 
 
     # gravity compensation
     f += d.qfrc_bias[id]
