@@ -38,15 +38,15 @@ PID_ACTUATOR = """
 """
 
 CASCADED_PIPI_ACTUATOR = """
-	<general ctrlrange='-1 1' gaintype="user" biastype="user" forcerange="-3 3" gainprm="5 0 0 10 .1 1.5 .97 3" joint="hinge" name="a-hinge" user="1"/>
+	<general ctrlrange='-1 1' gaintype="user" biastype="user" forcerange="-3 3" gainprm="5 0 0 0 0 10 .1 1.5 .97 3" joint="hinge" name="a-hinge" user="1"/>
 """
 
 CASCADED_PDPI_ACTUATOR = """
-	<general ctrlrange='-1 1' gaintype="user" biastype="user" forcerange="-3 3" gainprm="10 .1 1 10 .1 1.5 .97 3" joint="hinge" name="a-hinge" user="2"/>
+	<general ctrlrange='-1 1' gaintype="user" biastype="user" forcerange="-3 3" gainprm="10 0 0 .1 1 10 .1 1.5 .97 3" joint="hinge" name="a-hinge" user="1"/>
 """
 
 CASCADED_PDPI_ACTUATOR_NO_D = """
-	<general ctrlrange='-1 1' gaintype="user" biastype="user" forcerange="-3 3" gainprm="10 0 0 10 .1 1.5 .97 3" joint="hinge" name="a-hinge" user="2"/>
+	<general ctrlrange='-1 1' gaintype="user" biastype="user" forcerange="-3 3" gainprm="10 0 0 0 0 10 .1 1.5 .97 3" joint="hinge" name="a-hinge" user="1"/>
 """
 
 P_ONLY_ACTUATOR = """
@@ -112,7 +112,7 @@ def test_mj_proportional_only():
 
 def test_cascaded_pipi():
     """
-    To enable Cascaded PIPI control in the mujoco, please
+    To enable Cascaded control in mujoco, please
     refer to the setting in the CASCADED_PIPI_ACTUATOR. user param should be set to 1
 
     Here we set Kp = 5 for the position control loop and Kp =  10 for the velocity control
@@ -147,12 +147,12 @@ def test_cascaded_pipi():
     
 def test_cascaded_pdpi():
     """
-    To enable Cascaded PDPI control in the mujoco, please
-    refer to the setting in the CASCADED_PDPI_ACTUATOR. user param should be set to 2
+    This tests using a PD-PI loop with the cascasded controller. This is achieved by setting the 
+    integral time constant and clamp equal to zero.
 
-    Here we set Kp = 5 for the position control loop and Kp =  10 for the velocity control
-    Ti = 0.1 and integral_max_clamp=1.5.
-    EMA smoothing constant is set to 0.97, and velocity limit is 3 rad/s
+    Here we setup two sims (CASCADED_PDPI_ACTUATOR and CASCADED_PDPI_ACTUATOR_NO_D), one with 
+    derivative gain and one without. With the exception of the derivative term, all other gain 
+    parameters are the same. The goal is to show the stability added by the derivative term. 
     """
     random.seed(30)
     xml = MODEL_XML.format(actuator=CASCADED_PDPI_ACTUATOR, nuser_actuator=1)
@@ -161,7 +161,7 @@ def test_cascaded_pdpi():
     cymj.set_pid_control(sim.model, sim.data)
     
     """
-    sim2 uses the same Kp gain on the position loop as sim1 but does not have any derivative gain. 
+    sim2 uses the same Kp gain on the position loop as sim but does not have any derivative gain. 
     It is expected that given this Kp gain, the pole will be unstable without any derivative gain 
     and fail to hold the desired position. 
     """
