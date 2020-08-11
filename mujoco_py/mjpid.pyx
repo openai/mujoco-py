@@ -1,7 +1,8 @@
 from libc.math cimport fabs, fmax, fmin
 from mujoco_py.generated import const
 
-cdef int CONTROLLER_TYPE_PI_CASCADE = 1,
+cdef int CONTROLLER_TYPE_PIPI_CASCADE = 1,
+cdef int CONTROLLER_TYPE_PDPI_CASCADE = 2,
 
 cdef struct PIDErrors:
     double error
@@ -121,34 +122,32 @@ cdef mjtNum c_pid_bias(const mjModel*m, const mjData*d, int id):
     
     if effort_limit_low != 0.0 or effort_limit_high != 0.0:
         f = fmax(effort_limit_low, fmin(effort_limit_high, f))
-
     return f
 
 cdef enum USER_DEFINED_ACTUATOR_PARAMS_CASCADE:
-    IDX_CAS_PROPORTIONAL_GAIN = 0,
-    IDX_CAS_INTEGRAL_TIME_CONSTANT = 1,
-    IDX_CAS_INTEGRAL_MAX_CLAMP = 2,
-    IDX_CAS_PROPORTIONAL_GAIN_V = 3,
-    IDX_CAS_INTEGRAL_TIME_CONSTANT_V = 4,
-    IDX_CAS_INTEGRAL_MAX_CLAMP_V = 5,
-    IDX_CAS_EMA_SMOOTH_V = 6,
-    IDX_CAS_MAX_VEL = 7,
+    IDX_CAS_PIPI_PROPORTIONAL_GAIN = 0,
+    IDX_CAS_PIPI_INTEGRAL_TIME_CONSTANT = 1,
+    IDX_CAS_PIPI_INTEGRAL_MAX_CLAMP = 2,
+    IDX_CAS_PIPI_PROPORTIONAL_GAIN_V = 3,
+    IDX_CAS_PIPI_INTEGRAL_TIME_CONSTANT_V = 4,
+    IDX_CAS_PIPI_INTEGRAL_MAX_CLAMP_V = 5,
+    IDX_CAS_PIPI_EMA_SMOOTH_V = 6,
+    IDX_CAS_PIPI_MAX_VEL = 7,
 
 cdef enum USER_DEFINED_CONTROLLER_DATA_CASCADE:
-    IDX_CAS_INTEGRAL_ERROR = 0,
-    IDX_CAS_INTEGRAL_ERROR_V = 1,
-    IDX_CAS_STORED_EMA_SMOOTH_V = 2,
-    IDX_CAS_LAST_ERROR = 3,
-    NUM_USER_DATA_PER_ACT_CAS = 4,
+    IDX_CAS_PIPI_INTEGRAL_ERROR = 0,
+    IDX_CAS_PIPI_INTEGRAL_ERROR_V = 1,
+    IDX_CAS_PIPI_STORED_EMA_SMOOTH_V = 2,
+    NUM_USER_DATA_PER_ACT_CAS = 3,
 
-cdef NUM_USER_DATA_PER_ACT = max(int(NUM_USER_DATA_PER_ACT_PID), int(NUM_USER_DATA_PER_ACT_CAS))
+# cdef NUM_USER_DATA_PER_ACT = max(int(NUM_USER_DATA_PER_ACT_PID), int(NUM_USER_DATA_PER_ACT_CAS))
 
-cdef mjtNum c_pi_cascade_bias(const mjModel*m, const mjData*d, int id):
+cdef mjtNum c_pipi_cascade_bias(const mjModel*m, const mjData*d, int id):
     """
-    A cascaded PID controller implementation that can control position
-    and velocity setpoints for a given actuator.
+    A PI-PI cascaded PID controller implementation that can control position
+    and velocity setpoints for a given actuator. Set by specifying user="1" in general actuator field. 
     
-    Currently, the cascaded controller is implemented as PI controllers for both the position and 
+    Currently, the cascaded controller is implemented as two PI controllers for both the position and 
     the velocity terms and therefore require Kp, Ti and max_clamp_integral parameters to be 
     specified for both. Additionally, an exponential moving average smoothing is applied to the 
     velocity component for added stability, and the controller is gravity compensated via the 
@@ -161,67 +160,63 @@ cdef mjtNum c_pi_cascade_bias(const mjModel*m, const mjData*d, int id):
     cdef double dt_in_sec = m.opt.timestep
     cdef int NGAIN = int(const.NGAIN)
 
-    cdef double Kp_cas = m.actuator_gainprm[id * NGAIN + IDX_CAS_PROPORTIONAL_GAIN]
-
-    # Apply Exponential Moving Average smoothing to the velocity setpoint
-    ctrl_ema_vel = d.userdata[id * NUM_USER_DATA_PER_ACT + IDX_CAS_STORED_EMA_SMOOTH_V]
-    smoothing_factor = m.actuator_gainprm[id * NGAIN + IDX_CAS_EMA_SMOOTH_V]
-
-    smoothed_pos_setpoint = (smoothing_factor * ctrl_ema_vel) + (1 - smoothing_factor) * d.ctrl[id]
-
-    d.userdata[id * NUM_USER_DATA_PER_ACT + IDX_CAS_STORED_EMA_SMOOTH_V] = smoothed_pos_setpoint
+    cdef double Kp_cas = m.actuator_gainprm[id * NGAIN + IDX_CAS_PIPI_PROPORTIONAL_GAIN]
 
     if Kp_cas != 0:
         # Run a position PID loop and use the result to set a desired velocity signal
         pos_output = _pid(parameters=PIDParameters(
             dt_seconds=dt_in_sec,
-            setpoint=smoothed_pos_setpoint,
+            setpoint=d.ctrl[id],
             feedback=d.actuator_length[id],
             Kp=Kp_cas,
             error_deadband=0.0,
-            integral_max_clamp=0,
-            integral_time_const=0,
-            derivative_gain_smoothing=m.actuator_gainprm[id * NGAIN + IDX_CAS_INTEGRAL_MAX_CLAMP],
-            derivative_time_const=m.actuator_gainprm[id * NGAIN + IDX_CAS_INTEGRAL_TIME_CONSTANT],
+            integral_max_clamp=m.actuator_gainprm[id * NGAIN + IDX_CAS_PIPI_INTEGRAL_MAX_CLAMP],
+            integral_time_const=m.actuator_gainprm[id * NGAIN + IDX_CAS_PIPI_INTEGRAL_TIME_CONSTANT],
+            derivative_gain_smoothing=0.0,
+            derivative_time_const=0.0,
             previous_errors=PIDErrors(
-                error=d.userdata[id * NUM_USER_DATA_PER_ACT + IDX_CAS_LAST_ERROR],
-                derivative_error=d.userdata[id * NUM_USER_DATA_PER_ACT + IDX_CAS_INTEGRAL_ERROR],
-                integral_error=0.0,
+                error=0.0,
+                derivative_error=0.0,
+                integral_error=d.userdata[id * NUM_USER_DATA_PER_ACT + IDX_CAS_PIPI_INTEGRAL_ERROR],
             )))
 
         # Save errors
-        d.userdata[id * NUM_USER_DATA_PER_ACT + IDX_CAS_INTEGRAL_ERROR] = pos_output.errors.derivative_error
-        d.userdata[id * NUM_USER_DATA_PER_ACT + IDX_CAS_LAST_ERROR] = pos_output.errors.error
-
+        d.userdata[id * NUM_USER_DATA_PER_ACT + IDX_CAS_PIPI_INTEGRAL_ERROR] = pos_output.errors.integral_error
         des_vel = pos_output.output
     else:
         # If P gain on position loop is zero, only use the velocity controller
         des_vel = d.ctrl[id]
 
     # Clamp max angular velocity
-    max_qvel = m.actuator_gainprm[id * NGAIN + IDX_CAS_MAX_VEL]
+    max_qvel = m.actuator_gainprm[id * NGAIN + IDX_CAS_PIPI_MAX_VEL]
     des_vel = fmax(-max_qvel, fmin(max_qvel, des_vel))
 
+    # Apply Exponential Moving Average smoothing to the velocity setpoint
+    ctrl_ema_vel = d.userdata[id * NUM_USER_DATA_PER_ACT + IDX_CAS_PIPI_STORED_EMA_SMOOTH_V]
+    smoothing_factor = m.actuator_gainprm[id * NGAIN + IDX_CAS_PIPI_EMA_SMOOTH_V]
 
+    smoothed_vel_setpoint = (smoothing_factor * ctrl_ema_vel) + (1 - smoothing_factor) * des_vel
+
+    d.userdata[id * NUM_USER_DATA_PER_ACT + IDX_CAS_PIPI_STORED_EMA_SMOOTH_V] = smoothed_vel_setpoint
 
     vel_output = _pid(parameters=PIDParameters(
         dt_seconds=dt_in_sec,
-        setpoint=des_vel,
+        setpoint=smoothed_vel_setpoint,
         feedback=d.actuator_velocity[id],
-        Kp=m.actuator_gainprm[id * NGAIN + IDX_CAS_PROPORTIONAL_GAIN_V],
+        Kp=m.actuator_gainprm[id * NGAIN + IDX_CAS_PIPI_PROPORTIONAL_GAIN_V],
         error_deadband=0.0,
-        integral_max_clamp=m.actuator_gainprm[id * NGAIN + IDX_CAS_INTEGRAL_MAX_CLAMP_V],
-        integral_time_const=m.actuator_gainprm[id * NGAIN + IDX_CAS_INTEGRAL_TIME_CONSTANT_V],
+        integral_max_clamp=m.actuator_gainprm[id * NGAIN + IDX_CAS_PIPI_INTEGRAL_MAX_CLAMP_V],
+        integral_time_const=m.actuator_gainprm[id * NGAIN + IDX_CAS_PIPI_INTEGRAL_TIME_CONSTANT_V],
         derivative_gain_smoothing=0.0,
         derivative_time_const=0.0,
         previous_errors=PIDErrors(
             error=0.0,
             derivative_error=0.0,
-            integral_error=d.userdata[id * NUM_USER_DATA_PER_ACT + IDX_CAS_INTEGRAL_ERROR_V],
+            integral_error=d.userdata[id * NUM_USER_DATA_PER_ACT + IDX_CAS_PIPI_INTEGRAL_ERROR_V],
         )))
 
     # Save errors
-    d.userdata[id * NUM_USER_DATA_PER_ACT + IDX_CAS_INTEGRAL_ERROR_V] = vel_output.errors.integral_error
+    d.userdata[id * NUM_USER_DATA_PER_ACT + IDX_CAS_PIPI_INTEGRAL_ERROR_V] = vel_output.errors.integral_error
 
     # Limit max torque at the output
     cdef double effort_limit_low = m.actuator_forcerange[id * 2]
@@ -235,7 +230,118 @@ cdef mjtNum c_pi_cascade_bias(const mjModel*m, const mjData*d, int id):
     if effort_limit_low != 0.0 or effort_limit_high != 0.0:
         f = fmax(effort_limit_low, fmin(effort_limit_high, f))
 
+    print("pipi loop")    
+
     return f
+
+cdef enum USER_DEFINED_ACTUATOR_PARAMS_PIPI_CASCADE:
+    IDX_CAS_PDPI_PROPORTIONAL_GAIN = 0,
+    IDX_CAS_PDPI_DERIVATIVE_TIME_CONSTANT = 1,
+    IDX_CAS_PDPI_DERIVATIVE_GAIN_SMOOTHING = 2,
+    IDX_CAS_PDPI_PROPORTIONAL_GAIN_V = 3,
+    IDX_CAS_PDPI_INTEGRAL_TIME_CONSTANT_V = 4,
+    IDX_CAS_PDPI_INTEGRAL_MAX_CLAMP_V = 5,
+    IDX_CAS_PDPI_EMA_SMOOTH = 6,
+    IDX_CAS_PDPI_MAX_VEL = 7,
+
+cdef enum USER_DEFINED_CONTROLLER_DATA_PIPI_CASCADE:
+    IDX_CAS_PDPI_LAST_ERROR = 0,
+    IDX_CAS_PDPI_DERIVATIVE_ERROR_LAST = 1,
+    IDX_CAS_PDPI_INTEGRAL_ERROR_V = 2,
+    IDX_CAS_PDPI_STORED_EMA_SMOOTH = 3,
+    NUM_USER_DATA_PER_ACT_PDPI_CAS = 4,
+
+cdef NUM_USER_DATA_PER_ACT = max(int(NUM_USER_DATA_PER_ACT_PID), int(NUM_USER_DATA_PER_ACT_CAS), int(NUM_USER_DATA_PER_ACT_PDPI_CAS))
+
+cdef mjtNum c_pdpi_cascade_bias(const mjModel*m, const mjData*d, int id):
+    """
+    A cascaded PD-PI controller implementation that can control position
+    and velocity setpoints for a given actuator. Set by specifying user="2" in general actuator field. 
+    
+    The cascaded controller is implemented as a PD controller for the position loop and a
+    PI controller for the velocity loop. An exponential moving average smoothing is applied to the 
+    position component for added stability, and the controller is gravity compensated via the 
+    `qfrc_bias` term.
+
+    These are provided as part of gainprm in the following order: `gainprm="Kp_pos Td 
+    Td_smooth Kp_vel Ti_vel max_clamp_vel ema_smooth_factor max_vel"`, where ema_smooth_factor 
+    denotes the EMA smoothing factor and max_vel is a velocity constraint applied to the velocity setpoint. 
+    """
+    cdef double dt_in_sec = m.opt.timestep
+    cdef int NGAIN = int(const.NGAIN)
+
+    cdef double Kp_cas = m.actuator_gainprm[id * NGAIN + IDX_CAS_PDPI_PROPORTIONAL_GAIN]
+
+    # Apply Exponential Moving Average smoothing to the position setpoint
+    ctrl_ema = d.userdata[id * NUM_USER_DATA_PER_ACT + IDX_CAS_PDPI_STORED_EMA_SMOOTH]
+    smoothing_factor = m.actuator_gainprm[id * NGAIN + IDX_CAS_PDPI_EMA_SMOOTH]
+    smoothed_pos_setpoint = (smoothing_factor * ctrl_ema) + (1 - smoothing_factor) * d.ctrl[id]
+    d.userdata[id * NUM_USER_DATA_PER_ACT + IDX_CAS_PDPI_STORED_EMA_SMOOTH] = smoothed_pos_setpoint
+
+    if Kp_cas != 0:
+        # Run a position PID loop and use the result to set a desired velocity signal
+        pos_output_pdpi = _pid(parameters=PIDParameters(
+            dt_seconds=dt_in_sec,
+            setpoint=smoothed_pos_setpoint,
+            feedback=d.actuator_length[id],
+            Kp=Kp_cas,
+            error_deadband=0.0,
+            integral_max_clamp=0.0,
+            integral_time_const=0.0,
+            derivative_gain_smoothing=m.actuator_gainprm[id * NGAIN + IDX_CAS_PDPI_DERIVATIVE_GAIN_SMOOTHING],
+            derivative_time_const=m.actuator_gainprm[id * NGAIN + IDX_CAS_PDPI_DERIVATIVE_TIME_CONSTANT],
+            previous_errors=PIDErrors(
+                error=0.0,
+                derivative_error=d.userdata[id * NUM_USER_DATA_PER_ACT + IDX_CAS_PDPI_DERIVATIVE_ERROR_LAST],
+                integral_error=0.0,
+            )))
+
+        # Save errors
+        d.userdata[id * NUM_USER_DATA_PER_ACT + IDX_CAS_PDPI_LAST_ERROR] = pos_output_pdpi.errors.error
+        d.userdata[id * NUM_USER_DATA_PER_ACT + IDX_CAS_PDPI_DERIVATIVE_ERROR_LAST] = pos_output_pdpi.errors.derivative_error
+        des_vel = pos_output_pdpi.output
+    else:
+        # If P gain on position loop is zero, only use the velocity controller
+        des_vel = d.ctrl[id]
+
+    # Clamp max angular velocity
+    max_qvel = m.actuator_gainprm[id * NGAIN + IDX_CAS_PDPI_MAX_VEL]
+    des_vel = fmax(-max_qvel, fmin(max_qvel, des_vel))
+
+    vel_output_pdpi = _pid(parameters=PIDParameters(
+        dt_seconds=dt_in_sec,
+        setpoint=des_vel,
+        feedback=d.actuator_velocity[id],
+        Kp=m.actuator_gainprm[id * NGAIN + IDX_CAS_PDPI_PROPORTIONAL_GAIN_V],
+        error_deadband=0.0,
+        integral_max_clamp=m.actuator_gainprm[id * NGAIN + IDX_CAS_PDPI_INTEGRAL_MAX_CLAMP_V],
+        integral_time_const=m.actuator_gainprm[id * NGAIN + IDX_CAS_PDPI_INTEGRAL_TIME_CONSTANT_V],
+        derivative_gain_smoothing=0.0,
+        derivative_time_const=0.0,
+        previous_errors=PIDErrors(
+            error=0.0,
+            derivative_error=0.0,
+            integral_error=d.userdata[id * NUM_USER_DATA_PER_ACT + IDX_CAS_PDPI_INTEGRAL_ERROR_V],
+        )))
+
+    # Save errors
+    d.userdata[id * NUM_USER_DATA_PER_ACT + IDX_CAS_PDPI_INTEGRAL_ERROR_V] = vel_output_pdpi.errors.integral_error
+
+    # Limit max torque at the output
+    cdef double effort_limit_low = m.actuator_forcerange[id * 2]
+    cdef double effort_limit_high = m.actuator_forcerange[id * 2 + 1]
+
+    f = vel_output_pdpi.output
+    print("pdpi loop")    
+
+    # gravity compensation
+    f += d.qfrc_bias[id]
+
+    if effort_limit_low != 0.0 or effort_limit_high != 0.0:
+        f = fmax(effort_limit_low, fmin(effort_limit_high, f))
+
+    return f
+
 
 cdef enum USER_DEFINED_ACTUATOR_DATA:
     IDX_CONTROLLER_TYPE = 0
@@ -254,8 +360,10 @@ cdef mjtNum c_custom_bias(const mjModel*m, const mjData*d, int id) with gil:
     """
     controller_type = int(m.actuator_user[id * m.nuser_actuator + IDX_CONTROLLER_TYPE])
 
-    if controller_type == CONTROLLER_TYPE_PI_CASCADE:
-        return c_pi_cascade_bias(m, d, id)
+    if controller_type == CONTROLLER_TYPE_PIPI_CASCADE:
+        return c_pipi_cascade_bias(m, d, id)
+    elif controller_type == CONTROLLER_TYPE_PDPI_CASCADE:
+        return c_pdpi_cascade_bias(m, d, id)
     return c_pid_bias(m, d, id)
 
 def set_pid_control(m, d):
