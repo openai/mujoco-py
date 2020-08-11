@@ -289,7 +289,7 @@ cdef mjtNum c_pdpi_cascade_bias(const mjModel*m, const mjData*d, int id):
             derivative_gain_smoothing=m.actuator_gainprm[id * NGAIN + IDX_CAS_PDPI_DERIVATIVE_GAIN_SMOOTHING],
             derivative_time_const=m.actuator_gainprm[id * NGAIN + IDX_CAS_PDPI_DERIVATIVE_TIME_CONSTANT],
             previous_errors=PIDErrors(
-                error=0.0,
+                error=d.userdata[id * NUM_USER_DATA_PER_ACT + IDX_CAS_PDPI_LAST_ERROR],
                 derivative_error=d.userdata[id * NUM_USER_DATA_PER_ACT + IDX_CAS_PDPI_DERIVATIVE_ERROR_LAST],
                 integral_error=0.0,
             )))
