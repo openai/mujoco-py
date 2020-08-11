@@ -140,8 +140,6 @@ cdef enum USER_DEFINED_CONTROLLER_DATA_CASCADE:
     IDX_CAS_PIPI_STORED_EMA_SMOOTH_V = 2,
     NUM_USER_DATA_PER_ACT_CAS = 3,
 
-# cdef NUM_USER_DATA_PER_ACT = max(int(NUM_USER_DATA_PER_ACT_PID), int(NUM_USER_DATA_PER_ACT_CAS))
-
 cdef mjtNum c_pipi_cascade_bias(const mjModel*m, const mjData*d, int id):
     """
     A PI-PI cascaded PID controller implementation that can control position
