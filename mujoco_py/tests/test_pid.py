@@ -88,8 +88,8 @@ def test_mj_pid():
 
 def test_mj_proportional_only():
     """
-    Check new PID control is backward compatible with  position control
-    when only has Kp term.
+    Check new PID control is backward compatible with position control
+    when it only has a Kp term.
     """
     model = load_model_from_xml(MODEL_XML.format(actuator=P_ONLY_ACTUATOR, nuser_actuator=1))
     sim = MjSim(model)
