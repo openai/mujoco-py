@@ -83,8 +83,8 @@ cdef enum USER_DEFINED_ACTUATOR_PARAMS:
 
 cdef enum USER_DEFINED_CONTROLLER_DATA_PID:
     IDX_INTEGRAL_ERROR = 0,
-    IDX_LAST_ERROR = 1,
-    IDX_DERIVATIVE_ERROR_LAST = 2,
+    IDX_ERROR = 1,
+    IDX_DERIVATIVE_ERROR = 2,
     NUM_USER_DATA_PER_ACT_PID = 3,
 
 cdef mjtNum c_pid_bias(const mjModel*m, const mjData*d, int id):
@@ -105,13 +105,13 @@ cdef mjtNum c_pid_bias(const mjModel*m, const mjData*d, int id):
         derivative_gain_smoothing=m.actuator_gainprm[id * NGAIN + IDX_DERIVATIVE_GAIN_SMOOTHING],
         derivative_time_const=m.actuator_gainprm[id * NGAIN + IDX_DERIVATIVE_TIME_CONSTANT],
         previous_errors=PIDErrors(
-            error=d.userdata[id * NUM_USER_DATA_PER_ACT + IDX_LAST_ERROR],
-            derivative_error=d.userdata[id * NUM_USER_DATA_PER_ACT + IDX_DERIVATIVE_ERROR_LAST],
+            error=d.userdata[id * NUM_USER_DATA_PER_ACT + IDX_ERROR],
+            derivative_error=d.userdata[id * NUM_USER_DATA_PER_ACT + IDX_DERIVATIVE_ERROR],
             integral_error=d.userdata[id * NUM_USER_DATA_PER_ACT + IDX_INTEGRAL_ERROR],
         )))
 
-    d.userdata[id * NUM_USER_DATA_PER_ACT + IDX_LAST_ERROR] = result.errors.error
-    d.userdata[id * NUM_USER_DATA_PER_ACT + IDX_DERIVATIVE_ERROR_LAST] = result.errors.derivative_error
+    d.userdata[id * NUM_USER_DATA_PER_ACT + IDX_ERROR] = result.errors.error
+    d.userdata[id * NUM_USER_DATA_PER_ACT + IDX_DERIVATIVE_ERROR] = result.errors.derivative_error
     d.userdata[id * NUM_USER_DATA_PER_ACT + IDX_INTEGRAL_ERROR] = result.errors.integral_error
 
     f = result.output
@@ -136,9 +136,9 @@ cdef enum USER_DEFINED_ACTUATOR_PARAMS_CASCADE:
     IDX_CAS_MAX_VEL = 9,
 
 cdef enum USER_DEFINED_CONTROLLER_DATA_CASCADE:
-    IDX_CAS_LAST_ERROR = 0,
+    IDX_CAS_ERROR = 0,
     IDX_CAS_INTEGRAL_ERROR = 1,
-    IDX_CAS_DERIVATIVE_ERROR_LAST = 2,
+    IDX_CAS_DERIVATIVE_ERROR = 2,
     IDX_CAS_INTEGRAL_ERROR_V = 3,
     IDX_CAS_STORED_EMA_SMOOTH = 4,
     NUM_USER_DATA_PER_ACT_CAS = 5,
@@ -184,14 +184,14 @@ cdef mjtNum c_pi_cascade_bias(const mjModel*m, const mjData*d, int id):
             derivative_gain_smoothing=m.actuator_gainprm[id * NGAIN + IDX_CAS_DERIVATIVE_GAIN_SMOOTHING],
             derivative_time_const=m.actuator_gainprm[id * NGAIN + IDX_CAS_DERIVATIVE_TIME_CONSTANT],
             previous_errors=PIDErrors(
-                error=d.userdata[id * NUM_USER_DATA_PER_ACT + IDX_CAS_LAST_ERROR],
-                derivative_error=d.userdata[id * NUM_USER_DATA_PER_ACT + IDX_CAS_DERIVATIVE_ERROR_LAST],
+                error=d.userdata[id * NUM_USER_DATA_PER_ACT + IDX_CAS_ERROR],
+                derivative_error=d.userdata[id * NUM_USER_DATA_PER_ACT + IDX_CAS_DERIVATIVE_ERROR],
                 integral_error=d.userdata[id * NUM_USER_DATA_PER_ACT + IDX_CAS_INTEGRAL_ERROR],
             )))
 
         # Save errors
-        d.userdata[id * NUM_USER_DATA_PER_ACT + IDX_CAS_LAST_ERROR] = pos_output.errors.error
-        d.userdata[id * NUM_USER_DATA_PER_ACT + IDX_CAS_DERIVATIVE_ERROR_LAST] = pos_output.errors.derivative_error
+        d.userdata[id * NUM_USER_DATA_PER_ACT + IDX_CAS_ERROR] = pos_output.errors.error
+        d.userdata[id * NUM_USER_DATA_PER_ACT + IDX_CAS_DERIVATIVE_ERROR] = pos_output.errors.derivative_error
         d.userdata[id * NUM_USER_DATA_PER_ACT + IDX_CAS_INTEGRAL_ERROR] = pos_output.errors.integral_error
         des_vel = pos_output.output
     else:
@@ -201,8 +201,6 @@ cdef mjtNum c_pi_cascade_bias(const mjModel*m, const mjData*d, int id):
     # Clamp max angular velocity
     max_qvel = m.actuator_gainprm[id * NGAIN + IDX_CAS_MAX_VEL]
     des_vel = fmax(-max_qvel, fmin(max_qvel, des_vel))
-
- 
 
     vel_output = _pid(parameters=PIDParameters(
         dt_seconds=dt_in_sec,
@@ -243,9 +241,9 @@ cdef enum USER_DEFINED_ACTUATOR_DATA:
 
 cdef mjtNum c_custom_bias(const mjModel*m, const mjData*d, int id) with gil:
     """
-    Switches between PID and Cascaded PI type custom bias computation based on the
+    Switches between PID and Cascaded PID-PI type custom bias computation based on the
     defined actuator's actuator_user field.
-    user="1": Cascade PI
+    user="1": Cascade PID-PI
     default: PID
     :param m: mjModel
     :param d:  mjData
