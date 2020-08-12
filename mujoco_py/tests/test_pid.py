@@ -60,8 +60,7 @@ POSITION_ACTUATOR = """
 
 def test_mj_pid():
     """
-    To enable PID control in the mujoco, please
-    refer to the setting in the PID_ACTUATOR.
+    To enable PID control in the mujoco, please refer to the setting in the PID_ACTUATOR.
 
     Here we set Kp = 200, Ti = 10, Td = 0.1 (also iClamp = 10.0, dSmooth be 0.1)
     """
@@ -89,7 +88,7 @@ def test_mj_pid():
 
 def test_mj_proportional_only():
     """
-    check new PID control is backward compatible with  position control
+    Check new PID control is backward compatible with  position control
     when only has Kp term.
     """
     model = load_model_from_xml(MODEL_XML.format(actuator=P_ONLY_ACTUATOR, nuser_actuator=1))
@@ -112,8 +111,8 @@ def test_mj_proportional_only():
 
 def test_cascaded_pipi():
     """
-    To enable Cascaded control in mujoco, please
-    refer to the setting in the CASCADED_PIPI_ACTUATOR. user param should be set to 1
+    To enable Cascaded control in mujoco, please refer to the setting in 
+    the CASCADED_PIPI_ACTUATOR. user param should be set to 1
 
     Here we set Kp = 5 for the position control loop and Kp =  10 for the velocity control
     Ti = 0.1 and integral_max_clamp=1.5.
@@ -125,7 +124,7 @@ def test_cascaded_pipi():
     sim = MjSim(model)
     cymj.set_pid_control(sim.model, sim.data)
 
-    # pertubation of pole to be unbalanced
+    # Pertubation of pole to be unbalanced
     init_pos = 0.1 * (random.random() - 1.0)
     print('init pos', init_pos)
     sim.data.qpos[0] = init_pos
@@ -143,11 +142,11 @@ def test_cascaded_pipi():
 
     print('final pos', sim.data.qpos[0])
     assert abs(sim.data.qpos[0] - desired_pos) < 1e-3
-    assert max_torque <= 3  # torque limit set on the actuator
+    assert max_torque <= 3  # Torque limit set on the actuator
     
 def test_cascaded_pdpi():
     """
-    This tests using a PD-PI loop with the cascasded controller. This is achieved by setting the 
+    This tests using a PD-PI loop with the cascaded controller. This is achieved by setting the 
     integral time constant and clamp equal to zero.
 
     Here we setup two sims (CASCADED_PDPI_ACTUATOR and CASCADED_PDPI_ACTUATOR_NO_D), one with 
@@ -162,16 +161,15 @@ def test_cascaded_pdpi():
     
     """
     sim2 uses the same Kp gain on the position loop as sim but does not have any derivative gain. 
-    It is expected that given this Kp gain, the pole will be unstable without any derivative gain 
+    It is expected that given this Kp gain and no derivative gain, the system will be unstable 
     and fail to hold the desired position. 
     """
     xml = MODEL_XML.format(actuator=CASCADED_PDPI_ACTUATOR_NO_D, nuser_actuator=1)
     model2 = load_model_from_xml(xml)
     sim2 = MjSim(model2)
-    # viewer = MjViewer(sim)
     cymj.set_pid_control(sim2.model, sim2.data)
 
-    # pertubation of pole to be unbalanced
+    # Pertubation of pole to be unbalanced
     init_pos = 0.1 * (random.random() - 1.0)
     print('init pos', init_pos)
     sim.data.qpos[0] = sim2.data.qpos[0] = init_pos
@@ -191,7 +189,7 @@ def test_cascaded_pdpi():
     print('final pos', sim.data.qpos[0])
     assert abs(sim2.data.qpos[0] - desired_pos) > 1e-3 # Verify instability without D term
     assert abs(sim.data.qpos[0] - desired_pos) < 1e-3 # Verify stability with D term
-    assert max_torque <= 3  # torque limit set on the actuator
+    assert max_torque <= 3  # Torque limit set on the actuator
 
 
 def test_mjsize_exception():
