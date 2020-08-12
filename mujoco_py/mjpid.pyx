@@ -150,15 +150,22 @@ cdef mjtNum c_pi_cascade_bias(const mjModel*m, const mjData*d, int id):
     A cascaded PID-PI controller implementation that can control position
     and velocity setpoints for a given actuator.
     
-    The cascaded controller is implemented as a nested position-velocity controller. A PID controller is 
-    applied to the position loop and a PI controller for the velocity loop. An exponential moving average
-    filter is applied to the commanded position input (d.ctrl). Additionally the controller is gravity 
-    compensated via the `qfrc_bias` term.
+    The cascaded controller is implemented as a nested position-velocity controller. A PID loop is 
+    wrapped around desired position and a PI loop is wrapped around desired velocity. An exponential 
+    moving average filter is applied to the commanded position input (d.ctrl). Additionally the controller
+    is gravity compensated via the `qfrc_bias` term.
 
-    The PID-PI gains are set as part of gainprm in the following order: `gainprm="Kp_pos Ti_pos 
-    Ti_max_clamp_pos Td_pos Td_smooth_pos Kp_vel Ti_vel max_clamp_vel ema_smooth_factor max_vel"`, where 
-    ema_smooth_factor denotes the EMA smoothing factor and max_vel is a velocity constraint applied to the 
-    velocity setpoint. 
+    The PID-PI gains are set as part of gainprm in the following order: 
+    `gainprm="  Kp_pos              -> Position loop proportional gain
+                Ti_pos              -> Position loop integral time constant
+                Ti_max_clamp_pos    -> Position loop integral error clamp
+                Td_pos              -> Position loop derivative time constant
+                Td_smooth_pos       -> Position loop derivative smoothing (EMA)
+                Kp_vel              -> Velocity loop proportional gain
+                Ti_vel              -> Velocity loop integral time constant
+                max_clamp_vel       -> Velocity loop integral error clamp
+                ema_smooth_factor   -> Exponential moving average (EMA) on desired position
+                max_vel"`           -> Clamped velocity limit (applied in positive and negative direction)  
     """
     cdef double dt_in_sec = m.opt.timestep
     cdef int NGAIN = int(const.NGAIN)
