@@ -48,11 +48,11 @@ cdef PIDOutput _pid(PIDParameters parameters):
 
     cdef double error = parameters.setpoint - parameters.feedback
 
-    # clamp error that's within the error deadband
+    # Clamp error that's within the error deadband
     if fabs(error) < parameters.error_deadband:
         error = 0.0
 
-    # compute derivative error
+    # Compute derivative error
     cdef double derivative_error = (error - parameters.previous_errors.error) / parameters.dt_seconds
 
     derivative_error = (1.0 - parameters.derivative_gain_smoothing) * parameters.previous_errors.derivative_error + \
@@ -60,7 +60,7 @@ cdef PIDOutput _pid(PIDParameters parameters):
 
     cdef double derivative_error_term = derivative_error * parameters.derivative_time_const
 
-    # update and clamp integral error
+    # Update and clamp integral error
     integral_error = parameters.previous_errors.integral_error
     integral_error += error * parameters.dt_seconds
     integral_error = fmax(-parameters.integral_max_clamp, fmin(parameters.integral_max_clamp, integral_error))
@@ -165,7 +165,7 @@ cdef mjtNum c_pi_cascade_bias(const mjModel*m, const mjData*d, int id):
 
     cdef double Kp_cas = m.actuator_gainprm[id * NGAIN + IDX_CAS_PROPORTIONAL_GAIN]
 
-    # Apply Exponential Moving Average smoothing to the velocity setpoint
+    # Apply Exponential Moving Average smoothing to the position setpoint
     ctrl_ema = d.userdata[id * NUM_USER_DATA_PER_ACT + IDX_CAS_STORED_EMA_SMOOTH]
     smoothing_factor = m.actuator_gainprm[id * NGAIN + IDX_CAS_EMA_SMOOTH]
     smooth_pos_setpoint = (smoothing_factor * ctrl_ema) + (1 - smoothing_factor) * d.ctrl[id]
@@ -227,7 +227,7 @@ cdef mjtNum c_pi_cascade_bias(const mjModel*m, const mjData*d, int id):
 
     f = vel_output.output
 
-    # gravity compensation
+    # Gravity compensation
     f += d.qfrc_bias[id]
 
     if effort_limit_low != 0.0 or effort_limit_high != 0.0:
