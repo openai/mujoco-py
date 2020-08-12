@@ -70,7 +70,7 @@ def test_mj_pid():
     sim = MjSim(model)
     cymj.set_pid_control(sim.model, sim.data)
 
-    # pertubation of pole to be unbalanced
+    # Perturbation of pole to be unbalanced
     init_pos = 0.1 * (random.random() - 0.5)
     print('init pos', init_pos)
     sim.data.qpos[0] = init_pos
@@ -124,7 +124,7 @@ def test_cascaded_pipi():
     sim = MjSim(model)
     cymj.set_pid_control(sim.model, sim.data)
 
-    # Pertubation of pole to be unbalanced
+    # Perturbation of pole to be unbalanced
     init_pos = 0.1 * (random.random() - 1.0)
     print('init pos', init_pos)
     sim.data.qpos[0] = init_pos
@@ -169,7 +169,7 @@ def test_cascaded_pdpi():
     sim2 = MjSim(model2)
     cymj.set_pid_control(sim2.model, sim2.data)
 
-    # Pertubation of pole to be unbalanced
+    # Perturbation of pole to be unbalanced
     init_pos = 0.1 * (random.random() - 1.0)
     print('init pos', init_pos)
     sim.data.qpos[0] = sim2.data.qpos[0] = init_pos
