@@ -118,7 +118,7 @@ cdef mjtNum c_pid_bias(const mjModel*m, const mjData*d, int id):
 
     cdef double effort_limit_low = m.actuator_forcerange[id * 2]
     cdef double effort_limit_high = m.actuator_forcerange[id * 2 + 1]
-    
+
     if effort_limit_low != 0.0 or effort_limit_high != 0.0:
         f = fmax(effort_limit_low, fmin(effort_limit_high, f))
     return f
@@ -169,13 +169,18 @@ cdef mjtNum c_pi_cascade_bias(const mjModel*m, const mjData*d, int id):
     """
     cdef double dt_in_sec = m.opt.timestep
     cdef int NGAIN = int(const.NGAIN)
+    cdef double smooth_pos_setpoint;
 
     cdef double Kp_cas = m.actuator_gainprm[id * NGAIN + IDX_CAS_PROPORTIONAL_GAIN]
 
-    # Apply Exponential Moving Average smoothing to the position setpoint
-    ctrl_ema = d.userdata[id * NUM_USER_DATA_PER_ACT + IDX_CAS_STORED_EMA_SMOOTH]
-    smoothing_factor = m.actuator_gainprm[id * NGAIN + IDX_CAS_EMA_SMOOTH]
-    smooth_pos_setpoint = (smoothing_factor * ctrl_ema) + (1 - smoothing_factor) * d.ctrl[id]
+    # Apply Exponential Moving Average smoothing to the position setpoint, applying warmstart
+    # on the first iteration.
+    if d.time > 0.0:
+        ctrl_ema = d.userdata[id * NUM_USER_DATA_PER_ACT + IDX_CAS_STORED_EMA_SMOOTH]
+        smoothing_factor = m.actuator_gainprm[id * NGAIN + IDX_CAS_EMA_SMOOTH]
+        smooth_pos_setpoint = (smoothing_factor * ctrl_ema) + (1 - smoothing_factor) * d.ctrl[id]
+    else:
+        smooth_pos_setpoint = d.ctrl[id]
     d.userdata[id * NUM_USER_DATA_PER_ACT + IDX_CAS_STORED_EMA_SMOOTH] = smooth_pos_setpoint
 
     if Kp_cas != 0:
