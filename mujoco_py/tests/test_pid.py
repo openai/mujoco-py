@@ -143,7 +143,8 @@ def test_cascaded_pipi():
     print('final pos', sim.data.qpos[0])
     assert abs(sim.data.qpos[0] - desired_pos) < 1e-3
     assert max_torque <= 3  # Torque limit set on the actuator
-    
+
+
 def test_cascaded_pdpi():
     """
     This tests using a PD-PI loop with the cascaded controller. This is achieved by setting the 
@@ -158,7 +159,7 @@ def test_cascaded_pdpi():
     model = load_model_from_xml(xml)
     sim = MjSim(model)
     cymj.set_pid_control(sim.model, sim.data)
-    
+
     """
     sim2 uses the same Kp gain on the position loop as sim but does not have any derivative gain. 
     It is expected that given this Kp gain and no derivative gain, the system will be unstable 
@@ -185,10 +186,10 @@ def test_cascaded_pdpi():
         sim2.step()
         if abs(sim.data.actuator_force[0]) > max_torque:
             max_torque = abs(sim.data.actuator_force[0])
-        
+
     print('final pos', sim.data.qpos[0])
-    assert abs(sim2.data.qpos[0] - desired_pos) > 1e-3 # Verify instability without D term
-    assert abs(sim.data.qpos[0] - desired_pos) < 1e-3 # Verify stability with D term
+    assert abs(sim2.data.qpos[0] - desired_pos) > 1e-3  # Verify instability without D term
+    assert abs(sim.data.qpos[0] - desired_pos) < 1e-3  # Verify stability with D term
     assert max_torque <= 3  # Torque limit set on the actuator
 
 
@@ -199,3 +200,30 @@ def test_mjsize_exception():
     sim = MjSim(model)
     with pytest.raises(Exception):
         cymj.set_pid_control(sim.model, sim.data)
+
+
+CASCADED_PDPI_ACTUATOR_NO_EMA = """
+	<general ctrlrange='-1 1' gaintype="user" biastype="user" forcerange="-3 3" gainprm="10 0 0 .1 1 10 .1 1.5 0 3" joint="hinge" name="a-hinge" user="1"/>
+"""
+
+
+def test_warm_start_ema():
+    """
+    Test that the smoothed commanded position is initialized to the commanded position at
+    start.
+    """
+    # Load model with EMA smoothing (0.97)
+    model = load_model_from_xml(MODEL_XML.format(actuator=CASCADED_PDPI_ACTUATOR, nuser_actuator=1))
+    sim = MjSim(model)
+    cymj.set_pid_control(sim.model, sim.data)
+    # Load model without EMA smoothing (0.0)
+    model2 = load_model_from_xml(MODEL_XML.format(actuator=CASCADED_PDPI_ACTUATOR_NO_EMA, nuser_actuator=1))
+    sim2 = MjSim(model2)
+    cymj.set_pid_control(sim2.model, sim2.data)
+    init_pos = 0.1 * (random.random() - 0.5)
+    sim.data.ctrl[0] = sim2.data.ctrl[0] = .2
+    sim.step()
+    sim2.step()
+    EMA_SMOOTH_IDX = 4
+    # Compare that the saved smoothed position is the same for both EMA=.97 and EMA=0
+    assert abs(sim.data.userdata[EMA_SMOOTH_IDX] - sim2.data.userdata[EMA_SMOOTH_IDX]) < 1e-10
