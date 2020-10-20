@@ -66,6 +66,28 @@ print(sim.data.qpos)
 #  -2.22862221e-05]
 ```
 
+### Install `mujoco-py` with headless gpu rendering
+You may perform additional steps to build `mujoco-py` with gpu rendering support on a remote server without any monitor attached. 
+
+First, check whether mujoco_py has already been built with headless gpu rendering
+```
+$ python3
+import mujoco_py
+print('gpu' in str(mujoco_py.cymj).split('/')[-1])
+```
+If the output is `False`, you may perform the steps below to build gpu extension 
+
+```
+$ export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:/usr/lib/nvidia-000
+$ sudo mkdir -p /usr/lib/nvidia-000
+$ python3
+import mujoco_py
+print('gpu' in str(mujoco_py.cymj).split('/')[-1])
+# True
+```
+
+
+
 See the [full documentation](https://openai.github.io/mujoco-py/build/html/index.html) for advanced usage.
 
 ## Troubleshooting
