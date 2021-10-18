@@ -366,30 +366,30 @@ cdef extern from "mjmodel.h" nogil:
 
 
     #------------------------------ mjOption -----------------------------------------------
-    
+
     ctypedef struct mjOption:                    # physics options
         # timing parameters
         mjtNum timestep                 # timestep
         mjtNum apirate                  # update rate for remote API (Hz)
-    
+
         # solver parameters
         mjtNum impratio                 # ratio of friction-to-normal contact impedance
         mjtNum tolerance                # solver convergence tolerance
         mjtNum noslip_tolerance         # noslip solver tolerance
         mjtNum mpr_tolerance            # MPR solver tolerance
-    
+
         # physical constants
         mjtNum gravity[3]               # gravitational acceleration
         mjtNum wind[3]                  # wind (for lift, drag and viscosity)
         mjtNum magnetic[3]              # global magnetic flux
         mjtNum density                  # density of medium
         mjtNum viscosity                # viscosity of medium
-    
+
         # override contact solver parameters (if enabled)
         mjtNum o_margin                 # margin
         mjtNum o_solref[mjNREF]         # solref
         mjtNum o_solimp[mjNIMP]         # solimp
-    
+
         # discrete settings
         int integrator                  # integration mode (mjtIntegrator)
         int collision                   # collision mode (mjtCollision)
@@ -484,6 +484,7 @@ cdef extern from "mjmodel.h" nogil:
         int ntuple                      # number of tuple custom fields
         int ntupledata                  # number of objects in all tuple fields
         int nkey                        # number of keyframes
+        int nmocap                      # number of mocap bodies
         int nuser_body                  # number of mjtNums in body_user
         int nuser_jnt                   # number of mjtNums in jnt_user
         int nuser_geom                  # number of mjtNums in geom_user
@@ -501,7 +502,6 @@ cdef extern from "mjmodel.h" nogil:
         int nconmax                     # number of potential contacts in contact list
         int nstack                      # number of fields in mjData stack
         int nuserdata                   # number of extra fields in mjData
-        int nmocap                      # number of mocap bodies
         int nsensordata                 # number of fields in sensor data vector
 
         int nbuffer                     # number of bytes in buffer
@@ -806,6 +806,8 @@ cdef extern from "mjmodel.h" nogil:
         mjtNum*   key_qpos              # key position                             (nkey x nq)
         mjtNum*   key_qvel              # key velocity                             (nkey x nv)
         mjtNum*   key_act               # key activation                           (nkey x na)
+        mjtNum*   key_mpos              # key mocap position                       (nkey x 3*nmocap)
+        mjtNum*   key_mquat             # key mocap quaternion                     (nkey x 4*nmocap)
 
         # names
         int*      name_bodyadr          # body name pointers                       (nbody x 1)
