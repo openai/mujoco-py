@@ -175,7 +175,7 @@ def load_model_from_path(str path):
         raise Exception('Failed to load XML file: %s. mj_loadXML error: %s' % (path, errstr,))
     return WrapMjModel(model)
 
-def load_model_from_xml(str xml_str):
+def load_model_from_xml(str xml_str, str path=None):
     """
     Loads and returns a PyMjModel model from a string containing XML markup.
     Saves the XML string used to create the returned model in `model.xml`.
@@ -183,7 +183,7 @@ def load_model_from_xml(str xml_str):
     cdef char errstr[300]
     cdef mjModel *model
     with wrap_mujoco_warning():
-        with tempfile.NamedTemporaryFile(suffix=".xml", delete=True) as fp:
+        with tempfile.NamedTemporaryFile(suffix=".xml", dir=path, delete=True) as fp:
             fp.write(xml_str.encode())
             fp.flush()
             model = mj_loadXML(fp.name.encode(), NULL, errstr, 300)
