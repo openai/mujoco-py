@@ -5,7 +5,7 @@ from mujoco_py.utils import discover_mujoco
 
 
 def _add_mujoco_bin_to_dyld_library_path():
-    mujoco_path, _ = discover_mujoco()
+    mujoco_path = discover_mujoco()
     bin_path = os.path.join(mujoco_path, "bin")
     old_dyld_library_path = os.getenv("DYLD_LIBRARY_PATH", "")
     os.environ["DYLD_LIBRARY_PATH"] = "{}:{}".format(

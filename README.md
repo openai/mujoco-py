@@ -5,7 +5,7 @@
 [MuJoCo](http://mujoco.org/) is a physics engine for detailed, efficient rigid body simulations with contacts.
 `mujoco-py` allows using MuJoCo from Python 3.
 
-This library has been updated to be compatible with MuJoCo version 2.0 released on 10/1/2018.
+This library has been updated to be compatible with MuJoCo version 2.1 released on 2021-10-18.
 
 
 ## Synopsis
@@ -24,31 +24,26 @@ The following platforms are DEPRECATED and unsupported:
 
 ### Install MuJoCo
 
-1. Obtain a 30-day free trial on the [MuJoCo website](https://www.roboti.us/license.html)
-   or free license if you are a student.
-   The license key will arrive in an email with your username and password.
-2. Download the MuJoCo version 2.0 binaries for
-   [Linux](https://www.roboti.us/download/mujoco200_linux.zip) or
-   [OSX](https://www.roboti.us/download/mujoco200_macos.zip).
-3. Unzip the downloaded `mujoco200` directory into `~/.mujoco/mujoco200`,
-   and place your license key (the `mjkey.txt` file from your email)
-   at `~/.mujoco/mjkey.txt`.
+1. Download the MuJoCo version 2.1 binaries for
+   [Linux](https://mujoco.org/download/mujoco210-linux-x86_64.tar.gz) or
+   [OSX](https://mujoco.org/download/mujoco210-macos-x86_64.tar.gz).
+1. Extract the downloaded `mujoco210` directory into `~/.mujoco/mujoco210`.
 
-If you want to specify a nonstandard location for the key and package,
-use the env variables `MUJOCO_PY_MJKEY_PATH` and `MUJOCO_PY_MUJOCO_PATH`.
+If you want to specify a nonstandard location for the package,
+use the env variable `MUJOCO_PY_MUJOCO_PATH`.
 
 ### Install and use `mujoco-py`
 To include `mujoco-py` in your own package, add it to your requirements like so:
 ```
-mujoco-py<2.1,>=2.0
+mujoco-py<2.2,>=2.1
 ```
 To play with `mujoco-py` interactively, follow these steps:
 ```
-$ pip3 install -U 'mujoco-py<2.1,>=2.0'
+$ pip3 install -U 'mujoco-py<2.2,>=2.1'
 $ python3
 import mujoco_py
 import os
-mj_path, _ = mujoco_py.utils.discover_mujoco()
+mj_path = mujoco_py.utils.discover_mujoco()
 xml_path = os.path.join(mj_path, 'model', 'humanoid.xml')
 model = mujoco_py.load_model_from_path(xml_path)
 sim = mujoco_py.MjSim(model)
@@ -97,7 +92,7 @@ export CPPFLAGS="-I/usr/local/opt/llvm/include"
 
 ```bash
 # Make sure your python environment is activated
-pip install -U 'mujoco-py<2.1,>=2.0'
+pip install -U 'mujoco-py<2.2,>=2.1'
 ```
 
 ### Missing GLFW
@@ -112,7 +107,7 @@ MuJoCo ships with its own copy of this library, which can be used during install
 
 Add the path to the mujoco bin directory to your dynamic loader:
 
-    LD_LIBRARY_PATH=$HOME/.mujoco/mujoco200/bin pip install mujoco-py
+    LD_LIBRARY_PATH=$HOME/.mujoco/mujoco210/bin pip install mujoco-py
 
 This is particularly useful on Ubuntu 14.04, which does not have a GLFW package.
 

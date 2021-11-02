@@ -96,8 +96,8 @@ cdef class PyMjVFS(object):
         self.ptr = p
         
         
-        self._filesize = _wrap_int_1d(&p.filesize[0], 200)
-        self._filename = _wrap_char_2d(&p.filename[0][0], 200, 100)
+        self._filesize = _wrap_int_1d(&p.filesize[0], 2000)
+        self._filename = _wrap_char_2d(&p.filename[0][0], 2000, 1000)
         
     @property
     def nfile(self): return self.ptr.nfile
@@ -982,6 +982,8 @@ cdef class PyMjModel(object):
     cdef np.ndarray _key_qpos
     cdef np.ndarray _key_qvel
     cdef np.ndarray _key_act
+    cdef np.ndarray _key_mpos
+    cdef np.ndarray _key_mquat
     cdef np.ndarray _name_bodyadr
     cdef np.ndarray _name_jntadr
     cdef np.ndarray _name_geomadr
@@ -1489,6 +1491,8 @@ cdef class PyMjModel(object):
         self._key_qpos = _wrap_mjtNum_2d(p.key_qpos, p.nkey, p.nq)
         self._key_qvel = _wrap_mjtNum_2d(p.key_qvel, p.nkey, p.nv)
         self._key_act = _wrap_mjtNum_2d(p.key_act, p.nkey, p.na)
+        self._key_mpos = _wrap_mjtNum_2d(p.key_mpos, p.nkey, 3*p.nmocap)
+        self._key_mquat = _wrap_mjtNum_2d(p.key_mquat, p.nkey, 4*p.nmocap)
         self._name_bodyadr = _wrap_int_1d(p.name_bodyadr, p.nbody)
         self._name_jntadr = _wrap_int_1d(p.name_jntadr, p.njnt)
         self._name_geomadr = _wrap_int_1d(p.name_geomadr, p.ngeom)
@@ -1669,6 +1673,10 @@ cdef class PyMjModel(object):
     @nkey.setter
     def nkey(self, int x): self.ptr.nkey = x
     @property
+    def nmocap(self): return self.ptr.nmocap
+    @nmocap.setter
+    def nmocap(self, int x): self.ptr.nmocap = x
+    @property
     def nuser_body(self): return self.ptr.nuser_body
     @nuser_body.setter
     def nuser_body(self, int x): self.ptr.nuser_body = x
@@ -1728,10 +1736,6 @@ cdef class PyMjModel(object):
     def nuserdata(self): return self.ptr.nuserdata
     @nuserdata.setter
     def nuserdata(self, int x): self.ptr.nuserdata = x
-    @property
-    def nmocap(self): return self.ptr.nmocap
-    @nmocap.setter
-    def nmocap(self, int x): self.ptr.nmocap = x
     @property
     def nsensordata(self): return self.ptr.nsensordata
     @nsensordata.setter
@@ -2230,6 +2234,10 @@ cdef class PyMjModel(object):
     def key_qvel(self): return self._key_qvel
     @property
     def key_act(self): return self._key_act
+    @property
+    def key_mpos(self): return self._key_mpos
+    @property
+    def key_mquat(self): return self._key_mquat
     @property
     def name_bodyadr(self): return self._name_bodyadr
     @property
@@ -3341,6 +3349,10 @@ cdef class PyMjvPerturb(object):
     @active.setter
     def active(self, int x): self.ptr.active = x
     @property
+    def active2(self): return self.ptr.active2
+    @active2.setter
+    def active2(self, int x): self.ptr.active2 = x
+    @property
     def scale(self): return self.ptr.scale
     @scale.setter
     def scale(self, mjtNum x): self.ptr.scale = x
@@ -3709,6 +3721,7 @@ cdef class PyMjvScene(object):
     cdef np.ndarray _translate
     cdef np.ndarray _rotate
     cdef np.ndarray _flags
+    cdef np.ndarray _framergb
     
     def __cinit__(self):
         self.ptr = NULL
@@ -3727,6 +3740,7 @@ cdef class PyMjvScene(object):
         self._translate = _wrap_float_1d(&p.translate[0], 3)
         self._rotate = _wrap_float_1d(&p.rotate[0], 4)
         self._flags = _wrap_mjtByte_1d(&p.flags[0], mjNRNDFLAG)
+        self._framergb = _wrap_float_1d(&p.framergb[0], 3)
         
     @property
     def maxgeom(self): return self.ptr.maxgeom
@@ -3757,6 +3771,10 @@ cdef class PyMjvScene(object):
     @stereo.setter
     def stereo(self, int x): self.ptr.stereo = x
     @property
+    def framewidth(self): return self.ptr.framewidth
+    @framewidth.setter
+    def framewidth(self, int x): self.ptr.framewidth = x
+    @property
     def lights(self): return self._lights
     @property
     def camera(self): return self._camera
@@ -3766,6 +3784,8 @@ cdef class PyMjvScene(object):
     def rotate(self): return self._rotate
     @property
     def flags(self): return self._flags
+    @property
+    def framergb(self): return self._framergb
 
 cdef PyMjvScene WrapMjvScene(mjvScene* p):
     cdef PyMjvScene o = PyMjvScene()
@@ -3778,27 +3798,26 @@ cdef class PyMjvFigure(object):
     
     cdef np.ndarray _flg_ticklabel
     cdef np.ndarray _gridsize
-    cdef np.ndarray _highlight
     cdef np.ndarray _gridrgb
     cdef np.ndarray _figurergba
     cdef np.ndarray _panergba
     cdef np.ndarray _legendrgba
     cdef np.ndarray _textrgb
-    cdef np.ndarray _xlabel
-    cdef np.ndarray _title
     cdef np.ndarray _xformat
     cdef np.ndarray _yformat
     cdef np.ndarray _minwidth
+    cdef np.ndarray _title
+    cdef np.ndarray _xlabel
+    cdef np.ndarray _highlight
     cdef np.ndarray _linepnt
-    cdef np.ndarray _linewidth
     cdef np.ndarray _xaxispixel
     cdef np.ndarray _yaxispixel
     cdef np.ndarray _xaxisdata
     cdef np.ndarray _yaxisdata
-    cdef np.ndarray _range
     cdef np.ndarray _linergb
-    cdef np.ndarray _linedata
+    cdef np.ndarray _range
     cdef np.ndarray _linename
+    cdef np.ndarray _linedata
     
     def __cinit__(self):
         self.ptr = NULL
@@ -3814,27 +3833,26 @@ cdef class PyMjvFigure(object):
         
         self._flg_ticklabel = _wrap_int_1d(&p.flg_ticklabel[0], 2)
         self._gridsize = _wrap_int_1d(&p.gridsize[0], 2)
-        self._highlight = _wrap_int_1d(&p.highlight[0], 2)
         self._gridrgb = _wrap_float_1d(&p.gridrgb[0], 3)
         self._figurergba = _wrap_float_1d(&p.figurergba[0], 4)
         self._panergba = _wrap_float_1d(&p.panergba[0], 4)
         self._legendrgba = _wrap_float_1d(&p.legendrgba[0], 4)
         self._textrgb = _wrap_float_1d(&p.textrgb[0], 3)
-        self._xlabel = _wrap_char_1d(&p.xlabel[0], 100)
-        self._title = _wrap_char_1d(&p.title[0], 100)
         self._xformat = _wrap_char_1d(&p.xformat[0], 20)
         self._yformat = _wrap_char_1d(&p.yformat[0], 20)
         self._minwidth = _wrap_char_1d(&p.minwidth[0], 20)
+        self._title = _wrap_char_1d(&p.title[0], 1000)
+        self._xlabel = _wrap_char_1d(&p.xlabel[0], 100)
+        self._highlight = _wrap_int_1d(&p.highlight[0], 2)
         self._linepnt = _wrap_int_1d(&p.linepnt[0], 100)
-        self._linewidth = _wrap_float_1d(&p.linewidth[0], 100)
         self._xaxispixel = _wrap_int_1d(&p.xaxispixel[0], 2)
         self._yaxispixel = _wrap_int_1d(&p.yaxispixel[0], 2)
         self._xaxisdata = _wrap_float_1d(&p.xaxisdata[0], 2)
         self._yaxisdata = _wrap_float_1d(&p.yaxisdata[0], 2)
-        self._range = _wrap_float_2d(&p.range[0][0], 2, 2)
         self._linergb = _wrap_float_2d(&p.linergb[0][0], 100, 3)
-        self._linedata = _wrap_float_2d(&p.linedata[0][0], 100, 2000)
+        self._range = _wrap_float_2d(&p.range[0][0], 2, 2)
         self._linename = _wrap_char_2d(&p.linename[0][0], 100, 100)
+        self._linedata = _wrap_float_2d(&p.linedata[0][0], 100, 2000)
         
     @property
     def flg_legend(self): return self.ptr.flg_legend
@@ -3857,23 +3875,33 @@ cdef class PyMjvFigure(object):
     @flg_symmetric.setter
     def flg_symmetric(self, int x): self.ptr.flg_symmetric = x
     @property
-    def legendoff(self): return self.ptr.legendoff
-    @legendoff.setter
-    def legendoff(self, int x): self.ptr.legendoff = x
-    @property
-    def selection(self): return self.ptr.selection
-    @selection.setter
-    def selection(self, int x): self.ptr.selection = x
+    def linewidth(self): return self.ptr.linewidth
+    @linewidth.setter
+    def linewidth(self, float x): self.ptr.linewidth = x
     @property
     def gridwidth(self): return self.ptr.gridwidth
     @gridwidth.setter
     def gridwidth(self, float x): self.ptr.gridwidth = x
     @property
+    def legendoffset(self): return self.ptr.legendoffset
+    @legendoffset.setter
+    def legendoffset(self, int x): self.ptr.legendoffset = x
+    @property
+    def subplot(self): return self.ptr.subplot
+    @subplot.setter
+    def subplot(self, int x): self.ptr.subplot = x
+    @property
+    def highlightid(self): return self.ptr.highlightid
+    @highlightid.setter
+    def highlightid(self, int x): self.ptr.highlightid = x
+    @property
+    def selection(self): return self.ptr.selection
+    @selection.setter
+    def selection(self, float x): self.ptr.selection = x
+    @property
     def flg_ticklabel(self): return self._flg_ticklabel
     @property
     def gridsize(self): return self._gridsize
-    @property
-    def highlight(self): return self._highlight
     @property
     def gridrgb(self): return self._gridrgb
     @property
@@ -3885,19 +3913,19 @@ cdef class PyMjvFigure(object):
     @property
     def textrgb(self): return self._textrgb
     @property
-    def xlabel(self): return self._xlabel
-    @property
-    def title(self): return self._title
-    @property
     def xformat(self): return self._xformat
     @property
     def yformat(self): return self._yformat
     @property
     def minwidth(self): return self._minwidth
     @property
-    def linepnt(self): return self._linepnt
+    def title(self): return self._title
     @property
-    def linewidth(self): return self._linewidth
+    def xlabel(self): return self._xlabel
+    @property
+    def highlight(self): return self._highlight
+    @property
+    def linepnt(self): return self._linepnt
     @property
     def xaxispixel(self): return self._xaxispixel
     @property
@@ -3907,13 +3935,13 @@ cdef class PyMjvFigure(object):
     @property
     def yaxisdata(self): return self._yaxisdata
     @property
-    def range(self): return self._range
-    @property
     def linergb(self): return self._linergb
     @property
-    def linedata(self): return self._linedata
+    def range(self): return self._range
     @property
     def linename(self): return self._linename
+    @property
+    def linedata(self): return self._linedata
 
 cdef PyMjvFigure WrapMjvFigure(mjvFigure* p):
     cdef PyMjvFigure o = PyMjvFigure()
@@ -4215,7 +4243,7 @@ cdef class PyMjuiState(object):
         self.ptr = p
         
         
-        self._rect = [WrapMjrRect(&p.rect[i]) for i in range(15)]
+        self._rect = [WrapMjrRect(&p.rect[i]) for i in range(25)]
         
     @property
     def nrect(self): return self.ptr.nrect
@@ -4584,7 +4612,7 @@ cdef class PyMjUI(object):
         
         self._spacing = WrapMjuiThemeSpacing(&p.spacing)
         self._color = WrapMjuiThemeColor(&p.color)
-        self._edittext = _wrap_char_1d(&p.edittext[0], 500)
+        self._edittext = _wrap_char_1d(&p.edittext[0], 300)
         self._sect = [WrapMjuiSection(&p.sect[i]) for i in range(10)]
         
     @property
@@ -4681,7 +4709,7 @@ cdef class PyMjuiDef(object):
         
         
         self._name = _wrap_char_1d(&p.name[0], 40)
-        self._other = _wrap_char_1d(&p.other[0], 500)
+        self._other = _wrap_char_1d(&p.other[0], 300)
         
     @property
     def type(self): return self.ptr.type
@@ -4704,6 +4732,11 @@ cdef PyMjuiDef WrapMjuiDef(mjuiDef* p):
 cdef inline np.ndarray _wrap_char_1d(char* a, int shape0):
     if shape0 == 0: return None
     cdef char[:] b = <char[:shape0]> a
+    return np.asarray(b)
+
+cdef inline np.ndarray _wrap_double_1d(double* a, int shape0):
+    if shape0 == 0: return None
+    cdef double[:] b = <double[:shape0]> a
     return np.asarray(b)
 
 cdef inline np.ndarray _wrap_float_1d(float* a, int shape0):
@@ -4736,6 +4769,11 @@ cdef inline np.ndarray _wrap_char_2d(char* a, int shape0, int shape1):
     cdef char[:,:] b = <char[:shape0,:shape1]> a
     return np.asarray(b)
 
+cdef inline np.ndarray _wrap_double_2d(double* a, int shape0, int shape1):
+    if shape0 * shape1 == 0: return None
+    cdef double[:,:] b = <double[:shape0,:shape1]> a
+    return np.asarray(b)
+
 cdef inline np.ndarray _wrap_float_2d(float* a, int shape0, int shape1):
     if shape0 * shape1 == 0: return None
     cdef float[:,:] b = <float[:shape0,:shape1]> a
@@ -4761,15 +4799,6 @@ def _mj_activate(str filename):
 
 def _mj_deactivate():
     mj_deactivate()
-
-def _mj_certQuestion(np.ndarray[np.float64_t, mode="c", ndim=1] question):
-    mj_certQuestion(&question[0])
-
-def _mj_certAnswer(np.ndarray[np.float64_t, mode="c", ndim=1] question, np.ndarray[np.float64_t, mode="c", ndim=1] answer):
-    mj_certAnswer(&question[0], &answer[0])
-
-def _mj_certCheck(np.ndarray[np.float64_t, mode="c", ndim=1] question, np.ndarray[np.float64_t, mode="c", ndim=1] answer):
-    return mj_certCheck(&question[0], &answer[0])
 
 def _mj_defaultVFS(PyMjVFS vfs):
     mj_defaultVFS(vfs.ptr)
@@ -5224,6 +5253,9 @@ def _mjr_findRect(int x, int y, int nrect, PyMjrRect rect):
 def _mjui_add(PyMjUI ui, PyMjuiDef _def):
     mjui_add(ui.ptr, _def.ptr)
 
+def _mjui_addToSection(PyMjUI ui, int sect, PyMjuiDef _def):
+    mjui_addToSection(ui.ptr, sect, _def.ptr)
+
 def _mjui_resize(PyMjUI ui, PyMjrContext con):
     mjui_resize(ui.ptr, con.ptr)
 
@@ -5491,7 +5523,13 @@ def _mju_standardNormal(np.ndarray[np.float64_t, mode="c", ndim=1] num2):
 def _mju_insertionSort(np.ndarray[np.float64_t, mode="c", ndim=1] list, int n):
     mju_insertionSort(&list[0], n)
 
+def _mju_insertionSortInt(uintptr_t list, int n):
+    mju_insertionSortInt(<int*>list, n)
+
 def _mju_Halton(int index, int base):
     return mju_Halton(index, base)
+
+def _mju_sigmoid(float x):
+    return mju_sigmoid(x)
 
 

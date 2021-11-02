@@ -119,6 +119,17 @@ def extract_size_info(node):
     raise NotImplementedError(str(node))
 
 
+def format_size_argument(model_var_name, shape_def):
+  if isinstance(shape_def, str):
+    if shape_def.startswith('n'):
+      return f'{model_var_name}.{shape_def}'
+    m = re.match(r'(\d+)\s*\*\s*(n[a-zA-Z]*)', shape_def)
+    if m:
+      return f'{m.group(1)}*{model_var_name}.{m.group(2)}'
+
+  return shape_def
+
+
 def get_full_scr_lines(HEADER_DIR, HEADER_FILES):
     # ===== Read all header files =====
     file_contents = []
@@ -527,7 +538,7 @@ def get_funcs(fname):
 
 
 def main():
-    HEADER_DIR = os.path.expanduser(os.path.join('~', '.mujoco', 'mujoco200', 'include'))
+    HEADER_DIR = os.path.expanduser(os.path.join('~', '.mujoco', 'mujoco210', 'include'))
     HEADER_FILES = [
         'mjmodel.h',
         'mjdata.h',
@@ -620,18 +631,15 @@ def main():
                         '        self._{ptr_name} = _wrap_{ptr_type}_1d(p.{ptr_name}, {size0})'.format(
                             ptr_name=ptr_name,
                             ptr_type=ptr_type.replace(' ', '_'),
-                            size0='{}.{}'.format(model_var_name, size0) if (
-                                isinstance(size0, str) and size0.startswith('n')) else size0,
+                            size0=format_size_argument(model_var_name, size0),
                         ))
                 else:
                     member_initializers.append(
                         '        self._{ptr_name} = _wrap_{ptr_type}_2d(p.{ptr_name}, {size0}, {size1})'.format(
                             ptr_name=ptr_name,
                             ptr_type=ptr_type.replace(' ', '_'),
-                            size0='{}.{}'.format(model_var_name, shape0) if (
-                                isinstance(shape0, str) and shape0.startswith('n')) else shape0,
-                            size1='{}.{}'.format(model_var_name, shape1) if (
-                                isinstance(shape1, str) and shape1.startswith('n')) else shape1,
+                            size0=format_size_argument(model_var_name, shape0),
+                            size1=format_size_argument(model_var_name, shape1),
                         ))
                 needed_2d_wrappers.add(ptr_type)
 
@@ -939,6 +947,11 @@ def main():
         PyMem_Free(self.ptr)
 '''.format(name=name)
             extra_set = ''
+        elif name in [
+            'mjuiItemSingle', 'mjuiItemMulti', 'mjuiItemSlider', 'mjuiItemEdit'
+        ]:
+          # these structs don't have a corresponding typedef.
+          continue
         elif name[:2] == 'mj':
             extra = '''
     def __cinit__(self):

@@ -97,12 +97,8 @@ cdef extern from "mjvisualize.h" nogil:
         mjRND_SHADOW        = 0,        # shadows
         mjRND_WIREFRAME,                # wireframe
         mjRND_REFLECTION,               # reflections
-        mjRND_ADDITIVE,                 # additive
-        mjRND_SKYBOX,                   # skybox
         mjRND_FOG,                      # fog
-        mjRND_HAZE,                     # haze
-        mjRND_SEGMENT,                  # segment
-        mjRND_IDCOLOR,                  # color
+        mjRND_SKYBOX,                   # skybox
 
     enum: mjNRNDFLAG                      # number of rendering flags
 
@@ -117,6 +113,7 @@ cdef extern from "mjvisualize.h" nogil:
         int      select                 # selected body id; non-positive: none
         int      skinselect;            # selected skin id; non-positive: none
         int      active                 # perturbation bitmask (mjtPertBit)
+        int      active2                # secondary perturbation bitmask (mjtPertBit)
         mjtNum   refpos[3]              # desired position for selected object
         mjtNum   refquat[4]             # desired orientation for selected object
         mjtNum   localpos[3]            # selection point in object coordinates
@@ -238,6 +235,10 @@ cdef extern from "mjvisualize.h" nogil:
         int      stereo                 # stereoscopic rendering (mjtStereo)
         mjtByte  flags[mjNRNDFLAG]      # rendering flags (indexed by mjtRndFlag)
 
+        # framing
+        int      framewidth;            # frame pixel width; 0: disable framing
+        float    framergb[3];           # frame color
+
 
 
     ctypedef struct mjvFigure:          # abstract 2D figure passed to OpenGL renderer
@@ -250,29 +251,36 @@ cdef extern from "mjvisualize.h" nogil:
         int     flg_symmetric           # symmetric y-axis
 
         # figure options
+        float   linewidth;              # line width
+        float   gridwidth;              # grid line width
         int     legendoff               # number of lines to offset legend
         int     gridsize[2]             # number of grid points in (x,y)
-        int     selection               # selection line x-value
-        int     highlight[2]            # if point is in legend rect, highlight line
         float   gridrgb[3]              # grid line rgb
-        float   gridwidth               # grid line width
         float   figurergba[4]           # figure color and alpha
         float   panergba[4]             # pane color and alpha
         float   legendrgba[4]           # legend color and alpha
         float   textrgb[3]              # text color
+        float   linergb[mjMAXLINE][3]   # line colors
         float   range[2][2]             # axis ranges; (min>=max) automatic
-        char    xlabel[100]             # x-axis label
-        char    title[100]              # figure title
         char    xformat[20]             # x-tick label format for sprintf
         char    yformat[20]             # y-tick label format for sprintf
         char    minwidth[20]            # string used to determine min y-tick width
 
+        # text labels
+        char    title[100]              # figure title
+        char    xlabel[100]             # x-axis label
+        char    linename[mjMAXLINE][100]  # line names for legend
+
+        # dynamic settings
+        int     legendoffset;           # number of lines to offset legend
+        int     subplot;                # selected subplot (for title rendering)
+        int     highlight[2];           # if point is in legend rect, highlight line
+        int     highlightid;            # if id>=0 and no point, highlight id
+        float   selection;              # selection line x-value
+
         # line data
         int     linepnt[mjMAXLINE]                   # number of points in line; (0) disable
-        float   linergb[mjMAXLINE][3]                # line color
-        float   linewidth[mjMAXLINE]                 # line width
         float   linedata[mjMAXLINE][2*mjMAXLINEPNT]  # line data (x,y)
-        char    linename[mjMAXLINE][100]             # line name for legend
 
         # output from renderer
         int     xaxispixel[2]           # range of x-axis in pixels
