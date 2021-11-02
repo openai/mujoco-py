@@ -31,6 +31,11 @@ def get_nvidia_lib_dir():
     docker_path = '/usr/local/nvidia/lib64'
     if exists(docker_path):
         return docker_path
+
+    nvidia_path = '/usr/lib/nvidia'
+    if exists(nvidia_path):
+        return nvidia_path
+
     paths = glob.glob('/usr/lib/nvidia-[0-9][0-9][0-9]')
     paths = sorted(paths)
     if len(paths) == 0:
