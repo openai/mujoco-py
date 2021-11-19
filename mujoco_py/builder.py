@@ -331,10 +331,10 @@ class MacExtensionBuilder(MujocoExtensionBuilder):
                     break
             if available_c_compiler is None:
                 raise RuntimeError(
-                    'Could not find GCC executable.\n\n'
-                    'HINT: On OS X, install GCC with '
-                    '`brew install gcc`. or '
-                    '`port install gcc`.')
+                    'Could not find supported GCC executable.\n\n'
+                    'HINT: On OS X, install GCC 9.x with '
+                    '`brew install gcc@9`. or '
+                    '`port install gcc9`.')
             os.environ['CC'] = available_c_compiler
 
             so_file_path = super()._build_impl()
