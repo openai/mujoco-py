@@ -1,6 +1,6 @@
 # When updating these, you may need to also update pyproject.toml
-glfw>=1.4.0
-numpy>=1.11
+glfw>=2.2.0
+numpy>=1.19.2
 Cython>=0.27.2
 imageio>=2.1.2
 cffi>=1.10
