@@ -731,7 +731,7 @@ def test_multiprocess_with_killing():
 def import_process(queue):
     try:
         from mujoco_py import builder
-        mujoco_path, key_path = builder.discover_mujoco()
+        mujoco_path = builder.discover_mujoco()
         builder.load_cython_ext(mujoco_path)
     except Exception as e:
         queue.put(False)

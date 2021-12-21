@@ -19,7 +19,7 @@ from Cython.Build import cythonize
 from Cython.Distutils.old_build_ext import old_build_ext as build_ext
 from cffi import FFI
 
-from mujoco_py.utils import discover_mujoco, MISSING_KEY_MESSAGE
+from mujoco_py.utils import discover_mujoco
 from mujoco_py.version import get_version
 
 
@@ -31,6 +31,11 @@ def get_nvidia_lib_dir():
     docker_path = '/usr/local/nvidia/lib64'
     if exists(docker_path):
         return docker_path
+
+    nvidia_path = '/usr/lib/nvidia'
+    if exists(nvidia_path):
+        return nvidia_path
+
     paths = glob.glob('/usr/lib/nvidia-[0-9][0-9][0-9]')
     paths = sorted(paths)
     if len(paths) == 0:
@@ -172,8 +177,8 @@ def manually_link_libraries(mujoco_path, raw_cext_dll_path):
 
     # Fix the rpath of the generated library -- i lost the Stackoverflow
     # reference here
-    from_mujoco_path = '@executable_path/libmujoco200.dylib'
-    to_mujoco_path = '%s/libmujoco200.dylib' % mj_bin_path
+    from_mujoco_path = '@executable_path/libmujoco210.dylib'
+    to_mujoco_path = '%s/libmujoco210.dylib' % mj_bin_path
     subprocess.check_call(['install_name_tool',
                            '-change',
                            from_mujoco_path,
@@ -208,7 +213,7 @@ class MujocoExtensionBuilder():
                 join(mujoco_path, 'include'),
                 np.get_include(),
             ],
-            libraries=['mujoco200'],
+            libraries=['mujoco210'],
             library_dirs=[join(mujoco_path, 'bin')],
             extra_compile_args=[
                 '-fopenmp',  # needed for OpenMP
@@ -272,7 +277,7 @@ class LinuxCPUExtensionBuilder(MujocoExtensionBuilder):
     def _build_impl(self):
         so_file_path = super()._build_impl()
         # Removes absolute paths to libraries. Allows for dynamic loading.
-        fix_shared_library(so_file_path, 'libmujoco200.so', 'libmujoco200.so')
+        fix_shared_library(so_file_path, 'libmujoco210.so', 'libmujoco210.so')
         fix_shared_library(so_file_path, 'libglewosmesa.so', 'libglewosmesa.so')
         return so_file_path
 
@@ -291,7 +296,7 @@ class LinuxGPUExtensionBuilder(MujocoExtensionBuilder):
         so_file_path = super()._build_impl()
         fix_shared_library(so_file_path, 'libOpenGL.so', 'libOpenGL.so.0')
         fix_shared_library(so_file_path, 'libEGL.so', 'libEGL.so.1')
-        fix_shared_library(so_file_path, 'libmujoco200.so', 'libmujoco200.so')
+        fix_shared_library(so_file_path, 'libmujoco210.so', 'libmujoco210.so')
         fix_shared_library(so_file_path, 'libglewegl.so', 'libglewegl.so')
         return so_file_path
 
@@ -326,10 +331,10 @@ class MacExtensionBuilder(MujocoExtensionBuilder):
                     break
             if available_c_compiler is None:
                 raise RuntimeError(
-                    'Could not find GCC executable.\n\n'
-                    'HINT: On OS X, install GCC with '
-                    '`brew install gcc`. or '
-                    '`port install gcc`.')
+                    'Could not find supported GCC executable.\n\n'
+                    'HINT: On OS X, install GCC 9.x with '
+                    '`brew install gcc@9`. or '
+                    '`port install gcc9`.')
             os.environ['CC'] = available_c_compiler
 
             so_file_path = super()._build_impl()
@@ -478,7 +483,7 @@ def build_callback_fn(function_string, userdata_names=[]):
     ffibuilder.set_source(name, source_string,
                           include_dirs=[join(mujoco_path, 'include')],
                           library_dirs=[join(mujoco_path, 'bin')],
-                          libraries=['mujoco200'])
+                          libraries=['mujoco210'])
     # Catch compilation exceptions so we can cleanup partial files in that case
     try:
         library_path = ffibuilder.compile(verbose=True)
@@ -495,18 +500,7 @@ def build_callback_fn(function_string, userdata_names=[]):
     return module.lib.__fun
 
 
-def find_key():
-    ''' Try to find the key file, if missing, print out a big message '''
-    if exists(key_path):
-        return
-    print(MISSING_KEY_MESSAGE.format(key_path), file=sys.stderr)
-
-
-def activate():
-    functions.mj_activate(key_path)
-
-
-mujoco_path, key_path = discover_mujoco()
+mujoco_path = discover_mujoco()
 cymj = load_cython_ext(mujoco_path)
 
 

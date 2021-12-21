@@ -7,6 +7,7 @@ cdef extern from "mjui.h" nogil:
     enum: mjMAXUIMULTI
     enum: mjMAXUIEDIT
     enum: mjMAXUIRECT
+    enum: mjSEPCLOSED
 
 
     # predicate function: set enable/disable based on item category

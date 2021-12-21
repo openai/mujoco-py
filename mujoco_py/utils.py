@@ -5,17 +5,6 @@ from os.path import join, expanduser, exists
 
 import numpy as np
 
-MISSING_KEY_MESSAGE = '''
-You appear to be missing a License Key for mujoco.  We expected to find the
-file here: {}
-
-You can get licenses at this page:
-
-    https://www.roboti.us/license.html
-
-If python tries to activate an invalid license, the process will exit.
-'''
-
 MISSING_MUJOCO_MESSAGE = '''
 You appear to be missing MuJoCo.  We expected to find the file here: {}
 
@@ -75,15 +64,11 @@ def discover_mujoco():
     Currently assumes path is in ~/.mujoco
 
     Returns:
-    - mujoco_path (str): Path to MuJoCo 2.0 directory.
-    - key_path (str): Path to the MuJoCo license key.
+    - mujoco_path (str): Path to MuJoCo 2.1 directory.
     """
-    key_path = os.getenv('MUJOCO_PY_MJKEY_PATH')
-    if not key_path:
-        key_path = join(expanduser('~'), '.mujoco', 'mjkey.txt')
     mujoco_path = os.getenv('MUJOCO_PY_MUJOCO_PATH')
     if not mujoco_path:
-        mujoco_path = join(expanduser('~'), '.mujoco', 'mujoco200')
+        mujoco_path = join(expanduser('~'), '.mujoco', 'mujoco210')
 
     # We get lots of github issues that seem to be missing these
     # so check that mujoco is really there and raise errors if not.
@@ -91,9 +76,5 @@ def discover_mujoco():
         message = MISSING_MUJOCO_MESSAGE.format(mujoco_path)
         print(message, file=sys.stderr)
         raise Exception(message)
-    if not exists(key_path):
-        message = MISSING_KEY_MESSAGE.format(key_path)
-        print(message, file=sys.stderr)
-        raise Exception(message)
 
-    return (mujoco_path, key_path)
+    return mujoco_path

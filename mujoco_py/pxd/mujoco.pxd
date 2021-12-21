@@ -54,15 +54,6 @@ cdef extern from "mujoco.h" nogil:
     # deactivate license, free memory
     void mj_deactivate();
 
-    # server: generate certificate question
-    void mj_certQuestion(mjtNum question[16]);
-
-    # client: generate certificate answer given question
-    void mj_certAnswer(const mjtNum question[16], mjtNum answer[16]);
-
-    # server: check certificate question-answer pair; return 1 if match, 0 if mismatch
-    int mj_certCheck(const mjtNum question[16], const mjtNum answer[16]);
-
     #---------------------- Virtual file system --------------------------------------------
 
     # Initialize VFS to empty (no deallocation).
@@ -637,6 +628,11 @@ cdef extern from "mujoco.h" nogil:
     # Draw rectangle.
     void mjr_rectangle(mjrRect viewport, float r, float g, float b, float a);
 
+    # Draw rectangle with centered text.
+    void mjr_label(mjrRect viewport, int font, const char* txt,
+                   float r, float g, float b, float a, float rt, float gt, float bt,
+				           const mjrContext* con);
+
     # Draw 2D figure.
     void mjr_figure(mjrRect viewport, const mjvFigure* fig, const mjrContext* con);
 
@@ -656,6 +652,10 @@ cdef extern from "mujoco.h" nogil:
 
     # Add definitions to UI.
     void mjui_add(mjUI* ui, const mjuiDef* _def);
+
+    # Add definitions to UI section.
+    void mjui_addToSection(mjUI* ui, int sect, const mjuiDef* _def);
+
 
     # Compute UI sizes.
     void mjui_resize(mjUI* ui, const mjrContext* con);
@@ -1072,6 +1072,12 @@ cdef extern from "mujoco.h" nogil:
     # Insertion sort, resulting list is in increasing order.
     void mju_insertionSort(mjtNum* list, int n);
 
+    # Integer insertion sort, resulting list is in increasing order.
+    void mju_insertionSortInt(int* list, int n);
+
     # Generate Halton sequence.
     mjtNum mju_Halton(int index, int base);
+
+    # Sigmoid function over 0<=x<=1 constructed from half-quadratics.
+    mjtNum mju_sigmoid(mjtNum x);
 
