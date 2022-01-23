@@ -19,7 +19,6 @@ RUN apt-get update -q \
     wget \
     xpra \
     xserver-xorg-dev \
-    python3.8-venv \
     && apt-get clean \
     && rm -rf /var/lib/apt/lists/*
 
