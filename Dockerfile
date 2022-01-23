@@ -1,8 +1,8 @@
 # We need the CUDA base dockerfile to enable GPU rendering
 # on hosts with GPUs.
-# The image below is a pinned version of nvidia/cuda:9.1-cudnn7-devel-ubuntu16.04 (from Jan 2018)
+# The image below is a pinned version of nvidia/cuda:11.4.1-base-ubuntu20.04 (from Jan 2022)
 # If updating the base image, be sure to test on GPU since it has broken in the past.
-FROM nvidia/cuda@sha256:4df157f2afde1cb6077a191104ab134ed4b2fd62927f27b69d788e8e79a45fa1
+FROM nvidia/cuda@sha256:8480ffb4a547ba36cb9b9553eac5cdbb3fd33c346351c41a947279838817c7d8
 
 RUN apt-get update -q \
     && DEBIAN_FRONTEND=noninteractive apt-get install -y \
@@ -19,6 +19,7 @@ RUN apt-get update -q \
     wget \
     xpra \
     xserver-xorg-dev \
+    python3.8-venv \
     && apt-get clean \
     && rm -rf /var/lib/apt/lists/*
 
@@ -26,10 +27,8 @@ RUN DEBIAN_FRONTEND=noninteractive add-apt-repository --yes ppa:deadsnakes/ppa &
 RUN DEBIAN_FRONTEND=noninteractive apt-get install --yes python3.6-dev python3.6 python3-pip
 RUN virtualenv --python=python3.6 env
 
-RUN rm /usr/bin/python
-RUN ln -s /env/bin/python3.6 /usr/bin/python
-RUN ln -s /env/bin/pip3.6 /usr/bin/pip
-RUN ln -s /env/bin/pytest /usr/bin/pytest
+ENV VIRTUAL_ENV=/env
+ENV PATH="$VIRTUAL_ENV/bin:$PATH"
 
 RUN curl -o /usr/local/bin/patchelf https://s3-us-west-2.amazonaws.com/openai-sci-artifacts/manual-builds/patchelf_0.9_amd64.elf \
     && chmod +x /usr/local/bin/patchelf
@@ -55,8 +54,8 @@ WORKDIR /mujoco_py
 # expire until we actually change the requirements.
 COPY ./requirements.txt /mujoco_py/
 COPY ./requirements.dev.txt /mujoco_py/
-RUN pip install --no-cache-dir -r requirements.txt
-RUN pip install --no-cache-dir -r requirements.dev.txt
+RUN pip3 install --no-cache-dir -r requirements.txt
+RUN pip3 install --no-cache-dir -r requirements.dev.txt
 
 # Delay moving in the entire code until the very end.
 ENTRYPOINT ["/mujoco_py/vendor/Xdummy-entrypoint"]
