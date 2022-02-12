@@ -202,6 +202,37 @@ class MujocoExtensionBuilder():
     CYMJ_DIR_PATH = abspath(dirname(__file__))
 
     def __init__(self, mujoco_path):
+        
+        if sys.platform.startswith("win"):
+            # win default
+            _extra_compile_args = ['/openmp']
+            
+            # overwrite from environment
+            # set MUJOCO_COMPILE_EXTRA="/openmp /otherflags"
+            _env_compile_extra_args = os.getenv('MUJOCO_COMPILE_EXTRA')
+            _env_linker_extra_args = os.getenv('MUJOCO_LINKER_EXTRA')
+            
+            if len(_env_compile_extra_args) > 0:
+                _env_compile_extra_args = _env_compile_extra_args.split()
+            if len(_env_linker_extra_args) > 0:
+                _env_linker_extra_args = _env_linker_extra_args.split()
+        else:
+            _extra_compile_args = [
+                '-fopenmp',  # needed for OpenMP
+                '-w',        # suppress numpy compilation warnings
+            ]
+            _extra_linker_args = ['-fopenmp']
+
+        # in case we need add something else
+        # 2.1.1 mujoco lib in lib folder older release use bin
+        libs_dir = [join(mujoco_path, 'bin')]
+        libs_dir.append(join(mujoco_path, 'lib'))
+
+        # depend on distro 2.1.1 default lib name mujoco.lib
+        generated_libs = []
+        for d in libs_dir:
+            generated_libs += [lib_file for lib_file in os.listdir(d) if lib_file.endswith('.lib')]
+
         self.mujoco_path = mujoco_path
         python_version = str(sys.version_info.major) + str(sys.version_info.minor)
         self.version = '%s_%s_%s' % (get_version(), python_version, self.build_base())
@@ -213,13 +244,10 @@ class MujocoExtensionBuilder():
                 join(mujoco_path, 'include'),
                 np.get_include(),
             ],
-            libraries=['mujoco210'],
-            library_dirs=[join(mujoco_path, 'bin')],
-            extra_compile_args=[
-                '-fopenmp',  # needed for OpenMP
-                '-w',  # suppress numpy compilation warnings
-            ],
-            extra_link_args=['-fopenmp'],
+            libraries=generated_libs,
+            library_dirs=libs_dir,
+            extra_compile_args=_extra_compile_args,
+            extra_link_args=_extra_linker_args,
             language='c')
 
     def build(self):
