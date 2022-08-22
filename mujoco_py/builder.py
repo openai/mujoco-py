@@ -7,7 +7,7 @@ import sys
 from distutils.core import Extension
 from distutils.dist import Distribution
 from distutils.sysconfig import customize_compiler
-from importlib.machinery import ExtensionFileLoader
+from importlib.util import module_from_spec, spec_from_file_location
 from os.path import abspath, dirname, exists, join, getmtime
 from random import choice
 from shutil import move
@@ -126,8 +126,11 @@ def _ensure_set_env_var(var_name, lib_path):
 
 def load_dynamic_ext(name, path):
     """ Load compiled shared object and return as python module. """
-    loader = ExtensionFileLoader(name, path)
-    return loader.load_module()
+    spec = spec_from_file_location(name, path)
+    module = module_from_spec(spec)
+    sys.modules[name] = module
+    spec.loader.exec_module(module)
+    return module
 
 
 class custom_build_ext(build_ext):
