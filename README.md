@@ -1,8 +1,8 @@
 **Status**: Deprecated
 
-<span style="color: darkred; font-size: 120%; font-weight: 600">`mujoco-py` does not support versions of MuJoCo after 2.1.0.
-New users should depend on the <a href="https://github.com/deepmind/mujoco/blob/main/python/README.md">official MuJoCo Python bindings</a>.
-</span>
+### `mujoco-py` does not support versions of MuJoCo after 2.1.0.
+
+### New users should depend on the [official MuJoCo Python bindings](https://github.com/deepmind/mujoco/blob/main/python/README.md).
 
 # mujoco-py [![Documentation](https://img.shields.io/badge/docs-latest-brightgreen.svg?style=flat)](https://openai.github.io/mujoco-py/build/html/index.html) [![Build Status](https://travis-ci.org/openai/mujoco-py.svg?branch=master)](https://travis-ci.org/openai/mujoco-py)
 
