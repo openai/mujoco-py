@@ -11,7 +11,6 @@ from mujoco_py.utils import rec_copy, rec_assign
 from multiprocessing import Process, Queue
 from threading import Lock
 
-
 class MjViewerBasic(cymj.MjRenderContextWindow):
     """
     A simple display GUI showing the scene of an :class:`.MjSim` with a mouse-movable camera.
@@ -252,7 +251,7 @@ class MjViewer(MjViewerBasic):
         self.add_overlay(const.GRID_TOPLEFT, "Switch camera (#cams = %d)" % (self._ncam + 1),
                                              "[Tab] (camera ID = %d)" % self.cam.fixedcamid)
         self.add_overlay(const.GRID_TOPLEFT, "[C]ontact forces", "Off" if self.vopt.flags[
-                         10] == 1 else "On")
+                         const.VIS_CONTACTFORCE] == 0 else "On")
         self.add_overlay(
             const.GRID_TOPLEFT, "Referenc[e] frames", "Off" if self.vopt.frame == 1 else "On")
         self.add_overlay(const.GRID_TOPLEFT,
@@ -339,8 +338,7 @@ class MjViewer(MjViewerBasic):
         elif key == glfw.KEY_F:  # Speeds up simulation.
             self._run_speed *= 2.0
         elif key == glfw.KEY_C:  # Displays contact forces.
-            vopt = self.vopt
-            vopt.flags[10] = vopt.flags[11] = not vopt.flags[10]
+            self.vopt.flags[const.VIS_CONTACTFORCE] = not self.vopt.flags[const.VIS_CONTACTFORCE]
         elif key == glfw.KEY_D:  # turn off / turn on rendering every frame.
             self._render_every_frame = not self._render_every_frame
         elif key == glfw.KEY_E:
