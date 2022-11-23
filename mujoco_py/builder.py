@@ -28,9 +28,12 @@ def get_nvidia_lib_dir():
                                         stdout=subprocess.PIPE, stderr=subprocess.PIPE) == 0
     if not exists_nvidia_smi:
         return None
-    docker_path = '/usr/local/nvidia/lib64'
-    if exists(docker_path):
-        return docker_path
+    docker_path_v1 = '/usr/local/nvidia/lib64'
+    if exists(docker_path_v1):
+        return docker_path_v1
+    docker_path_v2 = '/usr/local/cuda/lib64'
+    if exists(docker_path_v2):
+        return docker_path_v2
 
     nvidia_path = '/usr/lib/nvidia'
     if exists(nvidia_path):
