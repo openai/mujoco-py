@@ -310,6 +310,7 @@ class MacExtensionBuilder(MujocoExtensionBuilder):
         self.extension.libraries.extend(['glfw.3'])
         self.extension.define_macros = [('ONMAC', None)]
         self.extension.runtime_library_dirs = [join(mujoco_path, 'bin')]
+        self.extension.include_dirs.extend([join(self.mujoco_path, 'MuJoCo.framework/Headers')])
 
     def _build_impl(self):
         if not os.environ.get('CC'):
@@ -323,6 +324,7 @@ class MacExtensionBuilder(MujocoExtensionBuilder):
                 '/opt/local/bin/gcc-mp-8',
                 '/opt/local/bin/gcc-mp-7',
                 '/opt/local/bin/gcc-mp-6',
+                '/usr/bin/clang',
             ]
             available_c_compiler = None
             for c_compiler in c_compilers:
@@ -332,10 +334,31 @@ class MacExtensionBuilder(MujocoExtensionBuilder):
             if available_c_compiler is None:
                 raise RuntimeError(
                     'Could not find supported GCC executable.\n\n'
-                    'HINT: On OS X, install GCC 9.x with '
+                    'HINT: On OS X, install Xcode and libomp (brew install libomp), or\n'
+                    'GCC 9.x with: '
                     '`brew install gcc@9`. or '
                     '`port install gcc9`.')
             os.environ['CC'] = available_c_compiler
+            if available_c_compiler ==  '/usr/bin/clang':
+                # Use standard Apple Xcode (with libomp for OpenMP): clang -Xpreprocessor -fopenmp -lomp
+                # Need to ensure libomp is in LIBRARY_PATH somewhere (e.g. /usr/local/lib or /opt/homebrew/lib)
+                self.extension.extra_compile_args=[
+                    '-Xpreprocessor',
+                    '-fopenmp',
+                    '-w'
+                ]
+                self.extension.extra_link_args=[
+                    '-lomp',
+                    '-framework',
+                    'MuJoCo',
+                    '-F',
+                    self.mujoco_path,
+                    '-rpath',
+                    self.mujoco_path
+                ]
+                self.extension.libraries=['omp', 'glfw.3']
+                self.extension.library_dirs.extend(['/usr/local/lib', '/opt/homebrew/lib'])
+                self.extension.include_dirs.extend(['/usr/local/include', '/opt/homebrew/include'])
 
             so_file_path = super()._build_impl()
             del os.environ['CC']
