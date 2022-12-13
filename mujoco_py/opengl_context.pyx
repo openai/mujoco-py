@@ -79,6 +79,10 @@ class GlfwContext(OpenGLContext):
                 print("Creating offscreen glfw")
             glfw.window_hint(glfw.VISIBLE, 0)
             glfw.window_hint(glfw.DOUBLEBUFFER, 0)
+            # For offscreen rendering, disable anti-aliasing. We do this because we often
+            # use Linux for offscreen rendering, which causes a difference in behavior
+            # when using Mac OS (which uses GLFW for off-screen rendering).
+            glfw.window_hint(glfw.SAMPLES, 0)
             init_width, init_height = self._INIT_WIDTH, self._INIT_HEIGHT
         else:
             if not quiet:
