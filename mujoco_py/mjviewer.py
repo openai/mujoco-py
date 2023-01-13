@@ -63,8 +63,7 @@ class MjViewerBasic(cymj.MjRenderContextWindow):
         if action == glfw.RELEASE and key == glfw.KEY_ESCAPE:
             print("Pressed ESC")
             print("Quitting.")
-            glfw.terminate()
-            sys.exit(0)
+            glfw.set_window_should_close(window, 1)
 
     def _cursor_pos_callback(self, window, xpos, ypos):
         if not (self._button_left_pressed or self._button_right_pressed):
