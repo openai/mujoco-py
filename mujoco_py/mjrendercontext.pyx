@@ -34,12 +34,9 @@ cdef class MjRenderContext(object):
     cdef public object sim
 
     def __cinit__(self):
-        maxgeom = 1000
-        mjv_makeScene(self._model_ptr, &self._scn, maxgeom)
-        mjv_defaultCamera(&self._cam)
-        mjv_defaultPerturb(&self._pert)
-        mjv_defaultOption(&self._vopt)
-        mjr_defaultContext(&self._con)
+        # __cinit__ run before __init__ self._model_ptr not init before call mjv_makeScene
+        # mv all init to line 54
+        pass
 
     def __init__(self, MjSim sim, bint offscreen=True, int device_id=-1, opengl_backend=None, quiet=False):
         self.sim = sim
@@ -54,6 +51,16 @@ cdef class MjRenderContext(object):
 
         self._model_ptr = sim.model.ptr
         self._data_ptr = sim.data.ptr
+
+        mjv_defaultCamera(&self._cam)
+        mjv_defaultPerturb(&self._pert)
+        mjv_defaultOption(&self._vopt)
+        mjr_defaultContext(&self._con)
+        mjv_defaultScene(&self._scn)
+
+        maxgeom = 1000
+        mjv_makeScene(self._model_ptr, &self._scn, maxgeom)
+
         self.scn = WrapMjvScene(&self._scn)
         self.cam = WrapMjvCamera(&self._cam)
         self.vopt = WrapMjvOption(&self._vopt)
