@@ -302,7 +302,7 @@ cdef class MjRenderContext(object):
 
 class MjRenderContextOffscreen(MjRenderContext):
 
-    def __cinit__(self, MjSim sim, int device_id):
+    def __init__(self, MjSim sim, int device_id):
         super().__init__(sim, offscreen=True, device_id=device_id)
 
 class MjRenderContextWindow(MjRenderContext):
