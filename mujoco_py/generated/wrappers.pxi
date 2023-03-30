@@ -1750,536 +1750,1400 @@ cdef class PyMjModel(object):
     def vis(self): return self._vis
     @property
     def stat(self): return self._stat
+
     @property
     def qpos0(self): return self._qpos0
+
     @property
     def qpos_spring(self): return self._qpos_spring
+
     @property
     def body_parentid(self): return self._body_parentid
+
+    def get_body_parentid(self, name):
+        id = self.body_name2id(name)
+        return self._body_parentid[id]
+
     @property
     def body_rootid(self): return self._body_rootid
+
+    def get_body_rootid(self, name):
+        id = self.body_name2id(name)
+        return self._body_rootid[id]
+
     @property
     def body_weldid(self): return self._body_weldid
+
+    def get_body_weldid(self, name):
+        id = self.body_name2id(name)
+        return self._body_weldid[id]
+
     @property
     def body_mocapid(self): return self._body_mocapid
+
+    def get_body_mocapid(self, name):
+        id = self.body_name2id(name)
+        return self._body_mocapid[id]
+
     @property
     def body_jntnum(self): return self._body_jntnum
+
+    def get_body_jntnum(self, name):
+        id = self.body_name2id(name)
+        return self._body_jntnum[id]
+
     @property
     def body_jntadr(self): return self._body_jntadr
+
+    def get_body_jntadr(self, name):
+        id = self.body_name2id(name)
+        return self._body_jntadr[id]
+
     @property
     def body_dofnum(self): return self._body_dofnum
+
+    def get_body_dofnum(self, name):
+        id = self.body_name2id(name)
+        return self._body_dofnum[id]
+
     @property
     def body_dofadr(self): return self._body_dofadr
+
+    def get_body_dofadr(self, name):
+        id = self.body_name2id(name)
+        return self._body_dofadr[id]
+
     @property
     def body_geomnum(self): return self._body_geomnum
+
+    def get_body_geomnum(self, name):
+        id = self.body_name2id(name)
+        return self._body_geomnum[id]
+
     @property
     def body_geomadr(self): return self._body_geomadr
+
+    def get_body_geomadr(self, name):
+        id = self.body_name2id(name)
+        return self._body_geomadr[id]
+
     @property
     def body_simple(self): return self._body_simple
+
+    def get_body_simple(self, name):
+        id = self.body_name2id(name)
+        return self._body_simple[id]
+
     @property
     def body_sameframe(self): return self._body_sameframe
+
+    def get_body_sameframe(self, name):
+        id = self.body_name2id(name)
+        return self._body_sameframe[id]
+
     @property
     def body_pos(self): return self._body_pos
+
+    def get_body_pos(self, name):
+        id = self.body_name2id(name)
+        return self._body_pos[id]
+
     @property
     def body_quat(self): return self._body_quat
+
+    def get_body_quat(self, name):
+        id = self.body_name2id(name)
+        return self._body_quat[id]
+
     @property
     def body_ipos(self): return self._body_ipos
+
+    def get_body_ipos(self, name):
+        id = self.body_name2id(name)
+        return self._body_ipos[id]
+
     @property
     def body_iquat(self): return self._body_iquat
+
+    def get_body_iquat(self, name):
+        id = self.body_name2id(name)
+        return self._body_iquat[id]
+
     @property
     def body_mass(self): return self._body_mass
+
+    def get_body_mass(self, name):
+        id = self.body_name2id(name)
+        return self._body_mass[id]
+
     @property
     def body_subtreemass(self): return self._body_subtreemass
+
+    def get_body_subtreemass(self, name):
+        id = self.body_name2id(name)
+        return self._body_subtreemass[id]
+
     @property
     def body_inertia(self): return self._body_inertia
+
+    def get_body_inertia(self, name):
+        id = self.body_name2id(name)
+        return self._body_inertia[id]
+
     @property
     def body_invweight0(self): return self._body_invweight0
+
+    def get_body_invweight0(self, name):
+        id = self.body_name2id(name)
+        return self._body_invweight0[id]
+
     @property
     def body_user(self): return self._body_user
+
+    def get_body_user(self, name):
+        id = self.body_name2id(name)
+        return self._body_user[id]
+
     @property
     def jnt_type(self): return self._jnt_type
+
+    def get_jnt_type(self, name):
+        id = self.joint_name2id(name)
+        return self._jnt_type[id]
+
     @property
     def jnt_qposadr(self): return self._jnt_qposadr
+
+    def get_jnt_qposadr(self, name):
+        id = self.joint_name2id(name)
+        return self._jnt_qposadr[id]
+
     @property
     def jnt_dofadr(self): return self._jnt_dofadr
+
+    def get_jnt_dofadr(self, name):
+        id = self.joint_name2id(name)
+        return self._jnt_dofadr[id]
+
     @property
     def jnt_bodyid(self): return self._jnt_bodyid
+
+    def get_jnt_bodyid(self, name):
+        id = self.joint_name2id(name)
+        return self._jnt_bodyid[id]
+
     @property
     def jnt_group(self): return self._jnt_group
+
+    def get_jnt_group(self, name):
+        id = self.joint_name2id(name)
+        return self._jnt_group[id]
+
     @property
     def jnt_limited(self): return self._jnt_limited
+
+    def get_jnt_limited(self, name):
+        id = self.joint_name2id(name)
+        return self._jnt_limited[id]
+
     @property
     def jnt_solref(self): return self._jnt_solref
+
+    def get_jnt_solref(self, name):
+        id = self.joint_name2id(name)
+        return self._jnt_solref[id]
+
     @property
     def jnt_solimp(self): return self._jnt_solimp
+
+    def get_jnt_solimp(self, name):
+        id = self.joint_name2id(name)
+        return self._jnt_solimp[id]
+
     @property
     def jnt_pos(self): return self._jnt_pos
+
+    def get_jnt_pos(self, name):
+        id = self.joint_name2id(name)
+        return self._jnt_pos[id]
+
     @property
     def jnt_axis(self): return self._jnt_axis
+
+    def get_jnt_axis(self, name):
+        id = self.joint_name2id(name)
+        return self._jnt_axis[id]
+
     @property
     def jnt_stiffness(self): return self._jnt_stiffness
+
+    def get_jnt_stiffness(self, name):
+        id = self.joint_name2id(name)
+        return self._jnt_stiffness[id]
+
     @property
     def jnt_range(self): return self._jnt_range
+
+    def get_jnt_range(self, name):
+        id = self.joint_name2id(name)
+        return self._jnt_range[id]
+
     @property
     def jnt_margin(self): return self._jnt_margin
+
+    def get_jnt_margin(self, name):
+        id = self.joint_name2id(name)
+        return self._jnt_margin[id]
+
     @property
     def jnt_user(self): return self._jnt_user
+
+    def get_jnt_user(self, name):
+        id = self.joint_name2id(name)
+        return self._jnt_user[id]
+
     @property
     def dof_bodyid(self): return self._dof_bodyid
+
     @property
     def dof_jntid(self): return self._dof_jntid
+
     @property
     def dof_parentid(self): return self._dof_parentid
+
     @property
     def dof_Madr(self): return self._dof_Madr
+
     @property
     def dof_simplenum(self): return self._dof_simplenum
+
     @property
     def dof_solref(self): return self._dof_solref
+
     @property
     def dof_solimp(self): return self._dof_solimp
+
     @property
     def dof_frictionloss(self): return self._dof_frictionloss
+
     @property
     def dof_armature(self): return self._dof_armature
+
     @property
     def dof_damping(self): return self._dof_damping
+
     @property
     def dof_invweight0(self): return self._dof_invweight0
+
     @property
     def dof_M0(self): return self._dof_M0
+
     @property
     def geom_type(self): return self._geom_type
+
+    def get_geom_type(self, name):
+        id = self.geom_name2id(name)
+        return self._geom_type[id]
+
     @property
     def geom_contype(self): return self._geom_contype
+
+    def get_geom_contype(self, name):
+        id = self.geom_name2id(name)
+        return self._geom_contype[id]
+
     @property
     def geom_conaffinity(self): return self._geom_conaffinity
+
+    def get_geom_conaffinity(self, name):
+        id = self.geom_name2id(name)
+        return self._geom_conaffinity[id]
+
     @property
     def geom_condim(self): return self._geom_condim
+
+    def get_geom_condim(self, name):
+        id = self.geom_name2id(name)
+        return self._geom_condim[id]
+
     @property
     def geom_bodyid(self): return self._geom_bodyid
+
+    def get_geom_bodyid(self, name):
+        id = self.geom_name2id(name)
+        return self._geom_bodyid[id]
+
     @property
     def geom_dataid(self): return self._geom_dataid
+
+    def get_geom_dataid(self, name):
+        id = self.geom_name2id(name)
+        return self._geom_dataid[id]
+
     @property
     def geom_matid(self): return self._geom_matid
+
+    def get_geom_matid(self, name):
+        id = self.geom_name2id(name)
+        return self._geom_matid[id]
+
     @property
     def geom_group(self): return self._geom_group
+
+    def get_geom_group(self, name):
+        id = self.geom_name2id(name)
+        return self._geom_group[id]
+
     @property
     def geom_priority(self): return self._geom_priority
+
+    def get_geom_priority(self, name):
+        id = self.geom_name2id(name)
+        return self._geom_priority[id]
+
     @property
     def geom_sameframe(self): return self._geom_sameframe
+
+    def get_geom_sameframe(self, name):
+        id = self.geom_name2id(name)
+        return self._geom_sameframe[id]
+
     @property
     def geom_solmix(self): return self._geom_solmix
+
+    def get_geom_solmix(self, name):
+        id = self.geom_name2id(name)
+        return self._geom_solmix[id]
+
     @property
     def geom_solref(self): return self._geom_solref
+
+    def get_geom_solref(self, name):
+        id = self.geom_name2id(name)
+        return self._geom_solref[id]
+
     @property
     def geom_solimp(self): return self._geom_solimp
+
+    def get_geom_solimp(self, name):
+        id = self.geom_name2id(name)
+        return self._geom_solimp[id]
+
     @property
     def geom_size(self): return self._geom_size
+
+    def get_geom_size(self, name):
+        id = self.geom_name2id(name)
+        return self._geom_size[id]
+
     @property
     def geom_rbound(self): return self._geom_rbound
+
+    def get_geom_rbound(self, name):
+        id = self.geom_name2id(name)
+        return self._geom_rbound[id]
+
     @property
     def geom_pos(self): return self._geom_pos
+
+    def get_geom_pos(self, name):
+        id = self.geom_name2id(name)
+        return self._geom_pos[id]
+
     @property
     def geom_quat(self): return self._geom_quat
+
+    def get_geom_quat(self, name):
+        id = self.geom_name2id(name)
+        return self._geom_quat[id]
+
     @property
     def geom_friction(self): return self._geom_friction
+
+    def get_geom_friction(self, name):
+        id = self.geom_name2id(name)
+        return self._geom_friction[id]
+
     @property
     def geom_margin(self): return self._geom_margin
+
+    def get_geom_margin(self, name):
+        id = self.geom_name2id(name)
+        return self._geom_margin[id]
+
     @property
     def geom_gap(self): return self._geom_gap
+
+    def get_geom_gap(self, name):
+        id = self.geom_name2id(name)
+        return self._geom_gap[id]
+
     @property
     def geom_user(self): return self._geom_user
+
+    def get_geom_user(self, name):
+        id = self.geom_name2id(name)
+        return self._geom_user[id]
+
     @property
     def geom_rgba(self): return self._geom_rgba
+
+    def get_geom_rgba(self, name):
+        id = self.geom_name2id(name)
+        return self._geom_rgba[id]
+
     @property
     def site_type(self): return self._site_type
+
+    def get_site_type(self, name):
+        id = self.site_name2id(name)
+        return self._site_type[id]
+
     @property
     def site_bodyid(self): return self._site_bodyid
+
+    def get_site_bodyid(self, name):
+        id = self.site_name2id(name)
+        return self._site_bodyid[id]
+
     @property
     def site_matid(self): return self._site_matid
+
+    def get_site_matid(self, name):
+        id = self.site_name2id(name)
+        return self._site_matid[id]
+
     @property
     def site_group(self): return self._site_group
+
+    def get_site_group(self, name):
+        id = self.site_name2id(name)
+        return self._site_group[id]
+
     @property
     def site_sameframe(self): return self._site_sameframe
+
+    def get_site_sameframe(self, name):
+        id = self.site_name2id(name)
+        return self._site_sameframe[id]
+
     @property
     def site_size(self): return self._site_size
+
+    def get_site_size(self, name):
+        id = self.site_name2id(name)
+        return self._site_size[id]
+
     @property
     def site_pos(self): return self._site_pos
+
+    def get_site_pos(self, name):
+        id = self.site_name2id(name)
+        return self._site_pos[id]
+
     @property
     def site_quat(self): return self._site_quat
+
+    def get_site_quat(self, name):
+        id = self.site_name2id(name)
+        return self._site_quat[id]
+
     @property
     def site_user(self): return self._site_user
+
+    def get_site_user(self, name):
+        id = self.site_name2id(name)
+        return self._site_user[id]
+
     @property
     def site_rgba(self): return self._site_rgba
+
+    def get_site_rgba(self, name):
+        id = self.site_name2id(name)
+        return self._site_rgba[id]
+
     @property
     def cam_mode(self): return self._cam_mode
+
+    def get_cam_mode(self, name):
+        id = self.camera_name2id(name)
+        return self._cam_mode[id]
+
     @property
     def cam_bodyid(self): return self._cam_bodyid
+
+    def get_cam_bodyid(self, name):
+        id = self.camera_name2id(name)
+        return self._cam_bodyid[id]
+
     @property
     def cam_targetbodyid(self): return self._cam_targetbodyid
+
+    def get_cam_targetbodyid(self, name):
+        id = self.camera_name2id(name)
+        return self._cam_targetbodyid[id]
+
     @property
     def cam_pos(self): return self._cam_pos
+
+    def get_cam_pos(self, name):
+        id = self.camera_name2id(name)
+        return self._cam_pos[id]
+
     @property
     def cam_quat(self): return self._cam_quat
+
+    def get_cam_quat(self, name):
+        id = self.camera_name2id(name)
+        return self._cam_quat[id]
+
     @property
     def cam_poscom0(self): return self._cam_poscom0
+
+    def get_cam_poscom0(self, name):
+        id = self.camera_name2id(name)
+        return self._cam_poscom0[id]
+
     @property
     def cam_pos0(self): return self._cam_pos0
+
+    def get_cam_pos0(self, name):
+        id = self.camera_name2id(name)
+        return self._cam_pos0[id]
+
     @property
     def cam_mat0(self): return self._cam_mat0
+
+    def get_cam_mat0(self, name):
+        id = self.camera_name2id(name)
+        return self._cam_mat0[id]
+
     @property
     def cam_fovy(self): return self._cam_fovy
+
+    def get_cam_fovy(self, name):
+        id = self.camera_name2id(name)
+        return self._cam_fovy[id]
+
     @property
     def cam_ipd(self): return self._cam_ipd
+
+    def get_cam_ipd(self, name):
+        id = self.camera_name2id(name)
+        return self._cam_ipd[id]
+
     @property
     def cam_user(self): return self._cam_user
+
+    def get_cam_user(self, name):
+        id = self.camera_name2id(name)
+        return self._cam_user[id]
+
     @property
     def light_mode(self): return self._light_mode
+
+    def get_light_mode(self, name):
+        id = self.light_name2id(name)
+        return self._light_mode[id]
+
     @property
     def light_bodyid(self): return self._light_bodyid
+
+    def get_light_bodyid(self, name):
+        id = self.light_name2id(name)
+        return self._light_bodyid[id]
+
     @property
     def light_targetbodyid(self): return self._light_targetbodyid
+
+    def get_light_targetbodyid(self, name):
+        id = self.light_name2id(name)
+        return self._light_targetbodyid[id]
+
     @property
     def light_directional(self): return self._light_directional
+
+    def get_light_directional(self, name):
+        id = self.light_name2id(name)
+        return self._light_directional[id]
+
     @property
     def light_castshadow(self): return self._light_castshadow
+
+    def get_light_castshadow(self, name):
+        id = self.light_name2id(name)
+        return self._light_castshadow[id]
+
     @property
     def light_active(self): return self._light_active
+
+    def get_light_active(self, name):
+        id = self.light_name2id(name)
+        return self._light_active[id]
+
     @property
     def light_pos(self): return self._light_pos
+
+    def get_light_pos(self, name):
+        id = self.light_name2id(name)
+        return self._light_pos[id]
+
     @property
     def light_dir(self): return self._light_dir
+
+    def get_light_dir(self, name):
+        id = self.light_name2id(name)
+        return self._light_dir[id]
+
     @property
     def light_poscom0(self): return self._light_poscom0
+
+    def get_light_poscom0(self, name):
+        id = self.light_name2id(name)
+        return self._light_poscom0[id]
+
     @property
     def light_pos0(self): return self._light_pos0
+
+    def get_light_pos0(self, name):
+        id = self.light_name2id(name)
+        return self._light_pos0[id]
+
     @property
     def light_dir0(self): return self._light_dir0
+
+    def get_light_dir0(self, name):
+        id = self.light_name2id(name)
+        return self._light_dir0[id]
+
     @property
     def light_attenuation(self): return self._light_attenuation
+
+    def get_light_attenuation(self, name):
+        id = self.light_name2id(name)
+        return self._light_attenuation[id]
+
     @property
     def light_cutoff(self): return self._light_cutoff
+
+    def get_light_cutoff(self, name):
+        id = self.light_name2id(name)
+        return self._light_cutoff[id]
+
     @property
     def light_exponent(self): return self._light_exponent
+
+    def get_light_exponent(self, name):
+        id = self.light_name2id(name)
+        return self._light_exponent[id]
+
     @property
     def light_ambient(self): return self._light_ambient
+
+    def get_light_ambient(self, name):
+        id = self.light_name2id(name)
+        return self._light_ambient[id]
+
     @property
     def light_diffuse(self): return self._light_diffuse
+
+    def get_light_diffuse(self, name):
+        id = self.light_name2id(name)
+        return self._light_diffuse[id]
+
     @property
     def light_specular(self): return self._light_specular
+
+    def get_light_specular(self, name):
+        id = self.light_name2id(name)
+        return self._light_specular[id]
+
     @property
     def mesh_vertadr(self): return self._mesh_vertadr
+
+    def get_mesh_vertadr(self, name):
+        id = self.mesh_name2id(name)
+        return self._mesh_vertadr[id]
+
     @property
     def mesh_vertnum(self): return self._mesh_vertnum
+
+    def get_mesh_vertnum(self, name):
+        id = self.mesh_name2id(name)
+        return self._mesh_vertnum[id]
+
     @property
     def mesh_texcoordadr(self): return self._mesh_texcoordadr
+
+    def get_mesh_texcoordadr(self, name):
+        id = self.mesh_name2id(name)
+        return self._mesh_texcoordadr[id]
+
     @property
     def mesh_faceadr(self): return self._mesh_faceadr
+
+    def get_mesh_faceadr(self, name):
+        id = self.mesh_name2id(name)
+        return self._mesh_faceadr[id]
+
     @property
     def mesh_facenum(self): return self._mesh_facenum
+
+    def get_mesh_facenum(self, name):
+        id = self.mesh_name2id(name)
+        return self._mesh_facenum[id]
+
     @property
     def mesh_graphadr(self): return self._mesh_graphadr
+
+    def get_mesh_graphadr(self, name):
+        id = self.mesh_name2id(name)
+        return self._mesh_graphadr[id]
+
     @property
     def mesh_vert(self): return self._mesh_vert
+
     @property
     def mesh_normal(self): return self._mesh_normal
+
     @property
     def mesh_texcoord(self): return self._mesh_texcoord
+
     @property
     def mesh_face(self): return self._mesh_face
+
     @property
     def mesh_graph(self): return self._mesh_graph
+
     @property
     def skin_matid(self): return self._skin_matid
+
     @property
     def skin_rgba(self): return self._skin_rgba
+
     @property
     def skin_inflate(self): return self._skin_inflate
+
     @property
     def skin_vertadr(self): return self._skin_vertadr
+
     @property
     def skin_vertnum(self): return self._skin_vertnum
+
     @property
     def skin_texcoordadr(self): return self._skin_texcoordadr
+
     @property
     def skin_faceadr(self): return self._skin_faceadr
+
     @property
     def skin_facenum(self): return self._skin_facenum
+
     @property
     def skin_boneadr(self): return self._skin_boneadr
+
     @property
     def skin_bonenum(self): return self._skin_bonenum
+
     @property
     def skin_vert(self): return self._skin_vert
+
     @property
     def skin_texcoord(self): return self._skin_texcoord
+
     @property
     def skin_face(self): return self._skin_face
+
     @property
     def skin_bonevertadr(self): return self._skin_bonevertadr
+
     @property
     def skin_bonevertnum(self): return self._skin_bonevertnum
+
     @property
     def skin_bonebindpos(self): return self._skin_bonebindpos
+
     @property
     def skin_bonebindquat(self): return self._skin_bonebindquat
+
     @property
     def skin_bonebodyid(self): return self._skin_bonebodyid
+
     @property
     def skin_bonevertid(self): return self._skin_bonevertid
+
     @property
     def skin_bonevertweight(self): return self._skin_bonevertweight
+
     @property
     def hfield_size(self): return self._hfield_size
+
     @property
     def hfield_nrow(self): return self._hfield_nrow
+
     @property
     def hfield_ncol(self): return self._hfield_ncol
+
     @property
     def hfield_adr(self): return self._hfield_adr
+
     @property
     def hfield_data(self): return self._hfield_data
+
     @property
     def tex_type(self): return self._tex_type
+
     @property
     def tex_height(self): return self._tex_height
+
     @property
     def tex_width(self): return self._tex_width
+
     @property
     def tex_adr(self): return self._tex_adr
+
     @property
     def tex_rgb(self): return self._tex_rgb
+
     @property
     def mat_texid(self): return self._mat_texid
+
     @property
     def mat_texuniform(self): return self._mat_texuniform
+
     @property
     def mat_texrepeat(self): return self._mat_texrepeat
+
     @property
     def mat_emission(self): return self._mat_emission
+
     @property
     def mat_specular(self): return self._mat_specular
+
     @property
     def mat_shininess(self): return self._mat_shininess
+
     @property
     def mat_reflectance(self): return self._mat_reflectance
+
     @property
     def mat_rgba(self): return self._mat_rgba
+
     @property
     def pair_dim(self): return self._pair_dim
+
     @property
     def pair_geom1(self): return self._pair_geom1
+
     @property
     def pair_geom2(self): return self._pair_geom2
+
     @property
     def pair_signature(self): return self._pair_signature
+
     @property
     def pair_solref(self): return self._pair_solref
+
     @property
     def pair_solimp(self): return self._pair_solimp
+
     @property
     def pair_margin(self): return self._pair_margin
+
     @property
     def pair_gap(self): return self._pair_gap
+
     @property
     def pair_friction(self): return self._pair_friction
+
     @property
     def exclude_signature(self): return self._exclude_signature
+
     @property
     def eq_type(self): return self._eq_type
+
     @property
     def eq_obj1id(self): return self._eq_obj1id
+
     @property
     def eq_obj2id(self): return self._eq_obj2id
+
     @property
     def eq_active(self): return self._eq_active
+
     @property
     def eq_solref(self): return self._eq_solref
+
     @property
     def eq_solimp(self): return self._eq_solimp
+
     @property
     def eq_data(self): return self._eq_data
+
     @property
     def tendon_adr(self): return self._tendon_adr
+
+    def get_tendon_adr(self, name):
+        id = self.tendon_name2id(name)
+        return self._tendon_adr[id]
+
     @property
     def tendon_num(self): return self._tendon_num
+
+    def get_tendon_num(self, name):
+        id = self.tendon_name2id(name)
+        return self._tendon_num[id]
+
     @property
     def tendon_matid(self): return self._tendon_matid
+
+    def get_tendon_matid(self, name):
+        id = self.tendon_name2id(name)
+        return self._tendon_matid[id]
+
     @property
     def tendon_group(self): return self._tendon_group
+
+    def get_tendon_group(self, name):
+        id = self.tendon_name2id(name)
+        return self._tendon_group[id]
+
     @property
     def tendon_limited(self): return self._tendon_limited
+
+    def get_tendon_limited(self, name):
+        id = self.tendon_name2id(name)
+        return self._tendon_limited[id]
+
     @property
     def tendon_width(self): return self._tendon_width
+
+    def get_tendon_width(self, name):
+        id = self.tendon_name2id(name)
+        return self._tendon_width[id]
+
     @property
     def tendon_solref_lim(self): return self._tendon_solref_lim
+
+    def get_tendon_solref_lim(self, name):
+        id = self.tendon_name2id(name)
+        return self._tendon_solref_lim[id]
+
     @property
     def tendon_solimp_lim(self): return self._tendon_solimp_lim
+
+    def get_tendon_solimp_lim(self, name):
+        id = self.tendon_name2id(name)
+        return self._tendon_solimp_lim[id]
+
     @property
     def tendon_solref_fri(self): return self._tendon_solref_fri
+
+    def get_tendon_solref_fri(self, name):
+        id = self.tendon_name2id(name)
+        return self._tendon_solref_fri[id]
+
     @property
     def tendon_solimp_fri(self): return self._tendon_solimp_fri
+
+    def get_tendon_solimp_fri(self, name):
+        id = self.tendon_name2id(name)
+        return self._tendon_solimp_fri[id]
+
     @property
     def tendon_range(self): return self._tendon_range
+
+    def get_tendon_range(self, name):
+        id = self.tendon_name2id(name)
+        return self._tendon_range[id]
+
     @property
     def tendon_margin(self): return self._tendon_margin
+
+    def get_tendon_margin(self, name):
+        id = self.tendon_name2id(name)
+        return self._tendon_margin[id]
+
     @property
     def tendon_stiffness(self): return self._tendon_stiffness
+
+    def get_tendon_stiffness(self, name):
+        id = self.tendon_name2id(name)
+        return self._tendon_stiffness[id]
+
     @property
     def tendon_damping(self): return self._tendon_damping
+
+    def get_tendon_damping(self, name):
+        id = self.tendon_name2id(name)
+        return self._tendon_damping[id]
+
     @property
     def tendon_frictionloss(self): return self._tendon_frictionloss
+
+    def get_tendon_frictionloss(self, name):
+        id = self.tendon_name2id(name)
+        return self._tendon_frictionloss[id]
+
     @property
     def tendon_lengthspring(self): return self._tendon_lengthspring
+
+    def get_tendon_lengthspring(self, name):
+        id = self.tendon_name2id(name)
+        return self._tendon_lengthspring[id]
+
     @property
     def tendon_length0(self): return self._tendon_length0
+
+    def get_tendon_length0(self, name):
+        id = self.tendon_name2id(name)
+        return self._tendon_length0[id]
+
     @property
     def tendon_invweight0(self): return self._tendon_invweight0
+
+    def get_tendon_invweight0(self, name):
+        id = self.tendon_name2id(name)
+        return self._tendon_invweight0[id]
+
     @property
     def tendon_user(self): return self._tendon_user
+
+    def get_tendon_user(self, name):
+        id = self.tendon_name2id(name)
+        return self._tendon_user[id]
+
     @property
     def tendon_rgba(self): return self._tendon_rgba
+
+    def get_tendon_rgba(self, name):
+        id = self.tendon_name2id(name)
+        return self._tendon_rgba[id]
+
     @property
     def wrap_type(self): return self._wrap_type
+
     @property
     def wrap_objid(self): return self._wrap_objid
+
     @property
     def wrap_prm(self): return self._wrap_prm
+
     @property
     def actuator_trntype(self): return self._actuator_trntype
+
+    def get_actuator_trntype(self, name):
+        id = self.actuator_name2id(name)
+        return self._actuator_trntype[id]
+
     @property
     def actuator_dyntype(self): return self._actuator_dyntype
+
+    def get_actuator_dyntype(self, name):
+        id = self.actuator_name2id(name)
+        return self._actuator_dyntype[id]
+
     @property
     def actuator_gaintype(self): return self._actuator_gaintype
+
+    def get_actuator_gaintype(self, name):
+        id = self.actuator_name2id(name)
+        return self._actuator_gaintype[id]
+
     @property
     def actuator_biastype(self): return self._actuator_biastype
+
+    def get_actuator_biastype(self, name):
+        id = self.actuator_name2id(name)
+        return self._actuator_biastype[id]
+
     @property
     def actuator_trnid(self): return self._actuator_trnid
+
+    def get_actuator_trnid(self, name):
+        id = self.actuator_name2id(name)
+        return self._actuator_trnid[id]
+
     @property
     def actuator_group(self): return self._actuator_group
+
+    def get_actuator_group(self, name):
+        id = self.actuator_name2id(name)
+        return self._actuator_group[id]
+
     @property
     def actuator_ctrllimited(self): return self._actuator_ctrllimited
+
+    def get_actuator_ctrllimited(self, name):
+        id = self.actuator_name2id(name)
+        return self._actuator_ctrllimited[id]
+
     @property
     def actuator_forcelimited(self): return self._actuator_forcelimited
+
+    def get_actuator_forcelimited(self, name):
+        id = self.actuator_name2id(name)
+        return self._actuator_forcelimited[id]
+
     @property
     def actuator_dynprm(self): return self._actuator_dynprm
+
+    def get_actuator_dynprm(self, name):
+        id = self.actuator_name2id(name)
+        return self._actuator_dynprm[id]
+
     @property
     def actuator_gainprm(self): return self._actuator_gainprm
+
+    def get_actuator_gainprm(self, name):
+        id = self.actuator_name2id(name)
+        return self._actuator_gainprm[id]
+
     @property
     def actuator_biasprm(self): return self._actuator_biasprm
+
+    def get_actuator_biasprm(self, name):
+        id = self.actuator_name2id(name)
+        return self._actuator_biasprm[id]
+
     @property
     def actuator_ctrlrange(self): return self._actuator_ctrlrange
+
+    def get_actuator_ctrlrange(self, name):
+        id = self.actuator_name2id(name)
+        return self._actuator_ctrlrange[id]
+
     @property
     def actuator_forcerange(self): return self._actuator_forcerange
+
+    def get_actuator_forcerange(self, name):
+        id = self.actuator_name2id(name)
+        return self._actuator_forcerange[id]
+
     @property
     def actuator_gear(self): return self._actuator_gear
+
+    def get_actuator_gear(self, name):
+        id = self.actuator_name2id(name)
+        return self._actuator_gear[id]
+
     @property
     def actuator_cranklength(self): return self._actuator_cranklength
+
+    def get_actuator_cranklength(self, name):
+        id = self.actuator_name2id(name)
+        return self._actuator_cranklength[id]
+
     @property
     def actuator_acc0(self): return self._actuator_acc0
+
+    def get_actuator_acc0(self, name):
+        id = self.actuator_name2id(name)
+        return self._actuator_acc0[id]
+
     @property
     def actuator_length0(self): return self._actuator_length0
+
+    def get_actuator_length0(self, name):
+        id = self.actuator_name2id(name)
+        return self._actuator_length0[id]
+
     @property
     def actuator_lengthrange(self): return self._actuator_lengthrange
+
+    def get_actuator_lengthrange(self, name):
+        id = self.actuator_name2id(name)
+        return self._actuator_lengthrange[id]
+
     @property
     def actuator_user(self): return self._actuator_user
+
+    def get_actuator_user(self, name):
+        id = self.actuator_name2id(name)
+        return self._actuator_user[id]
+
     @property
     def sensor_type(self): return self._sensor_type
+
+    def get_sensor_type(self, name):
+        id = self.sensor_name2id(name)
+        return self._sensor_type[id]
+
     @property
     def sensor_datatype(self): return self._sensor_datatype
+
+    def get_sensor_datatype(self, name):
+        id = self.sensor_name2id(name)
+        return self._sensor_datatype[id]
+
     @property
     def sensor_needstage(self): return self._sensor_needstage
+
+    def get_sensor_needstage(self, name):
+        id = self.sensor_name2id(name)
+        return self._sensor_needstage[id]
+
     @property
     def sensor_objtype(self): return self._sensor_objtype
+
+    def get_sensor_objtype(self, name):
+        id = self.sensor_name2id(name)
+        return self._sensor_objtype[id]
+
     @property
     def sensor_objid(self): return self._sensor_objid
+
+    def get_sensor_objid(self, name):
+        id = self.sensor_name2id(name)
+        return self._sensor_objid[id]
+
     @property
     def sensor_dim(self): return self._sensor_dim
+
+    def get_sensor_dim(self, name):
+        id = self.sensor_name2id(name)
+        return self._sensor_dim[id]
+
     @property
     def sensor_adr(self): return self._sensor_adr
+
+    def get_sensor_adr(self, name):
+        id = self.sensor_name2id(name)
+        return self._sensor_adr[id]
+
     @property
     def sensor_cutoff(self): return self._sensor_cutoff
+
+    def get_sensor_cutoff(self, name):
+        id = self.sensor_name2id(name)
+        return self._sensor_cutoff[id]
+
     @property
     def sensor_noise(self): return self._sensor_noise
+
+    def get_sensor_noise(self, name):
+        id = self.sensor_name2id(name)
+        return self._sensor_noise[id]
+
     @property
     def sensor_user(self): return self._sensor_user
+
+    def get_sensor_user(self, name):
+        id = self.sensor_name2id(name)
+        return self._sensor_user[id]
+
     @property
     def numeric_adr(self): return self._numeric_adr
+
     @property
     def numeric_size(self): return self._numeric_size
+
     @property
     def numeric_data(self): return self._numeric_data
+
     @property
     def text_adr(self): return self._text_adr
+
     @property
     def text_size(self): return self._text_size
+
     @property
     def text_data(self): return self._text_data
+
     @property
     def tuple_adr(self): return self._tuple_adr
+
     @property
     def tuple_size(self): return self._tuple_size
+
     @property
     def tuple_objtype(self): return self._tuple_objtype
+
     @property
     def tuple_objid(self): return self._tuple_objid
+
     @property
     def tuple_objprm(self): return self._tuple_objprm
+
     @property
     def key_time(self): return self._key_time
+
     @property
     def key_qpos(self): return self._key_qpos
+
     @property
     def key_qvel(self): return self._key_qvel
+
     @property
     def key_act(self): return self._key_act
+
     @property
     def key_mpos(self): return self._key_mpos
     @property
     def key_mquat(self): return self._key_mquat
     @property
     def name_bodyadr(self): return self._name_bodyadr
+
     @property
     def name_jntadr(self): return self._name_jntadr
+
     @property
     def name_geomadr(self): return self._name_geomadr
+
     @property
     def name_siteadr(self): return self._name_siteadr
+
     @property
     def name_camadr(self): return self._name_camadr
+
     @property
     def name_lightadr(self): return self._name_lightadr
+
     @property
     def name_meshadr(self): return self._name_meshadr
+
     @property
     def name_skinadr(self): return self._name_skinadr
+
     @property
     def name_hfieldadr(self): return self._name_hfieldadr
+
     @property
     def name_texadr(self): return self._name_texadr
+
     @property
     def name_matadr(self): return self._name_matadr
+
     @property
     def name_pairadr(self): return self._name_pairadr
+
     @property
     def name_excludeadr(self): return self._name_excludeadr
+
     @property
     def name_eqadr(self): return self._name_eqadr
+
     @property
     def name_tendonadr(self): return self._name_tendonadr
+
     @property
     def name_actuatoradr(self): return self._name_actuatoradr
+
     @property
     def name_sensoradr(self): return self._name_sensoradr
+
     @property
     def name_numericadr(self): return self._name_numericadr
+
     @property
     def name_textadr(self): return self._name_textadr
+
     @property
     def name_tupleadr(self): return self._name_tupleadr
+
     @property
     def name_keyadr(self): return self._name_keyadr
+
     @property
     def names(self): return self._names
 
@@ -3008,30 +3872,43 @@ cdef class PyMjData(object):
     def time(self): return self.ptr.time
     @time.setter
     def time(self, mjtNum x): self.ptr.time = x
+
     @property
     def qpos(self): return self._qpos
+
     @property
     def qvel(self): return self._qvel
+
     @property
     def act(self): return self._act
+
     @property
     def qacc_warmstart(self): return self._qacc_warmstart
+
     @property
     def ctrl(self): return self._ctrl
+
     @property
     def qfrc_applied(self): return self._qfrc_applied
+
     @property
     def xfrc_applied(self): return self._xfrc_applied
+
     @property
     def qacc(self): return self._qacc
+
     @property
     def act_dot(self): return self._act_dot
+
     @property
     def mocap_pos(self): return self._mocap_pos
+
     @property
     def mocap_quat(self): return self._mocap_quat
+
     @property
     def userdata(self): return self._userdata
+
     @property
     def sensordata(self): return self._sensordata
 
@@ -3049,92 +3926,176 @@ cdef class PyMjData(object):
     def xmat(self):
         raise RuntimeError("body_xmat should be used instead of xmat")
 
+
     @property
     def xipos(self): return self._xipos
+
     @property
     def ximat(self): return self._ximat
+
     @property
     def xanchor(self): return self._xanchor
+
     @property
     def xaxis(self): return self._xaxis
+
     @property
     def geom_xpos(self): return self._geom_xpos
+
+    def get_geom_xpos(self, name):
+        id = self.geom_name2id(name)
+        return self._geom_xpos[id]
+
     @property
     def geom_xmat(self): return self._geom_xmat
+
+    def get_geom_xmat(self, name):
+        id = self.geom_name2id(name)
+        return self._geom_xmat[id]
+
     @property
     def site_xpos(self): return self._site_xpos
+
+    def get_site_xpos(self, name):
+        id = self.site_name2id(name)
+        return self._site_xpos[id]
+
     @property
     def site_xmat(self): return self._site_xmat
+
+    def get_site_xmat(self, name):
+        id = self.site_name2id(name)
+        return self._site_xmat[id]
+
     @property
     def cam_xpos(self): return self._cam_xpos
+
+    def get_cam_xpos(self, name):
+        id = self.camera_name2id(name)
+        return self._cam_xpos[id]
+
     @property
     def cam_xmat(self): return self._cam_xmat
+
+    def get_cam_xmat(self, name):
+        id = self.camera_name2id(name)
+        return self._cam_xmat[id]
+
     @property
     def light_xpos(self): return self._light_xpos
+
+    def get_light_xpos(self, name):
+        id = self.light_name2id(name)
+        return self._light_xpos[id]
+
     @property
     def light_xdir(self): return self._light_xdir
+
+    def get_light_xdir(self, name):
+        id = self.light_name2id(name)
+        return self._light_xdir[id]
+
     @property
     def subtree_com(self): return self._subtree_com
+
     @property
     def cdof(self): return self._cdof
+
     @property
     def cinert(self): return self._cinert
+
     @property
     def ten_wrapadr(self): return self._ten_wrapadr
+
     @property
     def ten_wrapnum(self): return self._ten_wrapnum
+
     @property
     def ten_J_rownnz(self): return self._ten_J_rownnz
+
     @property
     def ten_J_rowadr(self): return self._ten_J_rowadr
+
     @property
     def ten_J_colind(self): return self._ten_J_colind
+
     @property
     def ten_length(self): return self._ten_length
+
     @property
     def ten_J(self): return self._ten_J
+
     @property
     def wrap_obj(self): return self._wrap_obj
+
     @property
     def wrap_xpos(self): return self._wrap_xpos
+
     @property
     def actuator_length(self): return self._actuator_length
+
+    def get_actuator_length(self, name):
+        id = self.actuator_name2id(name)
+        return self._actuator_length[id]
+
     @property
     def actuator_moment(self): return self._actuator_moment
+
+    def get_actuator_moment(self, name):
+        id = self.actuator_name2id(name)
+        return self._actuator_moment[id]
+
     @property
     def crb(self): return self._crb
+
     @property
     def qM(self): return self._qM
+
     @property
     def qLD(self): return self._qLD
+
     @property
     def qLDiagInv(self): return self._qLDiagInv
+
     @property
     def qLDiagSqrtInv(self): return self._qLDiagSqrtInv
+
     @property
     def contact(self): return self._contact
+
     @property
     def efc_type(self): return self._efc_type
+
     @property
     def efc_id(self): return self._efc_id
+
     @property
     def efc_J_rownnz(self): return self._efc_J_rownnz
+
     @property
     def efc_J_rowadr(self): return self._efc_J_rowadr
+
     @property
     def efc_J_rowsuper(self): return self._efc_J_rowsuper
+
     @property
     def efc_J_colind(self): return self._efc_J_colind
+
     @property
     def efc_JT_rownnz(self): return self._efc_JT_rownnz
+
     @property
     def efc_JT_rowadr(self): return self._efc_JT_rowadr
+
     @property
     def efc_JT_rowsuper(self): return self._efc_JT_rowsuper
+
     @property
     def efc_JT_colind(self): return self._efc_JT_colind
+
     @property
     def efc_J(self): return self._efc_J
+
     @property
     def efc_JT(self): return self._efc_JT
 
@@ -3142,68 +4103,108 @@ cdef class PyMjData(object):
     def efc_pos(self):
         raise RuntimeError("active_contacts_efc_pos should be used instead of efc_pos")
 
+
     @property
     def efc_margin(self): return self._efc_margin
+
     @property
     def efc_frictionloss(self): return self._efc_frictionloss
+
     @property
     def efc_diagApprox(self): return self._efc_diagApprox
+
     @property
     def efc_KBIP(self): return self._efc_KBIP
+
     @property
     def efc_D(self): return self._efc_D
+
     @property
     def efc_R(self): return self._efc_R
+
     @property
     def efc_AR_rownnz(self): return self._efc_AR_rownnz
+
     @property
     def efc_AR_rowadr(self): return self._efc_AR_rowadr
+
     @property
     def efc_AR_colind(self): return self._efc_AR_colind
+
     @property
     def efc_AR(self): return self._efc_AR
+
     @property
     def ten_velocity(self): return self._ten_velocity
+
     @property
     def actuator_velocity(self): return self._actuator_velocity
+
+    def get_actuator_velocity(self, name):
+        id = self.actuator_name2id(name)
+        return self._actuator_velocity[id]
+
     @property
     def cvel(self): return self._cvel
+
     @property
     def cdof_dot(self): return self._cdof_dot
+
     @property
     def qfrc_bias(self): return self._qfrc_bias
+
     @property
     def qfrc_passive(self): return self._qfrc_passive
+
     @property
     def efc_vel(self): return self._efc_vel
+
     @property
     def efc_aref(self): return self._efc_aref
+
     @property
     def subtree_linvel(self): return self._subtree_linvel
+
     @property
     def subtree_angmom(self): return self._subtree_angmom
+
     @property
     def actuator_force(self): return self._actuator_force
+
+    def get_actuator_force(self, name):
+        id = self.actuator_name2id(name)
+        return self._actuator_force[id]
+
     @property
     def qfrc_actuator(self): return self._qfrc_actuator
+
     @property
     def qfrc_unc(self): return self._qfrc_unc
+
     @property
     def qacc_unc(self): return self._qacc_unc
+
     @property
     def efc_b(self): return self._efc_b
+
     @property
     def efc_force(self): return self._efc_force
+
     @property
     def efc_state(self): return self._efc_state
+
     @property
     def qfrc_constraint(self): return self._qfrc_constraint
+
     @property
     def qfrc_inverse(self): return self._qfrc_inverse
+
     @property
     def cacc(self): return self._cacc
+
     @property
     def cfrc_int(self): return self._cfrc_int
+
     @property
     def cfrc_ext(self): return self._cfrc_ext
     @property
