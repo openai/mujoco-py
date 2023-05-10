@@ -71,7 +71,7 @@ See the [full documentation](https://openai.github.io/mujoco-py/build/html/index
 
 ### You're on MacOS and you see `clang: error: unsupported option '-fopenmp'`
 
-If this happend during installation or just running `python -c "import mujoco_py"` then the issue seems to be related to [this](https://github.com/velocyto-team/velocyto.R/issues/2#issuecomment-341165967) and the TL;DR is that for macOS the default compiler Apple clang LLVM does not support openmp. So you can try to install another clang/llvm installation. For example (requires [brew](https://brew.sh/)):
+If this happened during installation or just running `python -c "import mujoco_py"` then the issue seems to be related to [this](https://github.com/velocyto-team/velocyto.R/issues/2#issuecomment-341165967) and the TL;DR is that for macOS the default compiler Apple clang LLVM does not support openmp. So you can try to install another clang/llvm installation. For example (requires [brew](https://brew.sh/)):
 
 ```bash
 brew install llvm
@@ -116,9 +116,9 @@ Add the path to the mujoco bin directory to your dynamic loader:
 This is particularly useful on Ubuntu 14.04, which does not have a GLFW package.
 
 
-### Ubuntu installtion troubleshooting
+### Ubuntu installation troubleshooting
 
-Because `mujoco_py` has compiled native code that needs to be linked to a supplied MuJoCo binary, it's installation
+Because `mujoco_py` has compiled native code that needs to be linked to a supplied MuJoCo binary, its installation
 on linux can be more challenging than pure Python source packages.
 
 To install mujoco-py on Ubuntu, make sure you have the following libraries installed:
