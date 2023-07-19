@@ -1,7 +1,7 @@
 # When updating these, you may need to also update pyproject.toml
 glfw>=1.4.0
 numpy>=1.11
-Cython>=0.27.2
+Cython>=0.27.2,<3
 imageio>=2.1.2
 cffi>=1.10
 fasteners~=0.15
