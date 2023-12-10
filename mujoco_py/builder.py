@@ -1,3 +1,4 @@
+import cython
 import distutils
 import glob
 import os
@@ -236,7 +237,10 @@ class MujocoExtensionBuilder():
             "script_name": None,
             "script_args": ["build_ext"]
         })
-        dist.ext_modules = cythonize([self.extension])
+        if cython.__version__ < "3.0.0":
+            dist.ext_modules = cythonize([self.extension])
+        else:
+            dist.ext_modules = cythonize([self.extension], compiler_directives={'legacy_implicit_noexcept': True})
         dist.include_dirs = []
         dist.cmdclass = {'build_ext': custom_build_ext}
         build = dist.get_command_obj('build')
